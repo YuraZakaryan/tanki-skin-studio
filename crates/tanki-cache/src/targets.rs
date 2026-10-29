@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Table of resource groups that are positively identified as game items.
 //!
 //! Adding support for a new hull, turret or paint is one row in [`KNOWN_TARGETS`]:

@@ -81,6 +81,9 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Log file `<data>/logs/tanki-studio.log`: rotated on start (2 old kept), capped at 16 MiB, early records kept, `RUST_LOG` filters, a broken folder or poisoned lock never stops the app; only the window owning the data folder rotates | unit `logging`, real binary (3 starts + a second window) |
 | Every failure shown in a toast is logged in the core's English words; every panic is logged | unit `logging`, `errors::user_message` |
 | Every string translated, no stale rows | `cargo xtask i18n` |
+| Every file states its licence and copyright (SPDX headers, `REUSE.toml`, `LICENSES/`) | CI `Licences (REUSE)` (`reuse lint`) |
+| The app's About notice names version, licence, no warranty and source; the licence matches the crates' | unit `about` |
+| Every download carries `THIRD-PARTY-LICENSES.html` (the crate notices) | `cargo about generate --fail` in both packaging scripts |
 | Nothing git would commit is game content (file types, cache file names), a stray binary, a dump over 4 MiB or a name of the official client | unit `xtask::assets`, `cargo xtask assets` (in `ci`) |
 | Counts grouped as each language writes them (3,660 / 3 660) | unit `tanki-i18n`, unit `model` |
 | A missing author or license leaves no stray separator | unit `model` |

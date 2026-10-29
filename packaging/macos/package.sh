@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Build the macOS release: Tanki Skin Studio.app (the app and the CLI) in a .dmg.
 #
 # Usage: packaging/macos/package.sh [--arch universal|aarch64|x86_64] [--version X.Y.Z]
 # Output: dist/release/tanki-skin-studio-<version>-macos-<arch>.dmg
 #
 # `universal` builds for Apple silicon and Intel and joins them with `lipo`; it needs both Rust
-# targets (rustup target add aarch64-apple-darwin x86_64-apple-darwin).
+# targets (rustup target add aarch64-apple-darwin x86_64-apple-darwin). The licences of the Rust
+# crates come from cargo-about (cargo install cargo-about --locked --features cli).
 #
 # Signing: MACOS_SIGN_IDENTITY (a "Developer ID Application" identity in the keychain) signs with
 # the hardened runtime and a secure timestamp. Without it the app is signed ad-hoc, which runs on
@@ -61,6 +64,9 @@ done
 cp LICENSE "$APP/Contents/Resources/LICENSE.txt"
 mkdir -p "$APP/Contents/Resources/licenses"
 cp crates/tanki-ui/assets/OFL-*.txt crates/tanki-ui/assets/LICENSE-lucide.txt "$APP/Contents/Resources/licenses/"
+# The notices of every Rust crate built in (their licences ask for them in binaries too).
+cargo about generate --workspace --locked --fail -c packaging/about.toml \
+  -o "$APP/Contents/Resources/licenses/THIRD-PARTY-LICENSES.html" packaging/about.hbs
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

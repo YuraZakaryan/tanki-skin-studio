@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Rectangle splitting for pixel-exact screens. A screen is built the way the design file is: a
 //! rectangle is cut into rows and columns of fixed or filling parts, and each part is drawn into
 //! its own rectangle.

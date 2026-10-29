@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Info: the item in focus, its modifications in the cache, matching skin variants, the pack the
 //! skins come from, and the form to label an unrecognised resource by hand.
 

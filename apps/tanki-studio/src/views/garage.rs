@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Garage: the selected item with its modifications and skin variants, and every item of the cache.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};

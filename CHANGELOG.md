@@ -11,6 +11,9 @@ All notable changes are recorded here. The format follows
 - The licence is now GPL-3.0-or-later (it was MIT): a version anyone distributes must stay open,
   with its source. The app's About command, the splash screen and the CLI help show the licence,
   that there is no warranty and where the source is.
+- Every file states its licence and copyright (REUSE 3.3: SPDX headers, `REUSE.toml`, `LICENSES/`),
+  checked in CI, and every download carries `THIRD-PARTY-LICENSES.html` with the notices of the
+  Rust crates built in.
 
 ### Added
 

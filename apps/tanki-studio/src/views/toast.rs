@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Short messages in the bottom-right corner, with an optional action (Undo).
 
 use eframe::egui::{self, Area, Context, CornerRadius, Id, Order, Pos2, Rect, Sense, Vec2};

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The state without a game cache: explain it and offer the two ways out.
 
 use eframe::egui::{Pos2, Rect, Ui, Vec2};

@@ -74,6 +74,9 @@ jobs:
         with:
           toolchain: stable
           targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+        with:
+          tool: cargo-about@0.9.3
       - run: packaging/macos/package.sh --arch universal --version "$VERSION"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -104,6 +107,9 @@ jobs:
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
+        with:
+          tool: cargo-about@0.9.3
       - name: Install WiX
         shell: pwsh
         run: dotnet tool install --global wix --version 5.0.2

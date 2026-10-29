@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! What the user was doing when the app closed: the page, window, and per-cache selection.
 //!
 //! Stored as one JSON document under a versioned settings key so that

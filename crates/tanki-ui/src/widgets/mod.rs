@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Widgets that paint themselves at the design's exact sizes. Each one allocates its rectangle
 //! from the parent `Ui` (or takes one from [`crate::layout`]), draws with [`crate::draw`] and
 //! [`crate::fonts`], and returns an `egui::Response` for interaction.

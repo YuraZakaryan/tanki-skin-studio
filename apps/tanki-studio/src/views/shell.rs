@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The sidebar and the frame every page shares: top bar, content padding.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Ui, Vec2};

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Opt-in tests against a REAL game cache and a real pack, for the person who owns both. They are
 //! ignored by default and need
 //!

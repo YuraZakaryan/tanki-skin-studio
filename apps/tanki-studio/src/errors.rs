@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! What the user reads when an operation of the core fails. The core reports in English for logs
 //! and the CLI; the known failures are said here in the interface's language, with what to do
 //! next, and anything else is shown as it is.

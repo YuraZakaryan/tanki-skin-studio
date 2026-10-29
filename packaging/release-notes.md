@@ -20,7 +20,10 @@ The files are not signed yet: if SmartScreen asks, choose **More info**, then **
 ## Licence and source
 
 Tanki Skin Studio is free software under GPL-3.0-or-later and comes with no warranty. The source of
-this exact version is attached below (**Source code**) and tagged in the repository.
+this exact version is attached below (**Source code**) and tagged in the repository. The Rust crates
+it is built with are pinned to exact versions in `Cargo.lock` and published on
+[crates.io](https://crates.io); `cargo vendor` in the source fetches all of them. Their licences are
+in `THIRD-PARTY-LICENSES.html`, inside every download.
 
 ## Verify what you downloaded
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! A monkey test: hundreds of random clicks, key presses and typed text across the whole app, with
 //! fixed seeds so a failure replays exactly. Whatever the order, the app must not panic, must stay
 //! on a real page, and every replacement it made must undo back to the original cache. The run is

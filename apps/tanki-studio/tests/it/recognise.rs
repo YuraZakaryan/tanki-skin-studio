@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use std::{fs, path::Path};
 
 use base64::{Engine, engine::general_purpose::STANDARD};

@@ -42,6 +42,17 @@ No game is needed: every test runs on a synthetic cache that `crates/tanki-testk
 The project is licensed under GPL-3.0-or-later ([LICENSE](LICENSE)). By opening a pull request you
 agree that your contribution is licensed the same way.
 
+Every file states its licence, following the FSFE's [REUSE](https://reuse.software) specification.
+A new Rust source or shell script starts with:
+
+```rust
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+Other files are covered by [REUSE.toml](REUSE.toml). Check with
+`uvx --from 'reuse[charset-normalizer]' reuse lint` (CI runs it too).
+
 ## Conduct
 
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).

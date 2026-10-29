@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Build a pack from a folder of models and textures, whatever its layout.
 //!
 //! The whole tree is read, to any depth. Every folder that holds a model or a picture is read from

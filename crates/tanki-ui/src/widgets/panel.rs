@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use egui::{CornerRadius, Pos2, Rect, Ui, Vec2};
 
 use crate::{draw, fonts, fonts::Text, theme::Tokens};

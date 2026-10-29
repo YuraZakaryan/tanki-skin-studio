@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Interface size: how large the whole interface is drawn. It is egui's zoom factor on top of the
 //! display's own scale, so "100%" is the size the design was made for on every display, and the
 //! text stays sharp (egui rasterises at `pixels_per_point`).

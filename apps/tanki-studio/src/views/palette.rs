@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The ⌘K command palette: items, resources and every command of the registry, with a
 //! substring match that falls back to a subsequence match (PdfCraft's ranking), searched in both
 //! the translated and the English text.

@@ -24,6 +24,9 @@ theirs.
 
 - **Licence.** The code is GPL-3.0-or-later. Add only dependencies whose licences `deny.toml`
   allows (all are GPL-3.0 compatible), and keep `about::LICENSE` equal to the workspace licence.
+  Every file states its licence (REUSE): new sources start with the two SPDX lines, other files
+  are covered by `REUSE.toml`, and a third-party asset gets its own annotation and its licence
+  text in `LICENSES/`. Downloads carry `THIRD-PARTY-LICENSES.html` from `cargo about`.
 
 ## 2. Never crash, never lose a file
 

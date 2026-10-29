@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Hooks for tests and screenshots, driven by environment variables. They call the same methods
 //! the buttons call, so end-to-end tests exercise the real wiring without a mouse.
 //!

@@ -163,6 +163,7 @@ else's game content.
 |---|---|---|
 | Source code | Rust, GPL-3.0-or-later | `apps/`, `crates/`, `xtask/` |
 | Fonts | Chakra Petch, Inter and JetBrains Mono (SIL Open Font License); Lucide icons (ISC). Each ships with its licence text | `crates/tanki-ui/assets/` |
+| Licences | The text of every licence used, and the licence and copyright of every file ([REUSE](https://reuse.software) compliant) | `LICENSES/`, `REUSE.toml`, SPDX headers |
 | App icon | Drawn by code at start-up; there is no image file | `apps/tanki-studio/src/icon.rs` |
 | Interface design | The project's own design file | `design.pen` |
 | Translations | English keys, Russian catalogue | `crates/tanki-i18n/src/ru.tsv` |
@@ -254,7 +255,8 @@ layering on every CI run, and [docs/architecture.md](docs/architecture.md) has t
 - 125+ unit, integration and UI tests, with good and bad paths, hostile archives and tampered
   backups.
 
-Beside it, CI checks the dependencies with `cargo-deny` (RustSec advisories, licences, sources),
+Beside it, CI checks that every file states its licence (REUSE), checks the dependencies with
+`cargo-deny` (RustSec advisories, licences, sources),
 builds with the minimum Rust version, and runs every workflow step with pinned actions and a
 read-only token.
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Recognise items in a cache by what is in it, with no hand labelling.
 //!
 //! The client names a resource by a numeric id the app has no table for, but a pack ships the model

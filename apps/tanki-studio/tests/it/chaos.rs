@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! A deep monkey ("chaos") test: random clicks, keys, shortcuts and text, plus everything the world
 //! can do to the app while it runs: the window is resized, the game starts and stops, packs good and
 //! broken are imported or dropped, the cache folder disappears and comes back, and the app is

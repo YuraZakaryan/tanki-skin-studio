@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! End-to-end journey over the public core API against a synthetic cache and pack:
 //! scan → import (zip + folder) → persisted state → apply → restore, plus hostile inputs.
 

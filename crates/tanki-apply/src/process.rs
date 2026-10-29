@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Is the game running? Replacing cache files under a running client can corrupt them, so the UI
 //! asks the user to close it first.
 //!

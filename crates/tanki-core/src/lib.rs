@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Layer 3 facade. The logic lives in the lower crates; this keeps `tanki_core::cache::…` paths
 //! stable for applications and hosts the end-to-end tests that cross every layer.
 

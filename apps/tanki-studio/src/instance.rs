@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! One Tanki Skin Studio per data folder. A second window on the same data would write the same
 //! database and the same game cache at once (two applies, two restores racing).
 //!

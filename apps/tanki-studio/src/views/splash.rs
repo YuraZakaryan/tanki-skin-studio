@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The start-up screen: brand, progress and the three start-up steps, shown for about three
 //! seconds (a click, Space or Enter skips it).
 

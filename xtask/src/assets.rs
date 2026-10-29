@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The provenance check, enforced by `cargo xtask assets` (part of `cargo xtask ci`), the way
 //! PdfCraft guards its assets.
 //!

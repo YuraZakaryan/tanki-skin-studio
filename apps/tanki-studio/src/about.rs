@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! What the app says about itself: its version, its licence, that it comes with no warranty and
 //! where its source is. GPL-3.0 asks an interactive program to show these "Appropriate Legal
 //! Notices"; the splash screen and the About command show them.

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use egui::{CornerRadius, Pos2, Rect, Response, Role, Sense, Ui, Vec2};
 
 use super::{alloc, chips::*, describe};

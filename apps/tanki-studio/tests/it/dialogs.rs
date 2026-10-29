@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use egui_kittest::kittest::Queryable;
 use tanki_studio::app::{Dialog, Page};
 use tanki_testkit::{HULL_MODEL, PackOptions, build_pack_dir, scratch};

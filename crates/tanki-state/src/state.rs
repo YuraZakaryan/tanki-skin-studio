@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use crate::session::{SESSION_KEY, SessionState};
 use anyhow::Result;
 use rusqlite::{Connection, params};

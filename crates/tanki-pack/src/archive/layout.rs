@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! What a folder of an archive is, read from its path whatever the layout.
 //!
 //! Archives are laid out in many ways: `Flash/Hulls/New/Wasp/M3`, `2.0/hulls/wasp/m0`,

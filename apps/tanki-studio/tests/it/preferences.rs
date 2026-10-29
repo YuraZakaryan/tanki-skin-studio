@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use egui::{Key, Modifiers};
 use egui_kittest::kittest::Queryable;
 use tanki_core::state::StateStore;

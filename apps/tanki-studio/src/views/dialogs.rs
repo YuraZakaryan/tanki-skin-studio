@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Modal dialogs: confirm a replacement, the game-is-running warning, the result of a
 //! replacement, and the list of problems of a refused pack.
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The application state and its construction. Behaviour that changes state lives in
 //! [`crate::actions`]; drawing lives in [`crate::views`].
 

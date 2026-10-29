@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The three type families of the design (Chakra Petch for titles, Inter for body text, JetBrains
 //! Mono for numbers and file names; all SIL OFL) and the Lucide icon font (ISC), bundled so the
 //! app looks the same on every machine.

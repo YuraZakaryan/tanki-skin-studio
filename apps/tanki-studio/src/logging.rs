@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The app's logger, as in PdfCraft: `log::` records go to standard error and to a log file.
 //!
 //! A launch from Finder or the Start menu has no terminal, so without the file every warning (a

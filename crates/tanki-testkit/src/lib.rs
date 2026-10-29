@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Synthetic fixtures shared by integration tests and `cargo xtask e2e-ui`.
 //!
 //! Everything here is generated at run time from flat colours, so the repository never

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The command registry, as in PdfCraft: one table of what the app can do, with the label, icon
 //! and shortcut of each, used by the command palette and by the keyboard handler alike.
 
