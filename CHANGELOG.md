@@ -17,6 +17,10 @@ All notable changes are recorded here. The format follows
 
 ### Added
 
+- Code signing as in WordCraft and PdfCraft: Developer ID signing and notarization for macOS,
+  Authenticode with a certificate or Azure Trusted Signing for Windows, from the secrets of the
+  `release` environment; a release from the `release` branch fails without them.
+
 - Desktop app (egui) and command-line tool for managing skins in a local game cache.
 - Cache discovery in the standard Adobe AIR application storage, with the client recognised on the
   user's machine; no game is named in the code.

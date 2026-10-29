@@ -1,7 +1,8 @@
 name: Release
 
-# A push to the `release` branch builds the downloads and drafts a GitHub Release for the version in
-# Cargo.toml; a person reviews and publishes it (docs/releasing.md). A manual run can name a test
+# A push to the `release` branch builds signed downloads and drafts a GitHub Release for the version in
+# Cargo.toml; a person reviews and publishes it (docs/releasing.md). Builds there fail without the
+# signing secrets of the `release` environment; a manual run without them builds unsigned. A manual run can name a test
 # version such as 0.2.0-rc.1. A pull request that touches packaging builds the downloads without
 # drafting anything, so packaging is checked before it lands.
 on:
@@ -63,10 +64,31 @@ jobs:
     name: macOS universal
     needs: version
     runs-on: macos-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    # Signing secrets live in the `release` environment (docs/releasing.md); pull requests build
+    # without it, so their downloads are never signed.
+    environment: ${{ github.event_name != 'pull_request' && 'release' || '' }}
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
+      # On the release branch an unsigned build fails here instead of shipping, as in WordCraft.
+      - name: Require signing secrets on the release branch
+        if: github.ref == 'refs/heads/release'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=""
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::macOS releases must be signed and notarized, but these secrets of the release environment are empty:$missing"
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -77,12 +99,26 @@ jobs:
       - uses: taiki-e/install-action@86f7a0ffb25f40114606501a311ebcfaf882ea32 # v2.88.0
         with:
           tool: cargo-about@0.9.3
-      - run: packaging/macos/package.sh --arch universal --version "$VERSION"
+      - name: Import signing certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: packaging/macos/import-cert.sh
+      - name: Build, sign, notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: packaging/macos/package.sh --arch universal --version "$VERSION"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-macos
           path: dist/release/*.dmg
           if-no-files-found: error
+      - name: Remove temporary keychain
+        if: always() && env.MACOS_KEYCHAIN != ''
+        run: security delete-keychain "$MACOS_KEYCHAIN" || true
 
   windows:
     # An installer (.msi, per user) and a portable .zip for each architecture.
@@ -96,10 +132,32 @@ jobs:
         include:
           - { arch: x64, target: x86_64-pc-windows-msvc }
           - { arch: arm64, target: aarch64-pc-windows-msvc }
+    environment: ${{ github.event_name != 'pull_request' && 'release' || '' }}
     env:
       VERSION: ${{ needs.version.outputs.version }}
       ARCH: ${{ matrix.arch }}
     steps:
+      - name: Require signing secrets on the release branch
+        if: github.ref == 'refs/heads/release'
+        shell: bash
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
+        run: |
+          [ -n "$WINDOWS_CERTIFICATE" ] && exit 0
+          missing=""
+          for name in AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_SIGNING_ENDPOINT AZURE_SIGNING_ACCOUNT AZURE_CERT_PROFILE; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Windows releases must be signed: set WINDOWS_CERTIFICATE, or all of the Azure Trusted Signing secrets (missing:$missing), in the release environment"
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -113,7 +171,17 @@ jobs:
       - name: Install WiX
         shell: pwsh
         run: dotnet tool install --global wix --version 5.0.2
-      - shell: pwsh
+      - name: Build, sign, package
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
         run: ./packaging/windows/package.ps1 -Arch $env:ARCH -Version $env:VERSION
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

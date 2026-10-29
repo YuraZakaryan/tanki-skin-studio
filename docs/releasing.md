@@ -25,7 +25,8 @@ Release builds use no build cache, so nothing cached by another branch can reach
 
 1. In a pull request, set the version in the workspace `Cargo.toml` (`[workspace.package] version`)
    and move the `Unreleased` notes in [CHANGELOG.md](../CHANGELOG.md) under that version. Merge it.
-2. Point `release` at the merged `main`:
+2. Point `release` at the merged `main` (this needs the signing secrets; without them, run the
+   workflow manually from `main` instead):
 
    ```sh
    git push origin main:release
@@ -49,24 +50,60 @@ sha256sum -c SHA256SUMS.txt
 gh attestation verify tanki-skin-studio-0.1.0-macos-universal.dmg -R YuraZakaryan/tanki-skin-studio
 ```
 
-## Signing (not set up yet)
+## Signing
 
-Until certificates exist, the macOS app is signed ad-hoc and not notarized (first start: right-click,
-**Open**), and the Windows files are unsigned (SmartScreen: **More info → Run anyway**). Both build
-scripts print a warning when they ship unsigned.
+Signing works as in WordCraft and PdfCraft. The build scripts sign when the secrets are there and
+warn and ship unsigned when they are not, so test builds keep working. On the `release` branch a
+missing secret fails the build instead: a release from `release` is always signed. Until the
+certificates exist, release with a manual run of the workflow from `main` (unsigned).
 
-- **macOS** needs an Apple Developer ID Application certificate. `package.sh` signs with the hardened
-  runtime when `MACOS_SIGN_IDENTITY` names it; notarization (`notarytool submit --wait`,
-  `stapler staple`) is the next step to add, with the certificate, the Apple ID, an app-specific
-  password and the team id stored as secrets of a `release` environment.
-- **Windows** needs a code-signing certificate (or Azure Trusted Signing); `package.ps1` will sign
-  both executables with `signtool` before packaging, then the `.msi` itself.
+The secrets belong to the **`release` environment** (**Settings → Environments → release**; it
+appears after the first run, or create it). Pull requests build without that environment, so their
+downloads are never signed.
+
+### macOS: Developer ID and notarization
+
+[packaging/macos/import-cert.sh](../packaging/macos/import-cert.sh) imports the certificate into a
+temporary keychain; [package.sh](../packaging/macos/package.sh) signs the CLI and the app with the
+hardened runtime ([entitlements.plist](../packaging/macos/entitlements.plist), empty), notarizes the
+app and the `.dmg` with `notarytool`, staples the tickets and checks them with `spctl`.
+
+1. Join the [Apple Developer Program](https://developer.apple.com/programs/enroll/) (99 USD a year;
+   an individual account is enough).
+2. In **Certificates, Identifiers & Profiles**, create a **Developer ID Application** certificate,
+   install it in Keychain Access, and export it with its private key as a `.p12` with a password.
+3. At [account.apple.com](https://account.apple.com), create an **app-specific password** for
+   notarization. The **Team ID** is in the membership details.
+4. Add to the `release` environment:
+
+   | Secret | Value |
+   |---|---|
+   | `APPLE_CERTIFICATE` | the `.p12`, base64: `base64 -i DeveloperID.p12 \| pbcopy` |
+   | `APPLE_CERTIFICATE_PASSWORD` | the `.p12` password |
+   | `APPLE_ID` | the Apple ID email |
+   | `APPLE_PASSWORD` | the app-specific password |
+   | `APPLE_TEAM_ID` | the Team ID |
+   | `KEYCHAIN_PASSWORD` | optional; random when unset |
+
+### Windows: Authenticode
+
+[packaging/windows/sign.ps1](../packaging/windows/sign.ps1) signs `tanki-studio.exe` and
+`tanki-cli.exe` before they are packaged, then the `.msi`, with a timestamp, and verifies the
+signatures. It takes either:
+
+- **a code-signing certificate** as a `.pfx` (for example from Certum or another certificate
+  authority; an open-source or OV certificate): `WINDOWS_CERTIFICATE` (the `.pfx`, base64) and
+  `WINDOWS_CERTIFICATE_PASSWORD`; or
+- **[Azure Trusted Signing](https://azure.microsoft.com/products/artifact-signing)**, as WordCraft
+  uses (open to organisations and, for individuals, only in some countries): `AZURE_TENANT_ID`,
+  `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT`,
+  `AZURE_CERT_PROFILE`. The signing client is pinned by version and SHA-256.
+
+A new certificate earns SmartScreen's trust as people download signed files, so the first signed
+releases may still show a SmartScreen notice.
 
 The installer's `UpgradeCode` in `tanki-skin-studio.wxs` links every version together, so a new
 `.msi` replaces the old one. It must never change.
-
-Once signing is in place, the release job should fail on the `release` branch when a signing secret
-is missing, so an unsigned build can never be published by accident.
 
 ## Protecting the `release` branch
 
