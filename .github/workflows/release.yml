@@ -232,9 +232,15 @@ jobs:
               echo "::error::$tag is already published; raise the version in Cargo.toml"
               exit 1
             fi
-            echo "Updating the draft $tag"
-            gh release upload "$tag" --clobber dist/*
-            gh release edit "$tag" --target "$GITHUB_SHA" --prerelease="$PRERELEASE"
+            echo "Updating the draft $tag: replacing its files"
+            # Every old file goes first, so one renamed or dropped since can't linger in the draft.
+            gh release view "$tag" --json assets --jq '.assets[].name' | while read -r asset; do
+              gh release delete-asset "$tag" "$asset" --yes
+            done
+            gh release upload "$tag" dist/*
+            # The notes and title are refreshed too, so a rebuilt draft never keeps stale text.
+            gh release edit "$tag" --target "$GITHUB_SHA" --prerelease="$PRERELEASE" \
+              --title "Tanki Skin Studio $VERSION" --notes-file packaging/release-notes.md
           else
             echo "Creating the draft $tag"
             pre=()
