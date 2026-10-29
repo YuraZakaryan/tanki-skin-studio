@@ -450,7 +450,9 @@ const SCENES: &[Scene] = &[
         actions: "select:hull",
         incomplete_skin: true,
         checks: &[
-            has("the red reason and Incomplete badge", DANGER, 6, 300),
+            // Measured: 683 ppm at 1x (CI), 2014 at 2x, 0 on a Garage without an incomplete skin. Thin
+            // text at 1x has few pixels of the exact red, hence the wider tolerance.
+            has("the red reason and Incomplete badge", DANGER, 24, 200),
             lacks("an Apply button at full strength", ACCENT, 6, 2_000),
         ],
         ..SCENE
