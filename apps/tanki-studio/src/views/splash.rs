@@ -130,8 +130,9 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, full: Rect) {
         );
     }
     let legal = format!(
-        "v{} · MIT · {}",
+        "v{} · {} · {}",
         env!("CARGO_PKG_VERSION"),
+        crate::about::LICENSE,
         tl!("Game assets are not distributed")
     );
     fonts::draw_centered(

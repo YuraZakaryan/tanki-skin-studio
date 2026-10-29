@@ -37,6 +37,11 @@ No game is needed: every test runs on a synthetic cache that `crates/tanki-testk
 
 `cargo xtask assets` refuses most of this automatically.
 
+## Licence of contributions
+
+The project is licensed under GPL-3.0-or-later ([LICENSE](LICENSE)). By opening a pull request you
+agree that your contribution is licensed the same way.
+
 ## Conduct
 
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).

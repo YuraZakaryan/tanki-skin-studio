@@ -75,7 +75,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>CFBundleExecutable</key><string>tanki-studio</string>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>NSHighResolutionCapable</key><true/>
-<key>NSHumanReadableCopyright</key><string>MIT License</string>
+<key>NSHumanReadableCopyright</key><string>Copyright © 2026 Tanki Skin Studio contributors. GPL-3.0-or-later.</string>
 </dict></plist>
 PLIST
 

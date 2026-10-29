@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-a3e635?style=flat-square">
+  <img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-a3e635?style=flat-square">
   <img alt="Written in Rust" src="https://img.shields.io/badge/written%20in-Rust-4d7c0f?style=flat-square">
   <img alt="Platforms: macOS, Windows" src="https://img.shields.io/badge/runs%20on-macOS%20%C2%B7%20Windows-a3e635?style=flat-square">
   <img alt="No game assets in this repository" src="https://img.shields.io/badge/game%20assets-none-4d7c0f?style=flat-square">
@@ -161,7 +161,7 @@ else's game content.
 
 | Kind | What it is | Where |
 |---|---|---|
-| Source code | Rust, MIT licensed | `apps/`, `crates/`, `xtask/` |
+| Source code | Rust, GPL-3.0-or-later | `apps/`, `crates/`, `xtask/` |
 | Fonts | Chakra Petch, Inter and JetBrains Mono (SIL Open Font License); Lucide icons (ISC). Each ships with its licence text | `crates/tanki-ui/assets/` |
 | App icon | Drawn by code at start-up; there is no image file | `apps/tanki-studio/src/icon.rs` |
 | Interface design | The project's own design file | `design.pen` |
@@ -392,8 +392,18 @@ Dependabot opens one grouped update a week for Rust crates and one for GitHub Ac
 
 ## License and trademarks
 
-The source code is released under the [MIT License](LICENSE). The bundled fonts and icons keep
-their own licences, which sit next to them in `crates/tanki-ui/assets/`.
+Copyright (C) 2026 Tanki Skin Studio contributors.
+
+Tanki Skin Studio is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. It is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the [GNU General Public License](LICENSE) for more details.
+
+In short: you may use, study, change and share it, also commercially, but a version you distribute
+must stay open under the same licence, with its source. The bundled fonts and icons keep their own
+licences, which sit next to them in `crates/tanki-ui/assets/`. Commits published before the switch
+to GPL-3.0 on 2026-10-29 were released under the MIT License.
 
 Tanki Skin Studio is an independent fan project. It is **not affiliated with, endorsed by or
 connected to** any game, game client or their developers, and it names none of them. The names of

@@ -20,6 +20,7 @@ pub enum Command {
     SetTheme(ThemePreference),
     SetLanguage(&'static str),
     Zoom(i32),
+    About,
 }
 
 pub struct CommandSpec {
@@ -189,6 +190,13 @@ pub const COMMANDS: &[CommandSpec] = &[
         icons::GLOBE,
         None,
     ),
+    spec(
+        Command::About,
+        "About Tanki Skin Studio",
+        "Version, licence and source",
+        icons::INFO,
+        None,
+    ),
 ];
 
 /// "⌘I" on macOS, "Ctrl+I" elsewhere.
@@ -221,6 +229,7 @@ impl Studio {
             Command::Go(page) => self.go(page),
             Command::SetTheme(pref) => self.set_theme_preference(pref),
             Command::Zoom(direction) => self.zoom(direction),
+            Command::About => self.toast(crate::about::notice(), None),
             Command::SetLanguage(code) => {
                 if let Some(lang) = Lang::from_code(code) {
                     self.set_language(lang);

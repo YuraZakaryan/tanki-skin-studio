@@ -2,6 +2,7 @@
 //! binary (`main.rs`) only opens the window; tests drive the same app in-process with
 //! `egui_kittest`, the way PdfCraft tests its UI.
 
+pub mod about;
 pub mod actions;
 pub mod app;
 pub mod commands;

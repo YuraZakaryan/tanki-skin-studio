@@ -6,6 +6,12 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The licence is now GPL-3.0-or-later (it was MIT): a version anyone distributes must stay open,
+  with its source. The app's About command, the splash screen and the CLI help show the licence,
+  that there is no warranty and where the source is.
+
 ### Added
 
 - Desktop app (egui) and command-line tool for managing skins in a local game cache.

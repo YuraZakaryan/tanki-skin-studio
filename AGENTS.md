@@ -22,6 +22,9 @@ theirs.
 - `cargo xtask assets` (part of `cargo xtask ci`) refuses game file types and names, binaries outside
   their folders, files over 4 MiB and those names. Never weaken it to make a change pass.
 
+- **Licence.** The code is GPL-3.0-or-later. Add only dependencies whose licences `deny.toml`
+  allows (all are GPL-3.0 compatible), and keep `about::LICENSE` equal to the workspace licence.
+
 ## 2. Never crash, never lose a file
 
 - Cache files, packs, archives, settings and keystrokes are untrusted input. No new `unwrap`,

@@ -186,7 +186,9 @@ fn main() -> Result<()> {
             println!("Restored {} files. Restart the game.", tx.changes.len());
         }
         _ => println!(
-            "Tanki Skin Studio CLI\n  scan [cache-path]\n  recognise [cache-path]\n  archive-pack ARCHIVE-FOLDER PACK-FOLDER\n  pack-validate PACK\n  import PACK\n  packs\n  apply PACK-ID VARIANT-ID [cache-path]\n  restore"
+            "Tanki Skin Studio CLI {} ({}, no warranty; source: github.com/YuraZakaryan/tanki-skin-studio)\n  scan [cache-path]\n  recognise [cache-path]\n  archive-pack ARCHIVE-FOLDER PACK-FOLDER\n  pack-validate PACK\n  import PACK\n  packs\n  apply PACK-ID VARIANT-ID [cache-path]\n  restore",
+            env!("CARGO_PKG_VERSION"),
+            env!("CARGO_PKG_LICENSE")
         ),
     }
     Ok(())
