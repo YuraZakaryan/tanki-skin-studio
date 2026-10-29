@@ -13,6 +13,7 @@ use tanki_core::{pack::import_pack, state::StateStore};
 use tanki_testkit::{PackOptions, build_cache, build_pack_dir, scratch};
 
 mod assets;
+mod ico;
 mod layers;
 
 type Task = fn(&[String]) -> Result<()>;
@@ -67,6 +68,11 @@ const COMMANDS: &[(&str, &str, Task)] = &[
         "e2e-ui",
         "launch the real app on a fixture cache, capture each screen, assert on pixels",
         e2e_ui,
+    ),
+    (
+        "ico",
+        "pack square PNGs into a Windows icon: ico <out.ico> <in.png>... (packaging/icons.sh)",
+        ico::run,
     ),
 ];
 

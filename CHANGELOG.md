@@ -17,6 +17,9 @@ All notable changes are recorded here. The format follows
 
 ### Added
 
+- An app icon, the project's own mark drawn in `design.pen`: in the window, the Dock and the
+  taskbar, on the macOS app and in Finder, on `tanki-studio.exe`, its Start menu shortcut and in
+  Installed apps. The files live in `assets/app-icon/` and `packaging/icons.sh` renders them.
 - Code signing as in WordCraft and PdfCraft: Developer ID signing and notarization for macOS,
   Authenticode with a certificate or Azure Trusted Signing for Windows, from the secrets of the
   `release` environment; a release from the `release` branch fails without them.

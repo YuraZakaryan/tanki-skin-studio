@@ -67,6 +67,7 @@ for bin in "${BINS[@]}"; do
 done
 
 cp LICENSE "$APP/Contents/Resources/LICENSE.txt"
+cp assets/app-icon/tanki-skin-studio.icns "$APP/Contents/Resources/AppIcon.icns"
 mkdir -p "$APP/Contents/Resources/licenses"
 cp crates/tanki-ui/assets/OFL-*.txt crates/tanki-ui/assets/LICENSE-lucide.txt "$APP/Contents/Resources/licenses/"
 # The notices of every Rust crate built in (their licences ask for them in binaries too).
@@ -84,6 +85,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>CFBundleShortVersionString</key><string>$VERSION</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleExecutable</key><string>tanki-studio</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Tanki Skin Studio contributors. GPL-3.0-or-later.</string>

@@ -164,7 +164,7 @@ else's game content.
 | Source code | Rust, GPL-3.0-or-later | `apps/`, `crates/`, `xtask/` |
 | Fonts | Chakra Petch, Inter and JetBrains Mono (SIL Open Font License); Lucide icons (ISC). Each ships with its licence text | `crates/tanki-ui/assets/` |
 | Licences | The text of every licence used, and the licence and copyright of every file ([REUSE](https://reuse.software) compliant) | `LICENSES/`, `REUSE.toml`, SPDX headers |
-| App icon | Drawn by code at start-up; there is no image file | `apps/tanki-studio/src/icon.rs` |
+| App icon | The project's own mark, drawn in `design.pen`: the SVG source and the PNG, `.ico` and `.icns` files rendered from it by `packaging/icons.sh` | `assets/app-icon/` |
 | Interface design | The project's own design file | `design.pen` |
 | Translations | English keys, Russian catalogue | `crates/tanki-i18n/src/ru.tsv` |
 | Screenshots | The app running on the synthetic test cache | `docs/images/` |

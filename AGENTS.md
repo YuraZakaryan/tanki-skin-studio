@@ -17,6 +17,8 @@ theirs.
   application storage (`<application id>/Local Store/cache`), and the running client is the program
   whose AIR descriptor (`META-INF/AIR/application.xml`) declares that id. Any name the user sees
   comes from their own machine. In code the cache format is `air-cache`.
+- **The app icon** in `assets/app-icon/` is the project's own mark, drawn in `design.pen`. Change
+  the SVG, then run `packaging/icons.sh` to render the PNG, `.ico` and `.icns` files; commit them all.
 - **Fonts and icons** come under open licences with their licence file next to them in
   `crates/tanki-ui/assets/`. If an asset's origin or licence is unclear, do not add it.
 - `cargo xtask assets` (part of `cargo xtask ci`) refuses game file types and names, binaries outside
