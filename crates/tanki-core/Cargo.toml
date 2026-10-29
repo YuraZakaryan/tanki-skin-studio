@@ -1,0 +1,20 @@
+[package]
+name = "tanki-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+description = "Facade over the layered tanki crates, so applications keep one import path (layer 3)."
+
+[dependencies]
+tanki-cache = { path = "../tanki-cache" }
+tanki-pack = { path = "../tanki-pack" }
+tanki-apply = { path = "../tanki-apply" }
+tanki-state = { path = "../tanki-state" }
+
+[dev-dependencies]
+anyhow.workspace = true
+image.workspace = true
+tanki-testkit = { path = "../tanki-testkit" }

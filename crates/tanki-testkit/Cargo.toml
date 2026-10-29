@@ -1,0 +1,17 @@
+[package]
+name = "tanki-testkit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+description = "Synthetic game cache and skin packs for tests; contains no proprietary assets."
+
+[dependencies]
+anyhow.workspace = true
+base64.workspace = true
+image.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+zip.workspace = true

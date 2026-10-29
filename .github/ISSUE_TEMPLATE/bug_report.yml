@@ -1,0 +1,58 @@
+name: Bug report
+description: Something does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security problems go to the private channel in SECURITY.md instead.
+        **Never attach game files** (textures, models, cache folders, packs).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Garage
+        2. Pick a hull and a skin
+        3. Press Apply
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: 0.1.0 or the commit you built
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        The end of `logs/tanki-studio.log` in the app's data folder
+        (macOS: `~/Library/Application Support/TankiSkinStudio`, Windows: `%APPDATA%\TankiSkinStudio`).
+      render: text
+  - type: checkboxes
+    id: provenance
+    attributes:
+      label: Before you submit
+      options:
+        - label: This report contains no game files and no personal data.
+          required: true

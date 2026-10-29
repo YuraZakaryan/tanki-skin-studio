@@ -1,0 +1,435 @@
+//! Hooks for tests and screenshots, driven by environment variables. They call the same methods
+//! the buttons call, so end-to-end tests exercise the real wiring without a mouse.
+//!
+//! - `TANKI_VIEW=<page>`: start on that page (`overview`, `garage`, `resources`, `packs`, `info`).
+//! - `TANKI_LANG=<code>` / `TANKI_THEME=<dark|light>`: override the stored preference for this run.
+//! - `TANKI_ACTIONS="verb:arg;verb:arg"`: run actions after start-up:
+//!   `import:<path>`, `page:<code>`, `select:<kind|/marker/>`, `grade:<0-3>`, `filter:<code>`,
+//!   `apply:<item>:<variant>` (applies at once), `begin:<item>:<variant>` (opens the dialog),
+//!   `confirm`, `restore`, `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
+//!   (closes the toasts, which are never part of what a restart restores).
+//!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
+//!   switches and shortcuts, so the choice is stored like a real one.
+//! - `TANKI_GAME_PROCESSES=<a,b>`: the processes "found" when checking whether the game runs
+//!   (empty: none), instead of looking at the real process list.
+//! - `TANKI_SCRIPT="step;step"`: an autopilot that drives the visible window with pauses, so a
+//!   person can watch a journey on their real data: `wait:<ms>`, `page:<code>`, `tab:<kind>`,
+//!   `select:<kind>`, `variant:<n>`, `begin`, `confirm`, `restore`, `close`, `snapshot`, `diff`,
+//!   `assert_same`, `log:<text>`, `quit`. Results are printed as `AUTOPILOT ...` lines.
+//! - `TANKI_SIZE=<w>x<h>`: the window's inner size in points.
+//! - `TANKI_SHOT=<file.png>`: save the app's own frame to the file and exit, so the UI can be
+//!   inspected without screen-recording permission.
+
+use std::{
+    collections::{BTreeMap, VecDeque},
+    path::{Path, PathBuf},
+    time::{Duration, Instant},
+};
+
+use eframe::egui;
+use sha2::{Digest, Sha256};
+
+use crate::{
+    app::{Dialog, Page, Selection, Studio},
+    model::{Filter, grade_index},
+};
+
+pub fn run_actions(app: &mut Studio) {
+    if let Ok(page) = std::env::var("TANKI_VIEW") {
+        app.page = Page::from_code(&page);
+    }
+    if let Some(lang) = std::env::var("TANKI_LANG")
+        .ok()
+        .and_then(|code| tanki_i18n::Lang::from_code(&code))
+    {
+        app.lang = lang;
+    }
+    if let Ok(theme) = std::env::var("TANKI_THEME") {
+        app.theme_pref = tanki_ui::theme::ThemePreference::from_pref(Some(&theme));
+    }
+    // A comma-separated list stands in for the real process list (empty: none).
+    if let Ok(list) = std::env::var("TANKI_GAME_PROCESSES") {
+        app.game_processes_override = Some(
+            list.split(',')
+                .filter(|n| !n.is_empty())
+                .map(str::to_owned)
+                .collect(),
+        );
+    }
+    if let Ok(script) = std::env::var("TANKI_SCRIPT") {
+        app.autopilot = Some(Autopilot::new(&script));
+    }
+    let Ok(script) = std::env::var("TANKI_ACTIONS") else {
+        return;
+    };
+    for step in script.split(';').filter(|s| !s.is_empty()) {
+        let (verb, arg) = step.split_once(':').unwrap_or((step, ""));
+        match verb {
+            "import" => app.import_path(std::path::Path::new(arg)),
+            "page" => app.page = Page::from_code(arg),
+            "filter" => app.filter = Filter::from_code(arg),
+            "select" => select(app, arg),
+            "grade" => {
+                if let (Some(selection), Ok(grade)) = (app.selection.as_mut(), arg.parse::<usize>())
+                {
+                    selection.grade = grade.min(3);
+                }
+            }
+            "apply" | "begin" => {
+                let mut parts = arg.split(':').map(|n| n.parse::<usize>().unwrap_or(0));
+                let (item, variant) = (parts.next().unwrap_or(0), parts.next().unwrap_or(0));
+                app.begin_apply(item, variant);
+                if verb == "apply"
+                    && let Some(Dialog::Confirm(pending)) = app.dialog.clone()
+                {
+                    app.confirm_apply(pending);
+                }
+            }
+            "confirm" => {
+                if let Some(Dialog::Confirm(pending)) = app.dialog.clone() {
+                    app.confirm_apply(pending);
+                }
+            }
+            "restore" => app.restore_last(),
+            "dismiss" => app.toasts.clear(),
+            "lang" => {
+                if let Some(lang) = tanki_i18n::Lang::from_code(arg) {
+                    app.set_language(lang);
+                }
+            }
+            "theme" => {
+                app.set_theme_preference(tanki_ui::theme::ThemePreference::from_pref(Some(arg)))
+            }
+            "zoom" => app.zoom(match arg {
+                "+" => 1,
+                "-" => -1,
+                _ => 0,
+            }),
+            "palette" => {
+                app.open_palette();
+                if let Some(palette) = app.palette.as_mut() {
+                    palette.query = arg.to_owned();
+                }
+            }
+            "label" => {
+                // label:<marker>:<kind>:<id>:<grade> (the marker contains no colon).
+                let p: Vec<&str> = arg.split(':').collect();
+                if let (Some(scan), [marker, kind, id, grade]) = (&app.scan, p.as_slice()) {
+                    let game = scan.game.clone();
+                    if let Err(error) = app.store.save_user_target(&game, marker, kind, id, grade) {
+                        app.toast(format!("label failed: {error}"), None);
+                    }
+                    if let Some(scan) = app.scan.clone() {
+                        app.set_scan(scan);
+                        app.restore_cache_selection();
+                    }
+                }
+            }
+            other => app.toast(format!("unknown dev action: {other}"), None),
+        }
+    }
+}
+
+/// `select:hull` picks the first recognised hull; `select:/0/0/10/12/` the group with that marker.
+fn select(app: &mut Studio, arg: &str) {
+    let found = app.rows.iter().find(|row| {
+        if arg.starts_with('/') {
+            row.key.contains(arg)
+        } else {
+            row.target.as_ref().is_some_and(|t| t.0 == arg)
+        }
+    });
+    let Some(row) = found.cloned() else {
+        return;
+    };
+    match row.target {
+        Some((kind, id, grade)) => {
+            app.selection = Some(Selection {
+                kind: kind.clone(),
+                id,
+                grade: grade_index(&grade).unwrap_or(3),
+            });
+            app.garage_tab = kind;
+        }
+        None => app.selected_resource = Some(row.key),
+    }
+}
+
+/// With `TANKI_SHOT=<file.png>` save this frame once the UI has settled, then close the window.
+/// Animations are turned off for it: a dialog fading in would otherwise be caught half visible
+/// when frames are fast, and waiting for wall-clock time hangs when the window is covered and
+/// stops being drawn.
+pub fn screenshot(ctx: &egui::Context) {
+    let Ok(path) = std::env::var("TANKI_SHOT") else {
+        return;
+    };
+    ctx.all_styles_mut(|style| style.animation_time = 0.0);
+    ctx.request_repaint();
+    if ctx.cumulative_pass_nr() == 40 {
+        let close = ctx.clone();
+        ctx.request_screenshot(move |image| {
+            let [w, h] = image.size;
+            if let Some(buffer) =
+                image::RgbaImage::from_raw(w as u32, h as u32, image.as_raw().to_vec())
+            {
+                let _ = buffer.save(path);
+            }
+            close.send_viewport_cmd(egui::ViewportCommand::Close);
+        });
+    }
+}
+
+/// File name -> SHA-256 of every file under a folder.
+type Tree = BTreeMap<String, String>;
+
+fn tree(root: &Path) -> Tree {
+    fn walk(dir: &Path, root: &Path, out: &mut Tree) {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                walk(&path, root, out);
+            } else if let Ok(bytes) = std::fs::read(&path) {
+                let name = path
+                    .strip_prefix(root)
+                    .unwrap_or(&path)
+                    .to_string_lossy()
+                    .into_owned();
+                out.insert(name, format!("{:x}", Sha256::digest(bytes)));
+            }
+        }
+    }
+    let mut out = Tree::new();
+    walk(root, root, &mut out);
+    out
+}
+
+/// A scripted run of the visible window (see `TANKI_SCRIPT`).
+pub struct Autopilot {
+    steps: VecDeque<String>,
+    resume_at: Instant,
+    snapshot: Option<Tree>,
+    root: Option<PathBuf>,
+    pub failures: u32,
+}
+
+impl Autopilot {
+    pub fn new(script: &str) -> Self {
+        Self {
+            steps: script
+                .split(';')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+                .collect(),
+            resume_at: Instant::now() + Duration::from_millis(1500),
+            snapshot: None,
+            root: None,
+            failures: 0,
+        }
+    }
+}
+
+fn say(text: &str) {
+    println!("AUTOPILOT {text}");
+}
+
+fn differing(before: &Tree, after: &Tree) -> Vec<String> {
+    let mut names: Vec<String> = after
+        .iter()
+        .filter(|(name, hash)| before.get(*name) != Some(*hash))
+        .map(|(name, _)| name.clone())
+        .chain(before.keys().filter(|n| !after.contains_key(*n)).cloned())
+        .collect();
+    names.sort();
+    names
+}
+
+/// Run the next step of the autopilot when its pause is over.
+pub fn autopilot_tick(app: &mut Studio, ctx: &egui::Context) {
+    let Some(mut pilot) = app.autopilot.take() else {
+        return;
+    };
+    if !app.splash_done {
+        // The script starts when the start-up screen is gone.
+        pilot.resume_at = Instant::now() + Duration::from_millis(1500);
+    }
+    if app.splash_done && Instant::now() >= pilot.resume_at {
+        match pilot.steps.pop_front() {
+            Some(step) => {
+                run_step(app, &mut pilot, ctx, &step);
+            }
+            None => {
+                say(&format!("DONE failures={}", pilot.failures));
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                return;
+            }
+        }
+    }
+    ctx.request_repaint_after(Duration::from_millis(50));
+    app.autopilot = Some(pilot);
+}
+
+fn run_step(app: &mut Studio, pilot: &mut Autopilot, ctx: &egui::Context, step: &str) {
+    let (verb, arg) = step.split_once(':').unwrap_or((step, ""));
+    let pause = |pilot: &mut Autopilot, ms: u64| {
+        pilot.resume_at = Instant::now() + Duration::from_millis(ms)
+    };
+    pause(pilot, 400);
+    match verb {
+        "wait" => pause(pilot, arg.parse().unwrap_or(1000)),
+        "log" => say(arg),
+        "page" => {
+            say(&format!("page {arg}"));
+            app.page = Page::from_code(arg);
+        }
+        "tab" => app.garage_tab = arg.to_owned(),
+        "select" => {
+            select(app, arg);
+            say(&format!(
+                "selected {:?}",
+                app.selection
+                    .as_ref()
+                    .map(|s| format!("{}:{}:m{}", s.kind, s.id, s.grade))
+            ));
+        }
+        "items" => {
+            let list: Vec<String> = app
+                .items
+                .iter()
+                .map(|i| {
+                    format!(
+                        "{}:{}[{}]",
+                        i.kind,
+                        i.id,
+                        i.present
+                            .iter()
+                            .map(|p| if *p { '#' } else { '.' })
+                            .collect::<String>()
+                    )
+                })
+                .collect();
+            say(&format!(
+                "garage items ({}): {}",
+                list.len(),
+                list.join(" ")
+            ));
+        }
+        "item" => {
+            // item:<kind>:<id>:<grade 0-3>
+            let p: Vec<&str> = arg.split(':').collect();
+            if let [kind, id, grade] = p[..] {
+                let exists = app.items.iter().any(|i| i.kind == kind && i.id == id);
+                if exists {
+                    app.open_in_garage(kind, id, grade.parse().unwrap_or(3));
+                    say(&format!("item {kind}:{id}:m{grade}"));
+                } else {
+                    say(&format!("FAIL item {kind}:{id} is not in the garage"));
+                    pilot.failures += 1;
+                }
+            }
+        }
+        "variant" => {
+            let index: usize = arg.parse().unwrap_or(0);
+            if let Some(selection) = app.selection.clone() {
+                let options = app.pack_variants(
+                    &selection.kind,
+                    &selection.id,
+                    crate::model::grade_code(selection.grade),
+                );
+                match options.get(index).and_then(|(i, v)| {
+                    let (_, variant) = app.pack_variant(*i, *v)?;
+                    Some((app.variant_key(*i, *v)?, variant.name.clone()))
+                }) {
+                    Some((id, name)) => {
+                        app.remember_variant(&selection, &id);
+                        say(&format!("variant {index}: {name}"));
+                    }
+                    None => {
+                        say(&format!("FAIL no variant {index} for {}", selection.key()));
+                        pilot.failures += 1;
+                    }
+                }
+            }
+        }
+        "begin" => {
+            app.begin_apply_selected();
+            say(&format!("dialog after begin: {}", dialog_name(app)));
+        }
+        "confirm" => {
+            if let Some(Dialog::Confirm(pending)) = app.dialog.clone() {
+                say(&format!(
+                    "applying {} ({} files)",
+                    pending.target,
+                    pending.files.len()
+                ));
+                app.confirm_apply(pending);
+                say(&format!("dialog after apply: {}", dialog_name(app)));
+            } else {
+                say(&format!(
+                    "FAIL expected the confirmation, got {}",
+                    dialog_name(app)
+                ));
+                pilot.failures += 1;
+            }
+        }
+        "restore" => {
+            app.restore_last();
+            say("restored last replacement");
+        }
+        "close" => app.dialog = None,
+        "snapshot" => {
+            let root = app.scan.as_ref().map(|s| s.root.clone());
+            if let Some(root) = root {
+                let started = Instant::now();
+                pilot.snapshot = Some(tree(&root));
+                say(&format!(
+                    "snapshot of {} files in {:?}",
+                    pilot.snapshot.as_ref().map_or(0, BTreeMap::len),
+                    started.elapsed()
+                ));
+                pilot.root = Some(root);
+            }
+        }
+        "diff" | "assert_same" => {
+            let (Some(before), Some(root)) = (&pilot.snapshot, &pilot.root) else {
+                say("FAIL no snapshot taken");
+                pilot.failures += 1;
+                return;
+            };
+            let changed = differing(before, &tree(root));
+            if verb == "diff" {
+                say(&format!(
+                    "cache differs from the snapshot in {} file(s)",
+                    changed.len()
+                ));
+            } else if changed.is_empty() {
+                say("PASS cache is identical to the snapshot");
+            } else {
+                say(&format!(
+                    "FAIL cache differs in {} file(s): {:?}",
+                    changed.len(),
+                    &changed[..changed.len().min(5)]
+                ));
+                pilot.failures += 1;
+            }
+        }
+        "quit" => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+        other => {
+            say(&format!("FAIL unknown step {other}"));
+            pilot.failures += 1;
+        }
+    }
+}
+
+fn dialog_name(app: &Studio) -> &'static str {
+    match &app.dialog {
+        None => "none",
+        Some(Dialog::Confirm(_)) => "confirm",
+        Some(Dialog::GameRunning(..)) => "game running",
+        Some(Dialog::Done { .. }) => "done",
+        Some(Dialog::ImportError { .. }) => "import error",
+    }
+}

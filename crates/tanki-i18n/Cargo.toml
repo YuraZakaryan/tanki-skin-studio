@@ -1,0 +1,11 @@
+[package]
+name = "tanki-i18n"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+description = "UI localisation: English strings in code are the keys, per-language TSV catalogs translate them (layer 0)."
+
+[dependencies]

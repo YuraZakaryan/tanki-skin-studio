@@ -1,0 +1,16 @@
+[package]
+name = "tanki-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+tanki-core = { path = "../../crates/tanki-core" }
+serde_json.workspace = true
+
+[dev-dependencies]
+tanki-testkit = { path = "../../crates/tanki-testkit" }

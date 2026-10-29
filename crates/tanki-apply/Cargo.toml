@@ -1,0 +1,22 @@
+[package]
+name = "tanki-apply"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+description = "Transactional skin replacement and rollback (layer 2)."
+
+[dependencies]
+anyhow.workspace = true
+image.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
+tanki-cache = { path = "../tanki-cache" }
+tanki-pack = { path = "../tanki-pack" }
+
+[dev-dependencies]
+base64.workspace = true

@@ -1,0 +1,12 @@
+[package]
+name = "tanki-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+description = "Reusable egui building blocks (tokens, fonts, icons, widgets) drawn to the app's design file (layer 0)."
+
+[dependencies]
+egui = "0.37.0"

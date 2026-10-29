@@ -1,0 +1,19 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+ab_glyph = "0.2"
+image.workspace = true
+regex = "1"
+serde_json.workspace = true
+walkdir.workspace = true
+tanki-i18n = { path = "../crates/tanki-i18n" }
+tanki-core = { path = "../crates/tanki-core" }
+tanki-testkit = { path = "../crates/tanki-testkit" }

@@ -1,0 +1,255 @@
+# Russian (ru) catalog. Format: context <TAB> English source <TAB> translation.
+# - an empty context is the plain lookup used by `tl!`; any other word is a disambiguating
+#   context (`tl_ctx!`); `@plural` rows list the forms of `one|other` for the language.
+# - escapes: \n \t \\ ; `{name}` placeholders must match the English text; a trailing "…" is kept.
+# Plural forms (see `plural_russian` in lib.rs): one (1) | few (2-4) | many (0, 5+).
+#
+# Written from the plain meaning of the English labels. Product and technology names (Tanki,
+# SHA-256, ZIP, .tankipack) are not translated.
+
+	.tankipack library · active pack	Библиотека .tankipack · активный пак
+	.tankipack, .zip or a folder with manifest.json	.tankipack, .zip или папка с manifest.json
+	3D model	3D-модель
+	3D models	3D-модели
+	Actions	Действия
+	Active	Активен
+	Active pack	Активный пак
+	Actual size	Реальный размер
+	Add your first pack	Добавьте первый пак
+	All	Все
+	Appearance	Оформление
+	Apply	Применить
+	Apply to cache	Применить к кэшу
+	Apply to {name}	Применить к {name}
+	Apply {pack} to {target}?	Применить «{pack}» к {target}?
+	Archive	Архив
+	Archives	Архивы
+	Author	Автор
+	Back to 100%	Вернуть 100%
+	Backups	Резервные копии
+	Backups appear after the first replacement.	Резервные копии появятся после первой замены.
+	Built a pack from the model archive: {items} · {variants}	Из архива моделей собран пак: {items} · {variants}
+	Cache found	Кэш найден
+	Cache not connected	Кэш не подключён
+	Cache rescanned	Кэш прочитан заново
+	Cancel	Отмена
+	Check again	Проверить снова
+	Checked automatically	Проверено автоматически
+	Checksum mismatch	Контрольная сумма не совпадает
+	Checksums	Контрольные суммы
+	Choose another file	Выбрать другой файл
+	Choose cache folder	Выбрать папку кэша
+	Choose folder	Выбрать папку
+	Choose the game cache folder manually, or launch the game once and search again. Your real cache is not modified until you apply a pack.	Выберите папку кэша игры вручную или запустите игру один раз и повторите поиск. Ваш настоящий кэш не меняется, пока вы не примените пак.
+	Client items and skins from the active pack	Предметы клиента и скины из активного пака
+	Clients	Клиенты
+	Close	Закрыть
+	Close the game and press “Check again”. Restart the game after the replacement.	Закройте игру и нажмите «Проверить снова». После замены запустите игру заново.
+	Close the game before replacing and restart it afterwards.	Закройте игру перед заменой и запустите её заново после неё.
+	Close the game before replacing.	Закройте игру перед заменой.
+	Command palette	Палитра команд
+	Could not import pack	Не удалось импортировать пак
+	Custom folder	Своя папка
+	Dark	Тёмная
+	Dark theme	Тёмная тема
+	Delete pack	Удалить пак
+	Done	Готово
+	Drop a .tankipack here	Перетащите .tankipack сюда
+	Duplicate entry	Дубликат записи
+	English	English
+	File	Файл
+	File too large	Файл слишком большой
+	Files	Файлов
+	Files in cache	Файлов в кэше
+	Files in the game cache will be replaced. Originals are saved in a backup and can be restored.	Файлы в кэше игры будут заменены. Оригиналы сохраняются в резервной копии, их можно восстановить.
+	Folder with manifest.json	Папка с manifest.json
+	Found	Найден
+	From folder	Из папки
+	Game	Игра
+	Game assets are not distributed	Ресурсы игры не распространяются
+	Game cache	Кэш игры
+	Game cache catalog · {n} groups	Каталог кэша игры · групп: {n}
+	Game cache not connected	Кэш игры не подключён
+	Game cache not found	Кэш игры не найден
+	Game cache · active pack · restore	Кэш игры · активный пак · восстановление
+	Game is running	Игра запущена
+	Garage	Гараж
+	Give this resource an item id below to use skins for it.	Задайте этому ресурсу идентификатор предмета ниже, чтобы использовать для него скины.
+	Go to Garage	Перейти в Гараж
+	Go to Info	Перейти в Информацию
+	Go to Overview	Перейти в Обзор
+	Go to Packs	Перейти в Паки
+	Go to Resources	Перейти в Ресурсы
+	Group	Группа
+	Hull	Корпус
+	Hulls	Корпуса
+	Image	Изображение
+	Images	Изображения
+	Import ZIP	Импорт ZIP
+	Import a pack to see skins here.	Импортируйте пак, чтобы увидеть здесь скины.
+	Import pack	Импортировать пак
+	Import pack from folder	Импортировать пак из папки
+	In library	В библиотеке
+	Info	Информация
+	Invalid manifest	Некорректный манифест
+	Invalid path	Недопустимый путь
+	Item	Предмет
+	Item id, e.g. hornet	Идентификатор предмета, например hornet
+	Item, labeling and pack source	Предмет, разметка и источник пака
+	Items	Предметы
+	Label all modifications M0–M3 (adjacent resources)	Разметить все модификации M0–M3 (соседние ресурсы)
+	Label manually	Разметить вручную
+	Labelled {n} modifications	Размечено модификаций: {n}
+	Language	Язык
+	License	Лицензия
+	Light	Светлая
+	Light theme	Светлая тема
+	Make the interface larger	Увеличить интерфейс
+	Make the interface smaller	Уменьшить интерфейс
+	Manual labeling	Ручная разметка
+	Metadata	Метаданные
+	Missing file	Файл отсутствует
+	Modification	Модификация
+	Modifications	Модификации
+	Modifications of one item sit side by side and usually share the same model size.	Модификации одного предмета лежат рядом и обычно имеют одинаковый размер модели.
+	My packs	Мои паки
+	My tank	Мой танк
+	No active pack	Нет активного пака
+	No backup to restore	Нет резервной копии для восстановления
+	No resources match.	Ничего не найдено.
+	Not in cache	Нет в кэше
+	Not recognised	Не опознан
+	Nothing found.	Ничего не найдено.
+	Nothing recognised in this category yet. Label a resource to add it.	В этой категории пока ничего не опознано. Разметьте ресурс, чтобы добавить его.
+	Open an unrecognised resource from Resources with “Label manually” to name it.	Откройте неопознанный ресурс в разделе «Ресурсы» кнопкой «Разметить вручную», чтобы назвать его.
+	Open in Garage	Открыть в Гараже
+	Overview	Обзор
+	Pack	Пак
+	Pack items	Предметы пака
+	Pack removed	Пак удалён
+	Pack “{name}” failed validation. Nothing was written to the library and the game cache is unchanged.	Пак «{name}» не прошёл проверку. В библиотеку ничего не записано, кэш игры не изменён.
+	Pack “{name}” imported	Пак «{name}» импортирован
+	Packs	Паки
+	Page	Страница
+	Paint	Краска
+	Paints	Краски
+	Pick an item below to see its modifications.	Выберите предмет ниже, чтобы увидеть его модификации.
+	Pick an item in the Garage or a resource in Resources.	Выберите предмет в Гараже или ресурс в разделе «Ресурсы».
+	Pick the folder by hand	Выбрать папку вручную
+	Put the original files back	Вернуть оригинальные файлы
+	Match the cache with your packs' files	Сопоставить кэш с файлами ваших паков
+	Read the game cache again	Заново прочитать кэш игры
+	Reading pack library…	Чтение библиотеки паков…
+	Recent resources	Недавние ресурсы
+	Recognised	Опознан
+	Recognised in cache	Опознан в кэше
+	Replacement complete	Замена выполнена
+	Recognise items from packs	Опознать предметы по пакам
+	Recognised {n} from your packs	Из ваших паков опознано: {n}
+	Rescan cache	Перечитать кэш
+	Resource	Ресурс
+	Resource catalog	Каталог ресурсов
+	Resource groups	Групп ресурсов
+	Resources	Ресурсы
+	Resources you open appear here.	Здесь появятся открытые вами ресурсы.
+	Restore	Восстановить
+	Restore last replacement	Откатить последнюю замену
+	Restore original	Восстановить оригинал
+	Restored {n} files. Restart the game.	Восстановлено файлов: {n}. Перезапустите игру.
+	Revision	Ревизия
+	Role	Роль
+	Save labeling	Сохранить разметку
+	Search again	Искать снова
+	Search items and resources	Поиск предметов и ресурсов
+	Search items, resources and actions	Поиск предметов, ресурсов и действий
+	Searching for the game cache	Поиск кэша игры
+	Select	Выбрать
+	Select a resource to inspect it.	Выберите ресурс, чтобы рассмотреть его.
+	Size	Размер
+	Skin Studio	Skin Studio
+	Skin preview	Превью скина
+	Skin variants	Варианты скина
+	Sound	Звук
+	Sounds	Звуки
+	Source and compatibility	Источник и совместимость
+	That folder is not a game cache: it has no cache files.	Эта папка не является кэшем игры: в ней нет файлов кэша.
+	The active pack has no skins for this item.	В активном паке нет скинов для этого предмета.
+	The active pack has no skins for {name}.	В активном паке нет скинов для {name}.
+	The game is running ({names}). Replacing files while it runs can corrupt the cache.	Игра запущена ({names}). Замена файлов во время её работы может повредить кэш.
+	The game is running. Replacing files while it runs can corrupt the cache.	Игра запущена. Замена файлов во время её работы может повредить кэш.
+	The last imported pack becomes active automatically.	Последний импортированный пак становится активным автоматически.
+	System	Система
+	System theme	Системная тема
+	Follow the system appearance	Следовать оформлению системы
+	Turret	Пушка
+	Turrets	Пушки
+	Undo	Отменить
+	Unknown client	Неизвестный клиент
+	Validation failed	Проверка не пройдена
+	Version	Версия
+	ZIP or folder	ZIP или папка
+	Zoom in	Увеличить масштаб
+	Zoom out	Уменьшить масштаб
+	active: {name}	активен: {name}
+	esc close	esc закрыть
+	index updated {when}	индекс обновлён {when}
+	just now	только что
+	latest: {when}	последняя: {when}
+	no active pack	нет активного пака
+	none yet	пока нет
+	not applicable	не применимо
+	not found	не найден
+	not in cache	нет в кэше
+	not selected	не выбрана
+	revision {r}	ревизия {r}
+	today	сегодня
+	version {v}	версия {v}
+	yesterday	вчера
+	{files} files · {groups} groups	файлов: {files} · групп: {groups}
+	{files} replaced for {target}. Restart the game to see the skin.	Заменено: {files} для {target}. Перезапустите игру, чтобы увидеть скин.
+	{files} · revision {r}	{files} · ревизия {r}
+	{found} of 4 found	найдено {found} из 4
+	{items} · {variants}	{items} · {variants}
+	{name} not in cache	{name}: нет в кэше
+	{name} recognised	{name} опознан
+	{n} h ago	{n} ч назад
+	{n} items recognised	предметов опознано: {n}
+	{n} min ago	{n} мин назад
+	{os} · {n} files	{os} · файлов: {n}
+	{packs} · {variants}	{packs} · {variants}
+	{variants} · v{v}	{variants} · v{v}
+	{when} · {files}	{when} · {files}
+	Русский	Русский
+	↑↓ navigate	↑↓ навигация
+	↵ open	↵ открыть
+
+# Contexts: one English word with different meanings.
+action	Apply	Применить
+
+# Plural forms: one (1) | few (2-4) | many (0, 5+).
+@plural	{n} backup|{n} backups	{n} копия|{n} копии|{n} копий
+@plural	{n} file|{n} files	{n} файл|{n} файла|{n} файлов
+@plural	{n} item|{n} items	{n} предмет|{n} предмета|{n} предметов
+@plural	{n} modification|{n} modifications	{n} модификация|{n} модификации|{n} модификаций
+@plural	{n} resource|{n} resources	{n} ресурс|{n} ресурса|{n} ресурсов
+@plural	{n} pack|{n} packs	{n} пак|{n} пака|{n} паков
+@plural	{n} validation error|{n} validation errors	{n} ошибка проверки|{n} ошибки проверки|{n} ошибок проверки
+@plural	{n} variant|{n} variants	{n} вариант|{n} варианта|{n} вариантов
+	Current look in the game	Как сейчас выглядит в игре
+	No preview available	Превью нет
+
+	No texture to preview	Нет текстуры для превью
+	This skin has no preview in the pack	У этого скина нет превью в паке
+	Incomplete	Неполный
+	Can't apply: this skin has no {files} in the pack. Every file except the preview is needed.	Применить нельзя: в паке нет {files} для этого скина. Нужны все файлы, кроме превью.
+	Author: {author}	Автор: {author}
+	License {license}	Лицензия {license}
+	This item is not recognised in this cache.	Этот предмет не опознан в этом кэше.
+	This pack is for another game.	Этот пак для другой игры.
+	This skin has nothing that can be applied.	В этом скине нечего применять.
+	The cache is missing a file this skin replaces. Rescan the cache and try again.	В кэше нет файла, который заменяет этот скин. Перечитайте кэш и попробуйте снова.
+	A cache file is not where it should be. Rescan the cache and try again.	Файл кэша не на своём месте. Перечитайте кэш и попробуйте снова.
+	The backup is damaged and cannot be restored.	Резервная копия повреждена, восстановить её нельзя.
+	A file to restore is no longer in the cache.	Файла для восстановления больше нет в кэше.
+	The cache folder is gone. Choose it again.	Папка кэша пропала. Выберите её снова.
+	Tanki Skin Studio is already open. Switch to its window.	Tanki Skin Studio уже открыт. Перейдите в его окно.
