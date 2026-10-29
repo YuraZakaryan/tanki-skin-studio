@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Design tokens (colours) for the dark and light themes, and the one-time setup of fonts and
 //! egui visuals. The values are the variables of `design.pen`; widgets read them through
 //! [`Tokens::get`], so switching theme is one call to [`apply`].

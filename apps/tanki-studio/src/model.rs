@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The view model: what the screens show, derived from a cache scan and the installed packs.
 //! Everything here is plain data and pure functions, so it is unit-tested without a window.
 

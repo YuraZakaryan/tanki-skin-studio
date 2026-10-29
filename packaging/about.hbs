@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Third-party licences · Tanki Skin Studio</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1a1f1b; background: #f6f7f4; }
+    h1 { font-size: 1.6rem; } h2 { margin-top: 2rem; } h3 { margin-bottom: .25rem; }
+    pre { white-space: pre-wrap; background: #fff; border: 1px solid #dfe3da; border-radius: 8px; padding: 1rem; font-size: 13px; }
+    ul.crates { columns: 2; padding-left: 1.2rem; } a { color: #2f6b12; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e6ebe3; background: #0f1410; } pre { background: #151e17; border-color: #263228; } a { color: #a3e635; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Third-party licences</h1>
+  <p>Tanki Skin Studio is free software under GPL-3.0-or-later. It is built with the Rust crates
+  below, each under its own licence, whose notices follow. The bundled fonts and icons carry their
+  licences in the <code>licenses</code> folder beside this file.</p>
+
+  <h2>Overview</h2>
+  <ul>
+    {{#each overview}}
+    <li><a href="#{{id}}">{{name}}</a> ({{count}})</li>
+    {{/each}}
+  </ul>
+
+  <h2>Licences</h2>
+  {{#each licenses}}
+  <section>
+    <h3 id="{{id}}">{{name}}</h3>
+    <p>Used by:</p>
+    <ul class="crates">
+      {{#each used_by}}
+      <li><a href="{{#if crate.repository}}{{crate.repository}}{{else}}https://crates.io/crates/{{crate.name}}{{/if}}">{{crate.name}} {{crate.version}}</a></li>
+      {{/each}}
+    </ul>
+    <pre>{{text}}</pre>
+  </section>
+  {{/each}}
+</body>
+</html>

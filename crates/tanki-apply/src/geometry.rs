@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! A geometry fingerprint of a 3DS model: the vertex and face counts of its meshes.
 //!
 //! The cache holds the current version of a model and a pack often ships an older export of the same

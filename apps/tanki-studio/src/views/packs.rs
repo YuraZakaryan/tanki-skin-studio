@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Packs: the library of imported packs, the active pack's details and the backup history.
 
 use eframe::egui::{self, Pos2, Rect, Ui, Vec2};

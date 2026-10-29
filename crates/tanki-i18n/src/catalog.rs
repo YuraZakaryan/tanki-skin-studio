@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Parser and lookup tables for translation catalogs (`*.tsv`, format documented in `ru.tsv`).
 //!
 //! Validation is strict (unknown escapes, unknown `@` contexts, placeholder, ellipsis and plural

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The `eframe::App` of the studio: per-frame housekeeping (language, theme, zoom, shortcuts,
 //! dropped files, toasts, saving the session) and the window's remembered place.
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! UI localisation. Strings in code stay English and are the lookup keys; a per-language catalog
 //! (`*.tsv`, see `ru.tsv` for the format) maps them to display text at render time. File names,
 //! pack manifests, cache paths, the CLI and the dev hooks never see translated text, so scripts

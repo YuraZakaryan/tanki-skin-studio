@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Painting primitives the widgets share: bordered boxes with an inside stroke (how the design
 //! draws borders), one-pixel rules, radial gradients and drop shadows.
 

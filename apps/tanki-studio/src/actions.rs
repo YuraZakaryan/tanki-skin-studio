@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Everything the user can do. The buttons, the command palette, the shortcuts and the dev hooks
 //! all call these methods, so there is one implementation of each action.
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Which file of a variant folder is the model, which the textures and which the preview.
 //!
 //! The usual names come first (`object.3ds`, `lightmap.jpg`, `details.png`, `preview.png`); after

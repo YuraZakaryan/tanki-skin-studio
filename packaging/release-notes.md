@@ -17,6 +17,14 @@ adds Tanki Skin Studio to the Start menu and can be removed in **Settings → Ap
 `.msi` updates it in place. Or unzip the `-portable.zip` anywhere and run `tanki-studio.exe`.
 The files are not signed yet: if SmartScreen asks, choose **More info**, then **Run anyway**.
 
+## Licence and source
+
+Tanki Skin Studio is free software under GPL-3.0-or-later and comes with no warranty. The source of
+this exact version is attached below (**Source code**) and tagged in the repository. The Rust crates
+it is built with are pinned to exact versions in `Cargo.lock` and published on
+[crates.io](https://crates.io); `cargo vendor` in the source fetches all of them. Their licences are
+in `THIRD-PARTY-LICENSES.html`, inside every download.
+
 ## Verify what you downloaded
 
 Every file is built by GitHub Actions from this repository, with a signed build-provenance

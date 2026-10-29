@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Runs the real `tanki-cli` binary against a fixture cache and an isolated data folder.
 
 use std::{fs, path::Path, process::Command};

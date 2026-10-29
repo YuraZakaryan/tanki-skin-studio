@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The Garage: a skin that does not bring every model and texture file of the item cannot be
 //! applied, through the button or any other way, and the cache is left as it was.
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use anyhow::{Context, Result};
 use image::{DynamicImage, ImageFormat, codecs::jpeg::JpegEncoder};
 use serde::{Deserialize, Serialize};

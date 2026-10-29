@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The command registry, as in PdfCraft: one table of what the app can do, with the label, icon
 //! and shortcut of each, used by the command palette and by the keyboard handler alike.
 
@@ -20,6 +22,7 @@ pub enum Command {
     SetTheme(ThemePreference),
     SetLanguage(&'static str),
     Zoom(i32),
+    About,
 }
 
 pub struct CommandSpec {
@@ -189,6 +192,13 @@ pub const COMMANDS: &[CommandSpec] = &[
         icons::GLOBE,
         None,
     ),
+    spec(
+        Command::About,
+        "About Tanki Skin Studio",
+        "Version, licence and source",
+        icons::INFO,
+        None,
+    ),
 ];
 
 /// "⌘I" on macOS, "Ctrl+I" elsewhere.
@@ -221,6 +231,7 @@ impl Studio {
             Command::Go(page) => self.go(page),
             Command::SetTheme(pref) => self.set_theme_preference(pref),
             Command::Zoom(direction) => self.zoom(direction),
+            Command::About => self.toast(crate::about::notice(), None),
             Command::SetLanguage(code) => {
                 if let Some(lang) = Lang::from_code(code) {
                     self.set_language(lang);

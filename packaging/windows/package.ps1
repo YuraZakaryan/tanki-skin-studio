@@ -7,8 +7,9 @@
 .DESCRIPTION
   Both hold tanki-studio.exe (the app), tanki-cli.exe and the licences. The binaries link the
   C runtime statically (+crt-static), so no Visual C++ redistributable is needed. Needs Rust with
-  the MSVC toolchain and the target for -Arch, and WiX v5:
+  the MSVC toolchain and the target for -Arch, WiX v5 and cargo-about:
     dotnet tool install --global wix --version 5.0.2
+    cargo install cargo-about --locked --features cli
 
   Signing comes with a code-signing certificate (see docs\releasing.md); until then the files are
   unsigned and Windows SmartScreen asks once before the first start.
@@ -47,6 +48,10 @@ New-Item -ItemType Directory -Force $Stage, "$Stage\licenses", $Dist | Out-Null
 Copy-Item "$Bin\tanki-studio.exe", "$Bin\tanki-cli.exe" $Stage
 Copy-Item LICENSE "$Stage\LICENSE.txt"
 Copy-Item crates\tanki-ui\assets\OFL-*.txt, crates\tanki-ui\assets\LICENSE-lucide.txt "$Stage\licenses"
+# The notices of every Rust crate built in (their licences ask for them in binaries too).
+cargo about generate --workspace --locked --fail -c packaging\about.toml `
+  -o "$Stage\licenses\THIRD-PARTY-LICENSES.html" packaging\about.hbs
+if ($LASTEXITCODE -ne 0) { throw "cargo about failed with exit code $LASTEXITCODE" }
 
 if ($env:GITHUB_ACTIONS) {
   Write-Output '::warning::Windows: no code-signing certificate yet, so the executables are unsigned'

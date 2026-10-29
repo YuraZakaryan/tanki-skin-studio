@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Tanki Skin Studio: replace skin textures in a local game cache, with backups and rollback.
 
 use eframe::egui;

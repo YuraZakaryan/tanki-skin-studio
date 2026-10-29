@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use egui::{
     Area, Context, CornerRadius, Id, Layout, Order, Pos2, Rect, Sense, Ui, UiBuilder, Vec2,
 };

@@ -11,6 +11,7 @@
 	.tankipack, .zip or a folder with manifest.json	.tankipack, .zip или папка с manifest.json
 	3D model	3D-модель
 	3D models	3D-модели
+	About Tanki Skin Studio	О программе Tanki Skin Studio
 	Actions	Действия
 	Active	Активен
 	Active pack	Активный пак
@@ -172,6 +173,7 @@
 	Sound	Звук
 	Sounds	Звуки
 	Source and compatibility	Источник и совместимость
+	Tanki Skin Studio {version} is free software under {license}, with no warranty. Source: {source}	Tanki Skin Studio {version} — свободная программа под лицензией {license}, без каких-либо гарантий. Исходный код: {source}
 	That folder is not a game cache: it has no cache files.	Эта папка не является кэшем игры: в ней нет файлов кэша.
 	The active pack has no skins for this item.	В активном паке нет скинов для этого предмета.
 	The active pack has no skins for {name}.	В активном паке нет скинов для {name}.
@@ -187,6 +189,7 @@
 	Unknown client	Неизвестный клиент
 	Validation failed	Проверка не пройдена
 	Version	Версия
+	Version, licence and source	Версия, лицензия и исходный код
 	ZIP or folder	ZIP или папка
 	Zoom in	Увеличить масштаб
 	Zoom out	Уменьшить масштаб

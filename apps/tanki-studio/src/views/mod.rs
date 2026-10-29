@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Screens. Each file draws one page or overlay from the design file into rectangles cut with
 //! `tanki_ui::layout`, using the widgets of `tanki_ui`.
 

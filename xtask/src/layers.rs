@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Dependency layering rules, enforced by `cargo xtask layers` (same idea as PdfCraft's xtask).
 //!
 //! The rule engine works on a small model that does not depend on cargo, so it can be unit

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The application icon (dock, taskbar, Alt-Tab), drawn at start-up so the repository carries no
 //! binary artwork: a rounded dark tile with a lime "T" in the style of the interface.
 

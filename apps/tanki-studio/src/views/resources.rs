@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Resources: the searchable catalog of everything in the cache, and an inspector.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Ui, Vec2};

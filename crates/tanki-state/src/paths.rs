@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 use std::path::PathBuf;
 
 /// `TANKI_DATA_DIR` overrides the data folder so tests never touch real user state.

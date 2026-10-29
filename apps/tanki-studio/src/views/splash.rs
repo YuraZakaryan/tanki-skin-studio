@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! The start-up screen: brand, progress and the three start-up steps, shown for about three
 //! seconds (a click, Space or Enter skips it).
 
@@ -130,8 +132,9 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, full: Rect) {
         );
     }
     let legal = format!(
-        "v{} · MIT · {}",
+        "v{} · {} · {}",
         env!("CARGO_PKG_VERSION"),
+        crate::about::LICENSE,
         tl!("Game assets are not distributed")
     );
     fonts::draw_centered(

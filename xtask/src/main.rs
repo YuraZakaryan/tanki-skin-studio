@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Project automation, run as `cargo xtask <command>` (same pattern as PdfCraft's xtask).
 
 use std::{

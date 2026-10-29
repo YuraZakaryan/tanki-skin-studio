@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Preview textures: the cached `details.jpg` of a resource and the preview of a pack variant.
 //! Decoded once and kept in the texture cache of the app.
 
