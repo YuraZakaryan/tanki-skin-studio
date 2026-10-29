@@ -212,7 +212,7 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
             3 => {
                 if let Some(field) = h.query_all_by_role(Role::TextInput).next() {
                     field.focus();
-                    field.type_text(rng.pick(TEXTS));
+                    field.type_text(rng.pick::<&str>(TEXTS));
                 }
             }
             4 => {
