@@ -9,13 +9,15 @@
 | `tanki-skin-studio-<version>-windows-arm64-portable.zip` | the same without installing |
 | `SHA256SUMS.txt` | checksums of the files above |
 
-**macOS:** open the `.dmg` and drag Tanki Skin Studio to Applications. The app is not notarized
-yet: the first time, right-click it and choose **Open**.
+**macOS:** open the `.dmg` and drag Tanki Skin Studio to Applications. If macOS says it cannot
+check the app for malicious software (a build that is not notarized), open **System Settings →
+Privacy & Security**, scroll to Security and choose **Open Anyway** next to Tanki Skin Studio.
 
 **Windows:** run the `.msi`. It installs for your account only, without administrator rights,
 adds Tanki Skin Studio to the Start menu and can be removed in **Settings → Apps**; a newer
 `.msi` updates it in place. Or unzip the `-portable.zip` anywhere and run `tanki-studio.exe`.
-The files are not signed yet: if SmartScreen asks, choose **More info**, then **Run anyway**.
+If SmartScreen says it protected your PC (an unsigned build, or a new certificate it does not
+know yet), choose **More info**, then **Run anyway**.
 
 ## Licence and source
 

@@ -280,8 +280,9 @@ The case-by-case map of behaviours and the tests that hold them is in
 **Download:** each release on the [Releases page](https://github.com/YuraZakaryan/tanki-skin-studio/releases)
 has a universal `.dmg` for macOS 11 or later and, for Windows x64 and ARM, an `.msi` installer
 (for your account, no administrator rights) and a portable `.zip`, with checksums and a
-build-provenance attestation. They are not signed yet: on macOS right-click the app and choose
-**Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen asks.
+build-provenance attestation. Until the downloads are signed and notarized, macOS asks to allow the
+app once in **System Settings → Privacy & Security → Open Anyway**, and on Windows SmartScreen asks
+once (**More info → Run anyway**).
 
 **Build from source** instead with **Rust 1.95 or later**:
 

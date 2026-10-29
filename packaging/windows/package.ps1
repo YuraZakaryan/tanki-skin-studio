@@ -11,8 +11,9 @@
     dotnet tool install --global wix --version 5.0.2
     cargo install cargo-about --locked --features cli
 
-  Signing comes with a code-signing certificate (see docs\releasing.md); until then the files are
-  unsigned and Windows SmartScreen asks once before the first start.
+  Signing, as in WordCraft and PdfCraft: sign.ps1 signs both executables and then the installer
+  with a code-signing certificate (WINDOWS_CERTIFICATE) or Azure Trusted Signing (AZURE_*), and
+  leaves them unsigned with a warning when neither is set (see docs\releasing.md).
 
 .EXAMPLE
   ./packaging/windows/package.ps1 -Arch x64 -Version 0.1.0
@@ -53,11 +54,8 @@ cargo about generate --workspace --locked --fail -c packaging\about.toml `
   -o "$Stage\licenses\THIRD-PARTY-LICENSES.html" packaging\about.hbs
 if ($LASTEXITCODE -ne 0) { throw "cargo about failed with exit code $LASTEXITCODE" }
 
-if ($env:GITHUB_ACTIONS) {
-  Write-Output '::warning::Windows: no code-signing certificate yet, so the executables are unsigned'
-} else {
-  Write-Warning 'Windows: no code-signing certificate yet, so the executables are unsigned'
-}
+# Sign the executables before they go into the installer and the zip.
+& (Join-Path $PSScriptRoot 'sign.ps1') "$Stage\tanki-studio.exe" "$Stage\tanki-cli.exe"
 
 # The installer: per user, no administrator rights (tanki-skin-studio.wxs). An MSI version is
 # numbers only, so a pre-release such as 0.2.0-rc.1 installs as 0.2.0.
@@ -68,6 +66,7 @@ wix build (Join-Path $PSScriptRoot 'tanki-skin-studio.wxs') -arch $Arch `
 if ($LASTEXITCODE -ne 0) { throw "wix build failed with exit code $LASTEXITCODE" }
 # wix writes debug symbols beside the MSI; they are not a download.
 Remove-Item -Force -ErrorAction SilentlyContinue ([IO.Path]::ChangeExtension($Msi, '.wixpdb'))
+& (Join-Path $PSScriptRoot 'sign.ps1') $Msi
 Write-Output "Created $Msi"
 
 # The portable build: unzip anywhere and run tanki-studio.exe.

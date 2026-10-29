@@ -10,9 +10,14 @@
 # targets (rustup target add aarch64-apple-darwin x86_64-apple-darwin). The licences of the Rust
 # crates come from cargo-about (cargo install cargo-about --locked --features cli).
 #
-# Signing: MACOS_SIGN_IDENTITY (a "Developer ID Application" identity in the keychain) signs with
-# the hardened runtime and a secure timestamp. Without it the app is signed ad-hoc, which runs on
-# the machine that built it and elsewhere only after right-click > Open; the script says so.
+# Signing and notarization, as in WordCraft and PdfCraft (CI fills these from secrets through
+# import-cert.sh; see docs/releasing.md):
+#   MACOS_SIGN_IDENTITY   "Developer ID Application" identity (name or SHA-1). Unset: ad-hoc
+#                         signing, which runs elsewhere only after System Settings > Privacy &
+#                         Security > Open Anyway; the script warns.
+#   MACOS_KEYCHAIN        keychain holding the identity (optional)
+#   APPLE_ID, APPLE_PASSWORD (an app-specific password), APPLE_TEAM_ID
+#                         notarize the app and the disk image with Apple and staple the tickets
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -86,15 +91,66 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 IDENTITY="${MACOS_SIGN_IDENTITY:-}"
-if [ -n "$IDENTITY" ]; then
-  codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/tanki-cli"
-  codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
-else
+NOTARIZE=0
+if [ -z "$IDENTITY" ]; then
   warn "macOS: no MACOS_SIGN_IDENTITY, so the app is signed ad-hoc and not notarized"
-  codesign --force --sign - "$APP/Contents/MacOS/tanki-cli"
-  codesign --force --sign - "$APP"
+elif [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_PASSWORD:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
+  NOTARIZE=1
+else
+  warn "macOS: APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID incomplete, so the app is signed but not notarized"
 fi
+
+# Developer ID: hardened runtime, secure timestamp, the (empty) entitlements. Ad-hoc otherwise.
+sign() {
+  local kc=()
+  [ -n "${MACOS_KEYCHAIN:-}" ] && kc=(--keychain "$MACOS_KEYCHAIN")
+  if [ -n "$IDENTITY" ]; then
+    codesign --force --options runtime --timestamp --entitlements packaging/macos/entitlements.plist \
+      --sign "$IDENTITY" ${kc[@]+"${kc[@]}"} "$1"
+  else
+    codesign --force --sign - "$1"
+  fi
+}
+
+# `stapler` fetches the ticket from Apple's servers, and a dropped connection fails it although
+# notarization worked; try a few times.
+stapler_retry() {
+  for try in 1 2 3 4; do
+    xcrun stapler "$1" "$2" && return 0
+    echo "stapler $1 failed (try $try of 4); retrying in $((try * 20)) s" >&2
+    sleep $((try * 20))
+  done
+  echo "error: stapler $1 $(basename "$2") failed 4 times" >&2
+  return 1
+}
+
+notarize() {
+  local file="$1" out id status
+  echo "Notarizing $(basename "$file") (this can take a few minutes)"
+  out="$(xcrun notarytool submit "$file" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" \
+    --team-id "$APPLE_TEAM_ID" --wait --timeout 1h --output-format json)" || true
+  id="$(printf '%s' "$out" | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -n 1)"
+  status="$(printf '%s' "$out" | sed -n 's/.*"status" *: *"\([^"]*\)".*/\1/p' | head -n 1)"
+  if [ "$status" != "Accepted" ]; then
+    echo "$out" >&2
+    [ -n "$id" ] && xcrun notarytool log "$id" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" \
+      --team-id "$APPLE_TEAM_ID" || true
+    echo "error: notarization of $(basename "$file") failed (status: ${status:-unknown})" >&2
+    exit 1
+  fi
+}
+
+# Inner code first, then the bundle.
+sign "$APP/Contents/MacOS/tanki-cli"
+sign "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
+if [ "$NOTARIZE" = 1 ]; then
+  ditto -c -k --keepParent "$APP" "$WORK/notarize.zip"
+  notarize "$WORK/notarize.zip"
+  stapler_retry staple "$APP"
+  stapler_retry validate "$APP"
+  spctl --assess --type execute -vvv "$APP"
+fi
 
 # The disk image: the app beside a link to /Applications, so installing is one drag.
 ln -s /Applications "$WORK/stage/Applications"
@@ -110,7 +166,15 @@ for attempt in 1 2 3 4 5; do
   sleep $((attempt * 10))
 done
 if [ -n "$IDENTITY" ]; then
-  codesign --force --timestamp --sign "$IDENTITY" "$DMG"
+  kc=()
+  [ -n "${MACOS_KEYCHAIN:-}" ] && kc=(--keychain "$MACOS_KEYCHAIN")
+  codesign --force --timestamp --sign "$IDENTITY" ${kc[@]+"${kc[@]}"} "$DMG"
   codesign --verify --strict --verbose=2 "$DMG"
+fi
+if [ "$NOTARIZE" = 1 ]; then
+  notarize "$DMG"
+  stapler_retry staple "$DMG"
+  stapler_retry validate "$DMG"
+  spctl --assess --type open --context context:primary-signature -vvv "$DMG"
 fi
 echo "Created $DMG"
