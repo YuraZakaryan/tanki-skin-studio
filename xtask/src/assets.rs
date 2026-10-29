@@ -46,8 +46,13 @@ const GAME_FILE_NAMES: &[&str] = &[
 ];
 
 /// Our own binary files and the only folders they may live in.
-const ALLOWED_BINARIES: &[(&str, &str)] =
-    &[("ttf", "crates/tanki-ui/assets/"), ("png", "docs/images/")];
+const ALLOWED_BINARIES: &[(&str, &str)] = &[
+    ("ttf", "crates/tanki-ui/assets/"),
+    ("png", "docs/images/"),
+    ("png", "assets/app-icon/"),
+    ("ico", "assets/app-icon/"),
+    ("icns", "assets/app-icon/"),
+];
 
 /// A file this large is a dump or an archive, not source.
 pub const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024;
@@ -174,9 +179,17 @@ mod tests {
     fn our_binaries_stay_in_their_folders() {
         assert_eq!(check(&[file("crates/tanki-ui/assets/x.ttf")]).len(), 0);
         assert_eq!(check(&[file("docs/images/x.png")]).len(), 0);
-        let stray = check(&[file("tests/data/skin.png"), file("fonts/x.ttf")]);
-        assert_eq!(stray.len(), 2, "{stray:?}");
-        assert!(stray[0].contains("docs/images/"));
+        assert_eq!(check(&[file("assets/app-icon/x-256.png")]).len(), 0);
+        assert_eq!(check(&[file("assets/app-icon/x.ico")]).len(), 0);
+        assert_eq!(check(&[file("assets/app-icon/x.icns")]).len(), 0);
+        let stray = check(&[
+            file("tests/data/skin.png"),
+            file("fonts/x.ttf"),
+            file("docs/x.ico"),
+        ]);
+        assert_eq!(stray.len(), 3, "{stray:?}");
+        assert!(stray[0].contains("docs/images/, assets/app-icon/"));
+        assert!(stray[2].contains("assets/app-icon/"));
     }
 
     #[test]

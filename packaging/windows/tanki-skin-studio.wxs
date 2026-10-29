@@ -23,6 +23,9 @@
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/YuraZakaryan/tanki-skin-studio" />
     <Property Id="ARPHELPLINK" Value="https://github.com/YuraZakaryan/tanki-skin-studio/issues" />
     <Property Id="ARPNOMODIFY" Value="1" />
+    <!-- The icon in Installed apps: the one embedded in the exe by apps/tanki-studio/build.rs. -->
+    <Icon Id="AppIcon.exe" SourceFile="$(Stage)\tanki-studio.exe" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="UserProgramsFolder" Name="Programs">
@@ -58,6 +61,7 @@
         Name="Tanki Skin Studio"
         Description="Skin manager for a local game cache"
         Target="[INSTALLFOLDER]tanki-studio.exe"
+        Icon="AppIcon.exe"
         WorkingDirectory="INSTALLFOLDER" />
       <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="Shortcut" Type="integer" Value="1" KeyPath="yes" />
     </Component>

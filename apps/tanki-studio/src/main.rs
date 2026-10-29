@@ -93,8 +93,10 @@ fn main() -> eframe::Result<()> {
         .with_inner_size([DEFAULT_WINDOW.0, DEFAULT_WINDOW.1])
         .with_min_inner_size([MIN_WINDOW.0, MIN_WINDOW.1])
         .with_drag_and_drop(true)
-        .with_app_id(APP_ID)
-        .with_icon(icon::app_icon());
+        .with_app_id(APP_ID);
+    if let Some(icon) = icon::app_icon() {
+        viewport = viewport.with_icon(icon);
+    }
     // The screen is unknown before the window exists, so only plausibility is checked here;
     // the first frames repair a window that does not fit the monitor (see `track_window`).
     if std::env::var_os("TANKI_SHOT").is_none()
