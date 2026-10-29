@@ -18,5 +18,8 @@ All notable changes are recorded here. The format follows
   applied, and the game must be closed first.
 - English and Russian, dark and light themes, interface sizes, command palette, restored session,
   one window per data folder, rotated log file.
+- Release workflow: a push to the `release` branch builds a universal macOS `.dmg` and a Windows
+  x64 `.zip` from source, with checksums and a build-provenance attestation, and drafts a GitHub
+  Release.
 - Quality gate: provenance check, formatting, translations, Clippy, crate layering, unit, UI and
   real-window tests, dependency policy (`cargo-deny`), minimum Rust version check.

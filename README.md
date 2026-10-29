@@ -275,7 +275,12 @@ The case-by-case map of behaviours and the tests that hold them is in
 
 ## Get started
 
-There are no prebuilt downloads yet; build from source. You need **Rust 1.95 or later**:
+**Download:** each release on the [Releases page](https://github.com/YuraZakaryan/tanki-skin-studio/releases)
+has a universal `.dmg` for macOS 11 or later and a `.zip` for 64-bit Windows, with checksums and a
+build-provenance attestation. They are not signed yet: on macOS right-click the app and choose
+**Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen asks.
+
+**Build from source** instead with **Rust 1.95 or later**:
 
 - **macOS:** the Xcode Command Line Tools.
 - **Windows:** the MSVC toolchain (Visual Studio Build Tools).
@@ -293,8 +298,9 @@ cargo run --release -p tanki-studio
    and press the yellow **Apply** button.
 4. **See it in the game.** Start the game again. To undo, use **Restore**.
 
-**macOS app bundle:** `scripts/package-macos.sh` builds `dist/Tanki Skin Studio.app`, ad-hoc
-signed for your own machine.
+**Your own packages:** `packaging/macos/package.sh` builds the `.dmg` and
+`packaging/windows/package.ps1` the Windows `.zip`, into `dist/release/`. How releases are cut and
+verified is in [docs/releasing.md](docs/releasing.md).
 
 ---
 
@@ -350,7 +356,7 @@ The test hooks (`TANKI_VIEW`, `TANKI_SHOT`, `TANKI_ACTIONS` and others) are docu
 - **Windows:** the app builds and the full test suite passes on Windows in CI. It has not yet had
   the same hands-on use as on macOS.
 - **Not yet:**
-  - prebuilt or signed installers;
+  - signed downloads (a notarized macOS app, signed Windows executables) and an MSI installer;
   - a Linux build;
   - parsing `.tara` archives;
   - a pack authoring and export flow.
