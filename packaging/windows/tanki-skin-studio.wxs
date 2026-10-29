@@ -1,0 +1,70 @@
+<!--
+  The Windows installer (WiX v5), built by package.ps1:
+    wix build tanki-skin-studio.wxs -arch x64 -d Version=0.1.0 -d Stage=<staged files> -o <msi>
+
+  It installs for the current user only: no administrator rights, into
+  %LOCALAPPDATA%\Programs\Tanki Skin Studio, with a Start menu shortcut and an entry in
+  Settings > Apps that uninstalls it. A newer version replaces an older one in place.
+
+  The UpgradeCode ties every version together and must never change.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="Tanki Skin Studio"
+    Manufacturer="Tanki Skin Studio contributors"
+    Version="$(Version)"
+    UpgradeCode="2C923162-6D8B-4E01-86C7-4F7EB4791A88"
+    Scope="perUser"
+    Compressed="yes">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/YuraZakaryan/tanki-skin-studio" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/YuraZakaryan/tanki-skin-studio/issues" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="UserProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Tanki Skin Studio">
+          <Directory Id="LicensesFolder" Name="licenses" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Files in a user's profile are tracked by a registry value under HKCU, as Windows Installer
+         requires for per-user components. -->
+    <Component Id="Application" Directory="INSTALLFOLDER" Guid="3D00C09A-469A-4E6F-BBDF-D5793255524F">
+      <File Id="TankiStudioExe" Source="$(Stage)\tanki-studio.exe" KeyPath="no" />
+      <File Id="TankiCliExe" Source="$(Stage)\tanki-cli.exe" KeyPath="no" />
+      <File Id="LicenseTxt" Source="$(Stage)\LICENSE.txt" KeyPath="no" />
+      <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="Application" Type="integer" Value="1" KeyPath="yes" />
+      <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
+    </Component>
+
+    <Component Id="Licenses" Directory="LicensesFolder" Guid="B239A696-BE13-4950-9901-099E7EA39080">
+      <File Id="LicenseLucide" Source="$(Stage)\licenses\LICENSE-lucide.txt" KeyPath="no" />
+      <File Id="LicenseChakraPetch" Source="$(Stage)\licenses\OFL-chakrapetch.txt" KeyPath="no" />
+      <File Id="LicenseInter" Source="$(Stage)\licenses\OFL-inter.txt" KeyPath="no" />
+      <File Id="LicenseJetBrainsMono" Source="$(Stage)\licenses\OFL-jetbrainsmono.txt" KeyPath="no" />
+      <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="Licenses" Type="integer" Value="1" KeyPath="yes" />
+      <RemoveFolder Id="RemoveLicensesFolder" On="uninstall" />
+    </Component>
+
+    <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder" Guid="EBF645DF-3AB6-48B5-8CBC-4A8A4FDD46FF">
+      <Shortcut
+        Id="ApplicationShortcut"
+        Name="Tanki Skin Studio"
+        Description="Skin manager for a local game cache"
+        Target="[INSTALLFOLDER]tanki-studio.exe"
+        WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="Shortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main">
+      <ComponentRef Id="Application" />
+      <ComponentRef Id="Licenses" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>

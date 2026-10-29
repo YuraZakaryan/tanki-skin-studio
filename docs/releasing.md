@@ -10,7 +10,8 @@ publishes it.
 | File | Built by |
 |---|---|
 | `tanki-skin-studio-<version>-macos-universal.dmg` | [packaging/macos/package.sh](../packaging/macos/package.sh): Apple silicon and Intel joined with `lipo`, the app and the CLI in one `.app` |
-| `tanki-skin-studio-<version>-windows-x64.zip` | [packaging/windows/package.ps1](../packaging/windows/package.ps1): `tanki-studio.exe` and `tanki-cli.exe` with the C runtime linked in |
+| `tanki-skin-studio-<version>-windows-<x64\|arm64>.msi` | [packaging/windows/package.ps1](../packaging/windows/package.ps1) with [tanki-skin-studio.wxs](../packaging/windows/tanki-skin-studio.wxs) (WiX v5): installs for the current user without administrator rights, Start menu shortcut, uninstall in Settings → Apps, newer versions replace older ones |
+| `tanki-skin-studio-<version>-windows-<x64\|arm64>-portable.zip` | the same script: `tanki-studio.exe` and `tanki-cli.exe` with the C runtime linked in, and the licences |
 | `SHA256SUMS.txt` | the release job |
 
 Release builds use no build cache, so nothing cached by another branch can reach a published file.
@@ -54,7 +55,10 @@ scripts print a warning when they ship unsigned.
   `stapler staple`) is the next step to add, with the certificate, the Apple ID, an app-specific
   password and the team id stored as secrets of a `release` environment.
 - **Windows** needs a code-signing certificate (or Azure Trusted Signing); `package.ps1` will sign
-  both executables with `signtool` before zipping.
+  both executables with `signtool` before packaging, then the `.msi` itself.
+
+The installer's `UpgradeCode` in `tanki-skin-studio.wxs` links every version together, so a new
+`.msi` replaces the old one. It must never change.
 
 Once signing is in place, the release job should fail on the `release` branch when a signing secret
 is missing, so an unsigned build can never be published by accident.

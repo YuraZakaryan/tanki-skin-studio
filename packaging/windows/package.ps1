@@ -1,11 +1,14 @@
 <#
 .SYNOPSIS
-  Build the Windows release: tanki-skin-studio-<version>-windows-<arch>.zip in dist\release.
+  Build the Windows release into dist\release:
+    tanki-skin-studio-<version>-windows-<arch>.msi            installer for the current user
+    tanki-skin-studio-<version>-windows-<arch>-portable.zip   unzip anywhere and run
 
 .DESCRIPTION
-  The zip holds tanki-studio.exe (the app), tanki-cli.exe and the licences. The binaries link the
-  C runtime statically (+crt-static), so no Visual C++ redistributable is needed and the app runs
-  from any folder. Needs Rust with the MSVC toolchain and the target for -Arch.
+  Both hold tanki-studio.exe (the app), tanki-cli.exe and the licences. The binaries link the
+  C runtime statically (+crt-static), so no Visual C++ redistributable is needed. Needs Rust with
+  the MSVC toolchain and the target for -Arch, and WiX v5:
+    dotnet tool install --global wix --version 5.0.2
 
   Signing comes with a code-signing certificate (see docs\releasing.md); until then the files are
   unsigned and Windows SmartScreen asks once before the first start.
@@ -51,7 +54,19 @@ if ($env:GITHUB_ACTIONS) {
   Write-Warning 'Windows: no code-signing certificate yet, so the executables are unsigned'
 }
 
-$Zip = Join-Path $Dist "$Name.zip"
+# The installer: per user, no administrator rights (tanki-skin-studio.wxs). An MSI version is
+# numbers only, so a pre-release such as 0.2.0-rc.1 installs as 0.2.0.
+$MsiVersion = $Version -replace '-.*$', ''
+$Msi = Join-Path $Dist "$Name.msi"
+wix build (Join-Path $PSScriptRoot 'tanki-skin-studio.wxs') -arch $Arch `
+  -d "Version=$MsiVersion" -d "Stage=$((Resolve-Path $Stage).Path)" -o $Msi
+if ($LASTEXITCODE -ne 0) { throw "wix build failed with exit code $LASTEXITCODE" }
+# wix writes debug symbols beside the MSI; they are not a download.
+Remove-Item -Force -ErrorAction SilentlyContinue ([IO.Path]::ChangeExtension($Msi, '.wixpdb'))
+Write-Output "Created $Msi"
+
+# The portable build: unzip anywhere and run tanki-studio.exe.
+$Zip = Join-Path $Dist "$Name-portable.zip"
 Remove-Item -Force $Zip -ErrorAction SilentlyContinue
 Compress-Archive -Path "$Stage\*" -DestinationPath $Zip
 Write-Output "Created $Zip"

@@ -276,7 +276,8 @@ The case-by-case map of behaviours and the tests that hold them is in
 ## Get started
 
 **Download:** each release on the [Releases page](https://github.com/YuraZakaryan/tanki-skin-studio/releases)
-has a universal `.dmg` for macOS 11 or later and a `.zip` for 64-bit Windows, with checksums and a
+has a universal `.dmg` for macOS 11 or later and, for Windows x64 and ARM, an `.msi` installer
+(for your account, no administrator rights) and a portable `.zip`, with checksums and a
 build-provenance attestation. They are not signed yet: on macOS right-click the app and choose
 **Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen asks.
 
@@ -299,7 +300,7 @@ cargo run --release -p tanki-studio
 4. **See it in the game.** Start the game again. To undo, use **Restore**.
 
 **Your own packages:** `packaging/macos/package.sh` builds the `.dmg` and
-`packaging/windows/package.ps1` the Windows `.zip`, into `dist/release/`. How releases are cut and
+`packaging/windows/package.ps1` the Windows `.msi` and `.zip`, into `dist/release/`. How releases are cut and
 verified is in [docs/releasing.md](docs/releasing.md).
 
 ---
@@ -356,7 +357,7 @@ The test hooks (`TANKI_VIEW`, `TANKI_SHOT`, `TANKI_ACTIONS` and others) are docu
 - **Windows:** the app builds and the full test suite passes on Windows in CI. It has not yet had
   the same hands-on use as on macOS.
 - **Not yet:**
-  - signed downloads (a notarized macOS app, signed Windows executables) and an MSI installer;
+  - signed downloads (a notarized macOS app, signed Windows executables);
   - a Linux build;
   - parsing `.tara` archives;
   - a pack authoring and export flow.
