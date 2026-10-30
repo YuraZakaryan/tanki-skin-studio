@@ -14,10 +14,10 @@ check the app for malicious software (a build that is not notarized), open **Sys
 Privacy & Security**, scroll to Security and choose **Open Anyway** next to Tanki Skin Studio.
 
 **Windows:** run the `.msi`. It installs for your account only, without administrator rights,
-adds Tanki Skin Studio to the Start menu and can be removed in **Settings → Apps**; a newer
-`.msi` updates it in place. Or unzip the `-portable.zip` anywhere and run `tanki-studio.exe`.
-If SmartScreen says it protected your PC (an unsigned build, or a new certificate it does not
-know yet), choose **More info**, then **Run anyway**.
+adds Tanki Skin Studio to the Start menu and, unless you untick it, to the desktop, and can be
+removed in **Settings → Apps**; a newer `.msi` updates it in place. Or unzip the `-portable.zip`
+anywhere and run `tanki-studio.exe`. If SmartScreen says it protected your PC (an unsigned build,
+or a new certificate it does not know yet), choose **More info**, then **Run anyway**.
 
 ## Licence and source
 
