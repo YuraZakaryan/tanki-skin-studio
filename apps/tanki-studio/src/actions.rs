@@ -289,37 +289,47 @@ impl Studio {
             self.toast(message, None);
             return;
         }
-        let files = match self
-            .active_pack
-            .as_ref()
-            .map(|pack| planned_files(pack, pack_variant))
-        {
-            Some(Ok(files)) => files,
-            Some(Err(error)) => {
+        let Some(pack) = &self.active_pack else {
+            return;
+        };
+        let files = match planned_files(pack, pack_variant) {
+            Ok(files) => files,
+            Err(error) => {
                 self.toast(crate::errors::user_message(&error), None);
                 return;
             }
-            None => return,
         };
         let pending = PendingApply {
+            pack_id: pack.manifest.id.clone(),
+            pack_version: pack.manifest.version.clone(),
+            pack_name: pack.manifest.name.clone(),
             item,
             variant,
             target,
             cache_target,
             files,
         };
-        let cache_root = self.scan.as_ref().map(|s| s.root.clone());
-        let running = self.game_processes_override.clone().unwrap_or_else(|| {
-            cache_root
-                .as_deref()
-                .map(running_game_processes)
-                .unwrap_or_default()
-        });
+        self.ask_to_confirm(pending);
+    }
+
+    /// The confirmation, or the game-is-running warning while the game runs.
+    pub fn ask_to_confirm(&mut self, pending: PendingApply) {
+        let running = self.running_game();
         self.dialog = Some(if running.is_empty() {
             Dialog::Confirm(pending)
         } else {
             Dialog::GameRunning(pending, running)
         });
+    }
+
+    /// The game's processes running now (none when it is closed).
+    fn running_game(&self) -> Vec<String> {
+        self.game_processes_override.clone().unwrap_or_else(|| {
+            self.scan
+                .as_ref()
+                .map(|scan| running_game_processes(&scan.root))
+                .unwrap_or_default()
+        })
     }
 
     /// Apply the variant of the current selection (the Apply buttons of the Garage and Info pages).
@@ -332,19 +342,42 @@ impl Studio {
         }
     }
 
-    /// The user confirmed: write the files.
+    /// The user confirmed: write the files of the pack and variant the dialog named, if the game is
+    /// still closed (it may have been started while the dialog was open).
     pub fn confirm_apply(&mut self, pending: PendingApply) {
         self.dialog = None;
-        let Some(pack) = self.active_pack.clone() else {
+        let running = self.running_game();
+        if !running.is_empty() {
+            self.dialog = Some(Dialog::GameRunning(pending, running));
             return;
-        };
+        }
         let Some(scan) = self.scan.clone() else {
             return;
         };
-        let Some(variant) = self
-            .pack_variant(pending.item, pending.variant)
-            .map(|(_, v)| v.clone())
-        else {
+        let pack = self
+            .packs
+            .iter()
+            .find(|p| {
+                p.manifest.id == pending.pack_id && p.manifest.version == pending.pack_version
+            })
+            .cloned();
+        let Some((pack, variant)) = pack.and_then(|pack| {
+            let variant = pack
+                .manifest
+                .items
+                .get(pending.item)?
+                .variants
+                .get(pending.variant)?
+                .clone();
+            Some((pack, variant))
+        }) else {
+            self.toast(
+                fmt(
+                    tl!("Pack “{name}” is no longer in the library. Nothing was replaced."),
+                    &[("name", &pending.pack_name)],
+                ),
+                None,
+            );
             return;
         };
         match apply_variant(
@@ -375,8 +408,16 @@ impl Studio {
         }
     }
 
-    /// Put back the files of the most recent replacement.
+    /// Put back the files of the most recent replacement not restored yet; each restore goes back
+    /// one replacement. Like applying, never while the game runs.
     pub fn restore_last(&mut self) {
+        if !self.running_game().is_empty() {
+            self.toast(
+                tl!("Close the game before restoring the original files."),
+                None,
+            );
+            return;
+        }
         match latest_transaction(&self.data.join("backups")) {
             Ok(Some((dir, tx))) => match restore_transaction(&dir, &tx) {
                 Ok(()) => {
@@ -397,7 +438,7 @@ impl Studio {
     }
 
     pub fn can_restore(&self) -> bool {
-        !self.backups.is_empty()
+        self.backups.iter().any(|backup| !backup.restored)
     }
 
     /// Open an item in the Garage.
@@ -565,8 +606,12 @@ impl Studio {
         self.palette = Some(crate::views::palette::PaletteState::default());
     }
 
-    /// Files dropped on the window are imported as packs.
+    /// Files dropped on the window are imported as packs, but not while a dialog is open: a pack
+    /// imported under a confirmation would change the active pack it was asked about.
     pub fn handle_dropped(&mut self, paths: Vec<PathBuf>) {
+        if self.dialog.is_some() {
+            return;
+        }
         if let Some(path) = paths.into_iter().next() {
             self.import_path(&path);
             self.page = Page::Packs;

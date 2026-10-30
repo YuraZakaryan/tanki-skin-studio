@@ -314,6 +314,17 @@ pub fn apply_variant(
     Ok(tx)
 }
 
+/// Written into a backup folder once its originals are back in the cache. Restoring goes back one
+/// replacement at a time: a restored backup is never the latest one again, so the next restore
+/// reaches the replacement before it and, in the end, the original cache.
+const RESTORED: &str = "restored";
+
+/// Whether the originals of this backup have been put back.
+pub fn is_restored(dir: &Path) -> bool {
+    dir.join(RESTORED).is_file()
+}
+
+/// The newest backup that has not been restored yet.
 pub fn latest_transaction(backup_root: &Path) -> Result<Option<(PathBuf, Transaction)>> {
     if !backup_root.is_dir() {
         return Ok(None);
@@ -325,6 +336,9 @@ pub fn latest_transaction(backup_root: &Path) -> Result<Option<(PathBuf, Transac
     dirs.sort_by_key(|e| e.file_name());
     for entry in dirs.into_iter().rev() {
         let path = entry.path();
+        if is_restored(&path) {
+            continue;
+        }
         if let Ok(bytes) = fs::read(path.join("transaction.json"))
             && let Ok(tx) = serde_json::from_slice(&bytes)
         {
@@ -342,6 +356,8 @@ pub struct BackupEntry {
     pub created_unix: u64,
     /// Size of the saved originals.
     pub bytes: u64,
+    /// The originals are back in the cache (see [`latest_transaction`]).
+    pub restored: bool,
 }
 
 /// Every readable backup, newest first.
@@ -373,11 +389,13 @@ pub fn list_backups(backup_root: &Path) -> Result<Vec<BackupEntry>> {
             .filter_map(|change| fs::metadata(dir.join(&change.backup_name)).ok())
             .map(|meta| meta.len())
             .sum();
+        let restored = is_restored(&dir);
         entries.push(BackupEntry {
             dir,
             tx,
             created_unix,
             bytes,
+            restored,
         });
     }
     Ok(entries)
@@ -402,6 +420,7 @@ pub fn restore_transaction(dir: &Path, tx: &Transaction) -> Result<()> {
         );
         atomic_replace(&change.target, &bytes)?;
     }
+    fs::write(dir.join(RESTORED), &tx.id).context("could not mark the backup as restored")?;
     Ok(())
 }
 
@@ -476,6 +495,75 @@ mod tests {
         for (path, old) in &originals {
             assert_eq!(fs::read(path)?, *old);
         }
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn each_restore_goes_back_one_replacement_until_the_original() -> Result<()> {
+        let root = std::env::temp_dir().join(format!(
+            "tanki-apply-chain-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        ));
+        let cache = root.join("cache");
+        let pack_dir = root.join("pack");
+        let backups = root.join("backups");
+        fs::create_dir_all(&cache)?;
+        fs::create_dir_all(&pack_dir)?;
+        let model = cache.join(STANDARD.encode("http://example.test/0/0/10/14/111/object.3ds"));
+        fs::write(&model, b"original")?;
+        let target = PackTarget {
+            kind: "hull".into(),
+            id: "wasp".into(),
+            grade: "m3".into(),
+        };
+        let variant = |id: &str, bytes: &[u8]| -> Result<PackVariant> {
+            fs::write(pack_dir.join(format!("{id}.3ds")), bytes)?;
+            Ok(PackVariant {
+                id: id.into(),
+                name: id.into(),
+                preview: None,
+                resources: vec![PackResource {
+                    role: "model".into(),
+                    path: format!("{id}.3ds"),
+                    sha256: hash(bytes),
+                }],
+            })
+        };
+        let (first, second) = (variant("first", b"first")?, variant("second", b"second")?);
+        let pack = InstalledPack {
+            path: pack_dir.clone(),
+            manifest: PackManifest {
+                format_version: 1,
+                id: "test".into(),
+                name: "Test".into(),
+                version: "1".into(),
+                author: String::new(),
+                license: String::new(),
+                games: vec!["air-cache".into()],
+                items: vec![PackItem {
+                    target: target.clone(),
+                    variants: vec![first.clone(), second.clone()],
+                }],
+            },
+        };
+        let scan = scan_cache(&cache, Some("air-cache"))?;
+        apply_variant(&scan, &pack, &target, &first, &backups)?;
+        apply_variant(&scan, &pack, &target, &second, &backups)?;
+        assert_eq!(fs::read(&model)?, b"second");
+
+        let (dir, tx) = latest_transaction(&backups)?.expect("the second replacement");
+        restore_transaction(&dir, &tx)?;
+        assert_eq!(fs::read(&model)?, b"first", "back to the first skin");
+        let (dir, tx) = latest_transaction(&backups)?.expect("the first replacement");
+        restore_transaction(&dir, &tx)?;
+        assert_eq!(fs::read(&model)?, b"original", "back to the original");
+        assert!(
+            latest_transaction(&backups)?.is_none(),
+            "nothing left to restore"
+        );
+        assert!(list_backups(&backups)?.iter().all(|b| b.restored));
         fs::remove_dir_all(root)?;
         Ok(())
     }

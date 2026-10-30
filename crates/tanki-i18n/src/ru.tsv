@@ -48,6 +48,7 @@
 	Close the game and press “Check again”. Restart the game after the replacement.	Закройте игру и нажмите «Проверить снова». После замены запустите игру заново.
 	Close the game before replacing and restart it afterwards.	Закройте игру перед заменой и запустите её заново после неё.
 	Close the game before replacing.	Закройте игру перед заменой.
+	Close the game before restoring the original files.	Закройте игру перед восстановлением оригинальных файлов.
 	Command palette	Палитра команд
 	Could not import pack	Не удалось импортировать пак
 	Custom folder	Своя папка
@@ -130,6 +131,7 @@
 	Pack removed	Пак удалён
 	Pack “{name}” failed validation. Nothing was written to the library and the game cache is unchanged.	Пак «{name}» не прошёл проверку. В библиотеку ничего не записано, кэш игры не изменён.
 	Pack “{name}” imported	Пак «{name}» импортирован
+	Pack “{name}” is no longer in the library. Nothing was replaced.	Пака «{name}» больше нет в библиотеке. Ничего не заменено.
 	Packs	Паки
 	Page	Страница
 	Paint	Краска
@@ -204,6 +206,7 @@
 	not found	не найден
 	not in cache	нет в кэше
 	not selected	не выбрана
+	restored	откачено
 	revision {r}	ревизия {r}
 	today	сегодня
 	version {v}	версия {v}

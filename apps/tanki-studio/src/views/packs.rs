@@ -317,7 +317,7 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                     } else {
                         format!("{target} · {}", backup.tx.variant_name)
                     };
-                    let meta = fmt(
+                    let mut meta = fmt(
                         tl!("{when} · {files}"),
                         &[
                             ("when", &shell::describe_time(backup.created_unix)),
@@ -327,6 +327,9 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                             ),
                         ],
                     );
+                    if backup.restored {
+                        meta = format!("{meta} · {}", tl!("restored"));
+                    }
                     ListRow::new(icons::HISTORY, &name, &meta)
                         .size(&format_bytes(backup.bytes))
                         .clickable(false)
