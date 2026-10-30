@@ -44,6 +44,11 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
             message,
         } => import_error(app, ctx, &name, &issues, message.as_deref()),
         Dialog::DeletePack { id, version, name } => delete_pack(app, ctx, &id, &version, &name),
+        Dialog::RestoreAll {
+            items,
+            replacements,
+            files,
+        } => restore_all(app, ctx, &items, replacements, files),
     }
 }
 
@@ -322,7 +327,7 @@ fn done(app: &mut Studio, ctx: &eframe::egui::Context, target: &str, files: usiz
         },
     );
     if restore {
-        app.restore_last();
+        app.ask_to_restore();
     } else if close || event == ModalEvent::Dismissed {
         app.dialog = None;
     }
@@ -368,6 +373,124 @@ fn delete_pack(app: &mut Studio, ctx: &eframe::egui::Context, id: &str, version:
     if delete {
         app.dialog = None;
         app.delete_pack(id, version);
+    } else if cancel || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+/// The most items listed by name; the rest are counted, so the dialog fits the smallest window.
+const RESTORE_ROWS: usize = 4;
+
+fn restore_all(
+    app: &mut Studio,
+    ctx: &eframe::egui::Context,
+    items: &[String],
+    replacements: usize,
+    files: usize,
+) {
+    let tokens = Tokens::get(ctx);
+    let shown = items.len().min(RESTORE_ROWS);
+    let more = items.len() - shown;
+    let rows = shown + usize::from(more > 0);
+    let list_height = 37.0 * rows as f32;
+    let spec = ModalSpec {
+        id: "restore-all",
+        title: tl!("Restore the original files?"),
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: 42.0 + 14.0 + 24.0 + 14.0 + list_height + 14.0 + 38.0 + 20.0,
+    };
+    let mut restore = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(
+                ui,
+                tl!(
+                    "Every replacement not restored yet is undone, newest first, and the game cache goes back to how it was."
+                ),
+                tokens.text_2,
+                14.0,
+                21.0,
+            );
+            ui.add_space(14.0);
+            let count = fmt(
+                tl!("{replacements} · {files}"),
+                &[
+                    (
+                        "replacements",
+                        &tn(replacements as u64, "{n} replacement", "{n} replacements"),
+                    ),
+                    ("files", &tn(files as u64, "{n} file", "{n} files")),
+                ],
+            );
+            let width = widgets::chip_width(ui, &count);
+            let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 24.0), Sense::hover());
+            widgets::paint_chip(ui, rect, widgets::ChipKind::Neutral, &count);
+            ui.add_space(14.0);
+            let (rect, _) = ui
+                .allocate_exact_size(Vec2::new(ui.available_width(), list_height), Sense::hover());
+            draw::rounded(
+                ui.painter(),
+                rect,
+                CornerRadius::same(10),
+                tokens.surface,
+                Some((1.0, tokens.border)),
+            );
+            for (index, item) in items.iter().take(shown).enumerate() {
+                let line = Rect::from_min_size(
+                    Pos2::new(rect.min.x, rect.min.y + index as f32 * 37.0),
+                    Vec2::new(rect.width(), 37.0),
+                );
+                widgets::file_line(ui, line, icons::ROTATE_CCW, tokens.text_2, item, "", false);
+            }
+            if more > 0 {
+                let line = Rect::from_min_size(
+                    Pos2::new(rect.min.x, rect.min.y + shown as f32 * 37.0),
+                    Vec2::new(rect.width(), 37.0),
+                );
+                let text = fmt(tl!("and {n} more"), &[("n", &more.to_string())]);
+                widgets::file_line(ui, line, icons::LAYERS, tokens.text_3, &text, "", false);
+            }
+            ui.add_space(14.0);
+            let (rect, _) =
+                ui.allocate_exact_size(Vec2::new(ui.available_width(), 38.0), Sense::hover());
+            draw::rounded(
+                ui.painter(),
+                rect,
+                CornerRadius::same(10),
+                tokens.accent_soft,
+                None,
+            );
+            fonts::icon(
+                ui.painter(),
+                Pos2::new(rect.min.x + 14.0 + 9.0, rect.center().y),
+                icons::TRIANGLE_ALERT,
+                18.0,
+                tokens.accent,
+            );
+            fonts::draw_left(
+                ui.painter(),
+                rect.min.x + 14.0 + 18.0 + 10.0,
+                rect.center().y,
+                tl!("Close the game before restoring."),
+                Text::body(13.0, 400, tokens.accent),
+            );
+        },
+        |ui| {
+            restore = Button::new(ButtonKind::Danger, tl!("Restore"))
+                .icon(icons::ROTATE_CCW)
+                .show(ui)
+                .clicked();
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if restore {
+        app.restore_original();
     } else if cancel || event == ModalEvent::Dismissed {
         app.dialog = None;
     }

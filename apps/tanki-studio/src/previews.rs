@@ -76,12 +76,13 @@ impl Studio {
         self.variant_preview(ctx, &pack, &variant)
     }
 
-    /// Whether the Apply buttons can start a replacement for the current selection.
+    /// Whether the Apply buttons can start a replacement for the current selection: a skin is
+    /// picked and it is not the one in the game already.
     pub fn chosen_apply_available(&self) -> bool {
-        self.selection
-            .as_ref()
-            .and_then(|s| self.chosen_variant(s))
-            .is_some()
+        self.selection.as_ref().is_some_and(|s| {
+            let chosen = self.chosen_variant(s);
+            chosen.is_some() && chosen != self.applied_variant(s)
+        })
     }
 }
 

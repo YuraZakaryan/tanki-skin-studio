@@ -16,11 +16,17 @@ pub fn draw(app: &mut Studio, ctx: &Context) {
     let screen = ctx.content_rect();
     let mut run = None;
     let mut dismissed = None;
+    // The card of a running import sits in the corner; the toasts stack above it.
+    let lift = if app.import_job.is_some() {
+        super::progress::HEIGHT + 8.0
+    } else {
+        0.0
+    };
     for (index, toast) in app.toasts.iter().enumerate() {
         let from_bottom = (app.toasts.len() - 1 - index) as f32;
         let pos = Pos2::new(
             screen.max.x - 24.0 - WIDTH,
-            screen.max.y - 24.0 - HEIGHT - from_bottom * (HEIGHT + 8.0),
+            screen.max.y - 24.0 - lift - HEIGHT - from_bottom * (HEIGHT + 8.0),
         );
         Area::new(Id::unique(("toast", index)))
             .order(Order::Tooltip)

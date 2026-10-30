@@ -280,7 +280,7 @@ fn active_pack(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 .enabled(app.can_restore())
                 .show(ui);
             if restore.clicked() {
-                app.restore_last();
+                app.ask_to_restore();
             }
         });
     });

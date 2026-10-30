@@ -248,6 +248,9 @@ pub fn draw_centered(painter: &Painter, rect: Rect, text: &str, style: Text) {
 
 /// Draw a Lucide icon centred in a square of side `size` whose centre is `center`.
 pub fn icon(painter: &Painter, center: Pos2, glyph: char, size: f32, color: Color32) {
+    if glyph == crate::icons::TANK {
+        return tank(painter, center, size, color);
+    }
     let format = TextFormat {
         font_id: FontId::new(size, named("lucide")),
         color,
@@ -256,6 +259,42 @@ pub fn icon(painter: &Painter, center: Pos2, glyph: char, size: f32, color: Colo
     let galley = painter.layout_job(LayoutJob::single_section(glyph.to_string(), format));
     let offset = Vec2::new(galley.size().x / 2.0, galley.size().y / 2.0);
     painter.galley(center - offset, galley, color);
+}
+
+/// [`crate::icons::TANK`] in Lucide's manner: a 24-unit grid, strokes 2 units wide with round
+/// ends. Tracks with three road wheels, a turret on top, the gun to the right.
+fn tank(painter: &Painter, center: Pos2, size: f32, color: Color32) {
+    use egui::{CornerRadius, Stroke, StrokeKind};
+    let unit = size / 24.0;
+    let at = |x: f32, y: f32| center + Vec2::new(x - 12.0, y - 12.0) * unit;
+    let stroke = Stroke::new(2.0 * unit, color);
+    let radius = |r: f32| (r * unit).round().clamp(0.0, 255.0) as u8;
+    painter.rect_stroke(
+        Rect::from_min_max(at(2.0, 13.0), at(22.0, 20.0)),
+        CornerRadius::same(radius(3.5)),
+        stroke,
+        StrokeKind::Middle,
+    );
+    painter.rect_stroke(
+        Rect::from_min_max(at(6.0, 8.0), at(15.0, 13.0)),
+        CornerRadius {
+            nw: radius(2.0),
+            ne: radius(2.0),
+            sw: 0,
+            se: 0,
+        },
+        stroke,
+        StrokeKind::Middle,
+    );
+    painter.line_segment([at(15.0, 10.0), at(22.0, 10.0)], stroke);
+    // Round ends, as Lucide draws them: the gun's muzzle, and the road wheels as dots (Lucide's
+    // zero-length strokes). The same drawing is the "tank" path in design.pen:
+    // M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7Z M6 13v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3
+    // M15 10h7 M6.5 16.5h.01 M12 16.5h.01 M17.5 16.5h.01
+    painter.circle_filled(at(22.0, 10.0), unit, color);
+    for x in [6.5, 12.0, 17.5] {
+        painter.circle_filled(at(x, 16.5), unit, color);
+    }
 }
 
 /// Like [`icon`], turned clockwise by `angle` radians around its centre (a spinner).
@@ -309,6 +348,27 @@ mod tests {
         // A bare context uploads the font atlas; nothing paints it here.
         output.textures_delta.clear();
         assert!(checked);
+    }
+
+    #[test]
+    fn the_tank_is_drawn_with_strokes_not_typed_from_the_font() {
+        let ctx = egui::Context::default();
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            icon(
+                ui.painter(),
+                Pos2::new(50.0, 50.0),
+                crate::icons::TANK,
+                24.0,
+                Color32::WHITE,
+            );
+        });
+        output.textures_delta.clear();
+        let shapes: Vec<_> = output.shapes.iter().map(|s| &s.shape).collect();
+        assert!(
+            shapes.iter().all(|s| !matches!(s, egui::Shape::Text(_))),
+            "Lucide has no tank: nothing may be typed"
+        );
+        assert!(shapes.len() >= 6, "tracks, turret, gun, muzzle, 3 wheels");
     }
 
     #[test]

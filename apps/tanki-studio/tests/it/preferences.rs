@@ -146,3 +146,14 @@ fn a_session_pointing_at_things_that_no_longer_exist_is_repaired() {
         "and an item that is gone is replaced by one that exists"
     );
 }
+
+/// Windows opens a terminal next to a console program; the app is a window program in release
+/// builds (`windows_subsystem`), which only a Windows build would show, so the source says it.
+#[test]
+fn the_release_app_is_a_window_program_without_a_terminal_on_windows() {
+    let main = include_str!("../../src/main.rs");
+    assert!(
+        main.contains("#![cfg_attr(not(debug_assertions), windows_subsystem = \"windows\")]"),
+        "src/main.rs must declare the Windows GUI subsystem for release builds"
+    );
+}

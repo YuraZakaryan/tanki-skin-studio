@@ -397,6 +397,81 @@ pub fn grade_index(grade: &str) -> Option<usize> {
     }
 }
 
+/// Where a pack item's modification or edition sorts: the regular line M0..M3 first, then a skin
+/// whose path named none (`default`), then the special editions (XT, ALT, Prime, then any other
+/// word, alphabetically), each again by its modification. An explicit rank, not the alphabet, as
+/// tiered inventories sort; the names inside a rank sort naturally (see [`natural_cmp`]).
+pub fn grade_rank(grade: &str) -> (u8, String, u8) {
+    let mut modification = None;
+    let mut edition: Vec<&str> = Vec::new();
+    for word in grade.split('-').filter(|w| !w.is_empty()) {
+        match grade_index(word) {
+            Some(index) if modification.is_none() => modification = Some(index as u8),
+            _ => edition.push(word),
+        }
+    }
+    // Inside an edition its plain form comes first, then its modifications (XT, XT M0, XT M1...).
+    let edition_step = modification.map_or(0, |m| m + 1);
+    match edition.as_slice() {
+        [] => (0, String::new(), modification.unwrap_or(4)),
+        ["default"] => (1, String::new(), edition_step),
+        words => {
+            let name = words.join("-");
+            let known = ["xt", "alt", "prime"].iter().position(|e| *e == name);
+            (
+                2 + known.map_or(3, |p| p as u8),
+                if known.is_some() { String::new() } else { name },
+                edition_step,
+            )
+        }
+    }
+}
+
+/// Text order where a run of digits compares by its value ("Skin 2" before "Skin 10") and letters
+/// ignore case: the numeric collation of Unicode UTS #35 (`kn`), known as natural sort.
+pub fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    let (mut x, mut y) = (a.chars().peekable(), b.chars().peekable());
+    loop {
+        match (x.peek().copied(), y.peek().copied()) {
+            (None, None) => return a.cmp(b),
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(c), Some(d)) if c.is_ascii_digit() && d.is_ascii_digit() => {
+                let take = |it: &mut std::iter::Peekable<std::str::Chars<'_>>| {
+                    let mut digits = String::new();
+                    while let Some(ch) = it.peek().copied().filter(char::is_ascii_digit) {
+                        digits.push(ch);
+                        it.next();
+                    }
+                    digits
+                };
+                let (m, n) = (take(&mut x), take(&mut y));
+                let (m, n) = (m.trim_start_matches('0'), n.trim_start_matches('0'));
+                let order = m.len().cmp(&n.len()).then_with(|| m.cmp(n));
+                if order != Ordering::Equal {
+                    return order;
+                }
+            }
+            (Some(c), Some(d)) => {
+                let order = c.to_lowercase().cmp(d.to_lowercase());
+                if order != Ordering::Equal {
+                    return order;
+                }
+                x.next();
+                y.next();
+            }
+        }
+    }
+}
+
+/// The order of the skin variants of one item: by [`grade_rank`], then by name, naturally.
+pub fn variant_order(a: (&str, &str), b: (&str, &str)) -> std::cmp::Ordering {
+    grade_rank(a.0)
+        .cmp(&grade_rank(b.0))
+        .then_with(|| natural_cmp(a.1, b.1))
+}
+
 pub fn grade_code(index: usize) -> &'static str {
     ["m0", "m1", "m2", "m3"][index.min(3)]
 }
@@ -412,6 +487,57 @@ pub fn preview_path(scan: &CacheScan, group: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn variants_sort_m0_to_m3_then_the_editions_each_by_name_naturally() {
+        let mut variants = vec![
+            ("m3", "Hunter New"),
+            ("prime", "Hunter"),
+            ("m3", "Hunter Old"),
+            ("xt-m0", "Hunter"),
+            ("m0", "Hunter Old"),
+            ("default", "Hunter"),
+            ("alt-m2", "Hunter"),
+            ("m0", "Hunter New"),
+            ("xt", "Hunter"),
+            ("legacy", "Hunter"),
+            ("m1", "Hunter Camo 10"),
+            ("m1", "Hunter Camo 2"),
+            ("m2", "hunter neon"),
+            ("m2", "Hunter Neon Old"),
+        ];
+        variants.sort_by(|a, b| variant_order(*a, *b));
+        assert_eq!(
+            variants,
+            [
+                ("m0", "Hunter New"),
+                ("m0", "Hunter Old"),
+                ("m1", "Hunter Camo 2"),
+                ("m1", "Hunter Camo 10"),
+                ("m2", "hunter neon"),
+                ("m2", "Hunter Neon Old"),
+                ("m3", "Hunter New"),
+                ("m3", "Hunter Old"),
+                ("default", "Hunter"),
+                ("xt", "Hunter"),
+                ("xt-m0", "Hunter"),
+                ("alt-m2", "Hunter"),
+                ("prime", "Hunter"),
+                ("legacy", "Hunter"),
+            ]
+        );
+    }
+
+    #[test]
+    fn names_compare_digits_by_value_and_letters_without_case() {
+        use std::cmp::Ordering::*;
+        assert_eq!(natural_cmp("Skin 2", "Skin 10"), Less);
+        assert_eq!(natural_cmp("Skin 010", "Skin 9"), Greater);
+        assert_eq!(natural_cmp("neon", "Neon Old"), Less);
+        assert_eq!(natural_cmp("Камуфляж 3", "Камуфляж 12"), Less);
+        assert_eq!(natural_cmp("", "a"), Less);
+        assert_eq!(natural_cmp("a1b", "a1b"), Equal);
+    }
     use tanki_testkit::{HORNET_MARKER, build_cache, scratch};
 
     #[test]

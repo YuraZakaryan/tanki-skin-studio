@@ -7,9 +7,13 @@
 //! - `TANKI_LANG=<code>` / `TANKI_THEME=<dark|light>`: override the stored preference for this run.
 //! - `TANKI_ACTIONS="verb:arg;verb:arg"`: run actions after start-up:
 //!   `import:<path>`, `page:<code>`, `select:<kind|/marker/>`, `grade:<0-3>`, `filter:<code>`,
+//!   `pick:<n>` (picks the selection's n-th skin, as a click on it does),
 //!   `apply:<item>:<variant>` (applies at once), `begin:<item>:<variant>` (opens the dialog),
-//!   `confirm`, `restore`, `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
-//!   (closes the toasts, which are never part of what a restart restores).
+//!   `confirm`, `restore` (everything back, no question), `ask-restore` (the Restore button's
+//!   question), `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
+//!   (closes the toasts, which are never part of what a restart restores), `close` (closes the
+//!   dialog, as its Done or Cancel does), `importing:<name>:<percent>` (the progress card of an
+//!   import that stays at that point, copying, about 20 seconds from the end).
 //!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
 //!   switches and shortcuts, so the choice is stored like a real one.
 //! - `TANKI_GAME_PROCESSES=<a,b>`: the processes "found" when checking whether the game runs
@@ -67,7 +71,12 @@ pub fn run_actions(app: &mut Studio) {
     for step in script.split(';').filter(|s| !s.is_empty()) {
         let (verb, arg) = step.split_once(':').unwrap_or((step, ""));
         match verb {
-            "import" => app.import_path(std::path::Path::new(arg)),
+            "import" => {
+                // The scene's next actions need the pack: import it at once, without the card.
+                let background = std::mem::replace(&mut app.background_import, false);
+                app.import_path(std::path::Path::new(arg));
+                app.background_import = background;
+            }
             "page" => app.page = Page::from_code(arg),
             "filter" => app.filter = Filter::from_code(arg),
             "select" => select(app, arg),
@@ -92,8 +101,21 @@ pub fn run_actions(app: &mut Studio) {
                     app.confirm_apply(pending);
                 }
             }
-            "restore" => app.restore_last(),
+            "pick" => {
+                if let (Some(selection), Ok(index)) = (app.selection.clone(), arg.parse::<usize>())
+                {
+                    let options = app.pack_variants(&selection.kind, &selection.id);
+                    if let Some(key) = options.get(index).and_then(|&(i, v)| app.variant_key(i, v))
+                    {
+                        app.remember_variant(&selection, &key);
+                    }
+                }
+            }
+            "restore" => app.restore_original(),
+            "ask-restore" => app.ask_to_restore(),
             "dismiss" => app.toasts.clear(),
+            "close" => app.dialog = None,
+            "importing" => importing(app, arg),
             "lang" => {
                 if let Some(lang) = tanki_i18n::Lang::from_code(arg) {
                     app.set_language(lang);
@@ -258,6 +280,12 @@ pub fn autopilot_tick(app: &mut Studio, ctx: &egui::Context) {
         // The script starts when the start-up screen is gone.
         pilot.resume_at = Instant::now() + Duration::from_millis(1500);
     }
+    if app.import_job.is_some() {
+        // A journey's next step needs the pack the running import brings.
+        pilot.resume_at = pilot
+            .resume_at
+            .max(Instant::now() + Duration::from_millis(100));
+    }
     if app.splash_done && Instant::now() >= pilot.resume_at {
         match pilot.steps.pop_front() {
             Some(step) => {
@@ -336,11 +364,7 @@ fn run_step(app: &mut Studio, pilot: &mut Autopilot, ctx: &egui::Context, step: 
         "variant" => {
             let index: usize = arg.parse().unwrap_or(0);
             if let Some(selection) = app.selection.clone() {
-                let options = app.pack_variants(
-                    &selection.kind,
-                    &selection.id,
-                    crate::model::grade_code(selection.grade),
-                );
+                let options = app.pack_variants(&selection.kind, &selection.id);
                 match options.get(index).and_then(|(i, v)| {
                     let (_, variant) = app.pack_variant(*i, *v)?;
                     Some((app.variant_key(*i, *v)?, variant.name.clone()))
@@ -378,7 +402,7 @@ fn run_step(app: &mut Studio, pilot: &mut Autopilot, ctx: &egui::Context, step: 
             }
         }
         "restore" => {
-            app.restore_last();
+            app.restore_original();
             say("restored last replacement");
         }
         "close" => app.dialog = None,
@@ -434,5 +458,26 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::Done { .. }) => "done",
         Some(Dialog::ImportError { .. }) => "import error",
         Some(Dialog::DeletePack { .. }) => "delete pack",
+        Some(Dialog::RestoreAll { .. }) => "restore all",
     }
+}
+
+/// `importing:<name>:<percent>`: the card of an import frozen while copying, for the screenshot.
+fn importing(app: &mut Studio, arg: &str) {
+    let (name, percent) = arg.rsplit_once(':').unwrap_or((arg, "45"));
+    let percent = percent.parse::<u64>().unwrap_or(45).min(99);
+    let progress =
+        tanki_core::pack::ImportProgress::at(tanki_core::pack::ImportStage::Copying, percent, 100);
+    // Started long enough ago that about 20 seconds are left.
+    let elapsed = 20.0 * percent as f32 / (100 - percent).max(1) as f32;
+    let (sender, receiver) = std::sync::mpsc::channel();
+    // The answer never comes: the card stays for the screenshot.
+    std::mem::forget(sender);
+    app.import_job = Some(crate::app::ImportJob {
+        name: name.to_owned(),
+        archive: false,
+        progress: std::sync::Arc::new(progress),
+        started: Instant::now() - Duration::from_secs_f32(elapsed),
+        receiver,
+    });
 }

@@ -91,7 +91,7 @@ fn collect(app: &Studio, query: &str) -> Vec<Hit> {
             };
             hits.push(Hit {
                 group: Group::Items,
-                icon: icons::TRUCK,
+                icon: super::garage::kind_icon(&item.kind),
                 title,
                 meta,
                 keys: None,
@@ -445,7 +445,7 @@ mod tests {
         assert_eq!(score("Wasp M3", ""), Some(0));
         assert_eq!(score("Wasp M3", "wasp"), Some(0));
         assert_eq!(score("Railgun Wasp", "wasp"), Some(8));
-        assert_eq!(score("Restore last replacement", "rlr"), Some(100));
+        assert_eq!(score("Restore original files", "rof"), Some(100));
         assert_eq!(score("Wasp M3", "zzz"), None);
     }
 }

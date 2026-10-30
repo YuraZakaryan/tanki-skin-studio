@@ -34,4 +34,5 @@ winresource = "0.1.34"
 tanki-testkit = { path = "../../crates/tanki-testkit" }
 egui = "0.37.0"
 base64.workspace = true
+serde_json.workspace = true
 egui_kittest = { version = "0.37.0", features = ["eframe"] }

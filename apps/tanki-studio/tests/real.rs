@@ -374,6 +374,7 @@ fn open(real: &Real, data: &Path) -> Harness<'static, Studio> {
             )
             .unwrap();
             app.game_processes_override = Some(Vec::new());
+            app.background_import = false;
             if app.active_pack.is_none() {
                 app.import_path(&pack);
             }
@@ -416,7 +417,7 @@ fn the_whole_journey_through_the_real_interface_on_the_real_cache() {
         h.run_steps(3);
         h.get_by_label(card).click();
         h.run_steps(3);
-        let variants = h.state().pack_variants(tab, id, "m3");
+        let variants = h.state().pack_variants(tab, id);
         assert!(
             variants.len() >= 2,
             "{label}: old and new variants, got {variants:?}"

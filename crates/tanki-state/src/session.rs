@@ -22,6 +22,8 @@ pub const SESSION_KEY: &str = "ui.session.v1";
 pub const MAX_CACHES: usize = 16;
 /// Smallest window the layout supports.
 pub const MIN_WINDOW: (f32, f32) = (820.0, 520.0);
+/// The window of a first start on a screen large enough for it: the design's frame.
+pub const DEFAULT_WINDOW: (f32, f32) = (1440.0, 900.0);
 
 /// Outer window rectangle in logical points.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -37,6 +39,31 @@ impl WindowGeometry {
     /// Repair a stored rectangle for a screen of `screen` points: finite numbers only, no smaller
     /// than the supported minimum and no larger than the screen, and at least a grabbable part of
     /// the title area on screen (the monitor it was on may be gone). `None` if it is garbage.
+    /// The window of a first start on a screen of `screen` points: the design's frame when it
+    /// fits, else 90% of the width and 85% of the height (room for the title bar and a taskbar),
+    /// never below the supported minimum unless the screen is smaller; centred, a little above the
+    /// middle so a bottom taskbar does not cover it. `None` for a screen that makes no sense.
+    pub fn first_start(screen: (f32, f32)) -> Option<Self> {
+        if !(screen.0.is_finite() && screen.1.is_finite()) || screen.0 < 1.0 || screen.1 < 1.0 {
+            return None;
+        }
+        let width = DEFAULT_WINDOW
+            .0
+            .min(screen.0 * 0.9)
+            .max(MIN_WINDOW.0.min(screen.0));
+        let height = DEFAULT_WINDOW
+            .1
+            .min(screen.1 * 0.85)
+            .max(MIN_WINDOW.1.min(screen.1));
+        Some(Self {
+            x: ((screen.0 - width) / 2.0).max(0.0),
+            y: ((screen.1 - height) / 2.0 - 24.0).max(0.0),
+            width,
+            height,
+            maximized: false,
+        })
+    }
+
     pub fn fit_to_screen(self, screen: (f32, f32)) -> Option<Self> {
         let finite = [self.x, self.y, self.width, self.height]
             .iter()
@@ -76,7 +103,7 @@ pub struct CacheSession {
     /// Garage item and modification (`m0`..`m3`).
     pub item: Option<ItemRef>,
     pub grade: Option<String>,
-    /// Chosen skin variant per `kind:id:grade`.
+    /// Chosen skin variant per pack and item, keyed `<pack id>/<kind>:<id>:<grade>`.
     pub variants: BTreeMap<String, String>,
     /// Resource group selected in the Resources page.
     pub resource: Option<String>,
@@ -176,6 +203,29 @@ mod tests {
     const PAGES: &[&str] = &["overview", "garage", "resources", "packs", "info"];
     const TABS: &[&str] = &["hull", "turret", "paint"];
     const FILTERS: &[&str] = &["all", "hull", "image"];
+
+    #[test]
+    fn a_first_start_fits_the_screen_it_opens_on() {
+        // A 1366x768 laptop: smaller than the design's frame, with a taskbar.
+        let small = WindowGeometry::first_start((1366.0, 768.0)).unwrap();
+        assert!(small.width <= 1366.0 * 0.9 && small.height <= 768.0 * 0.85);
+        assert!(small.width >= MIN_WINDOW.0 && small.height >= MIN_WINDOW.1);
+        assert!(
+            small.x >= 0.0 && small.x + small.width <= 1366.0,
+            "inside horizontally"
+        );
+        // The title bar (about 30 points) and a 48-point taskbar still leave it whole.
+        assert!(small.y + 30.0 + small.height <= 768.0 - 48.0, "{small:?}");
+        // A large screen gets the design's frame, centred.
+        let large = WindowGeometry::first_start((2560.0, 1440.0)).unwrap();
+        assert_eq!((large.width, large.height), DEFAULT_WINDOW);
+        assert_eq!(large.x, (2560.0 - 1440.0) / 2.0);
+        // A screen below the minimum: the whole screen, never more.
+        let tiny = WindowGeometry::first_start((800.0, 500.0)).unwrap();
+        assert!(tiny.width <= 800.0 && tiny.height <= 500.0);
+        assert!(WindowGeometry::first_start((f32::NAN, 900.0)).is_none());
+        assert!(WindowGeometry::first_start((0.0, 900.0)).is_none());
+    }
 
     #[test]
     fn a_session_round_trips_through_json() {

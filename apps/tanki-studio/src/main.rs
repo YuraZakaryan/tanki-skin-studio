@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Tanki Skin Studio: replace skin textures in a local game cache, with backups and rollback.
+// A window program on Windows, not a console one: without this, Windows opens a terminal next to
+// the window. Debug builds keep the console for their log lines; the log file has them either way.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use eframe::egui;
-use tanki_core::session::MIN_WINDOW;
+use tanki_core::session::{DEFAULT_WINDOW, MIN_WINDOW};
 use tanki_studio::{
     app::{Startup, Studio},
     icon, logging,
@@ -11,8 +14,6 @@ use tanki_studio::{
 
 /// Wayland/desktop application id (the `.desktop` file name when packaged for Linux).
 const APP_ID: &str = "tanki-skin-studio";
-/// The size of a first start, in points: the design's frame.
-const DEFAULT_WINDOW: (f32, f32) = (1440.0, 900.0);
 
 /// GPU settings, as in PdfCraft: a restored window on a high-DPI display can ask for a surface
 /// larger than the 8192 pixels egui-wgpu requests (3440 points at 250% is 8600) and otherwise

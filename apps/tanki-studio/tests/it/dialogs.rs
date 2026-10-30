@@ -6,10 +6,13 @@ use tanki_testkit::{HULL_MODEL, PackOptions, build_pack_dir, scratch};
 
 use crate::common::{contents, env, harness, harness_with_pack};
 
+/// The Garage with the fixture's hull and its skin picked (nothing is picked until a click).
 fn open_garage_with_hull(h: &mut egui_kittest::Harness<'static, tanki_studio::app::Studio>) {
     h.get_by_label("Garage").click();
     h.run_steps(3);
     assert_eq!(h.state().page, Page::Garage);
+    h.get_by_label("Wasp Red").click();
+    h.run_steps(3);
 }
 
 #[test]
@@ -80,10 +83,20 @@ fn confirming_replaces_the_files_shows_the_result_and_restore_puts_them_back() {
     assert_eq!(replaced, 2, "the model reached both revisions");
     assert_eq!(h.state().backups.len(), 1);
 
-    // "Restore" is also in the top bar; the dialog is drawn last.
+    // "Restore" is also in the top bar; the dialog is drawn last. It asks first.
     h.get_all_by_label("Restore")
         .last()
         .expect("the dialog's Restore")
+        .click();
+    h.run_steps(5);
+    assert!(
+        matches!(h.state().dialog, Some(Dialog::RestoreAll { .. })),
+        "{:?}",
+        h.state().dialog
+    );
+    h.get_all_by_label("Restore")
+        .last()
+        .expect("the question's Restore")
         .click();
     h.run_steps(5);
     assert!(h.state().dialog.is_none());
@@ -402,8 +415,12 @@ fn restoring_while_the_game_runs_changes_nothing() {
     open_confirmation(&mut h);
     press_dialog_apply(&mut h);
     let applied = contents(&env.cache.hull_files);
+    h.state_mut().dialog = None;
     h.state_mut().game_processes_override = Some(vec!["GameClient.exe".into()]);
-    h.state_mut().restore_last();
+    h.state_mut().ask_to_restore();
+    h.run_steps(2);
+    assert!(h.state().dialog.is_none(), "not even asked while it runs");
+    h.state_mut().restore_original();
     h.run_steps(2);
     assert_eq!(contents(&env.cache.hull_files), applied, "the skin stays");
     assert!(
@@ -413,17 +430,16 @@ fn restoring_while_the_game_runs_changes_nothing() {
 }
 
 #[test]
-fn each_restore_goes_back_one_replacement_until_the_original() {
-    let env = env("restore-chain");
+fn restore_asks_first_then_undoes_every_replacement_back_to_the_original() {
+    let env = env("restore-all");
     let mut h = harness_with_pack(&env);
     let original = contents(&env.cache.hull_files);
     open_confirmation(&mut h);
     press_dialog_apply(&mut h);
-    let first = contents(&env.cache.hull_files);
     h.state_mut().dialog = None;
-    // The same skin again, from a second pack: a second replacement on top of the first.
+    // The same skin again, from a second pack, and the turret: three replacements in all.
     let second = build_pack_dir(
-        &scratch("restore-chain-src"),
+        &scratch("restore-all-src"),
         &PackOptions {
             id: "second",
             ..PackOptions::default()
@@ -434,21 +450,51 @@ fn each_restore_goes_back_one_replacement_until_the_original() {
     h.run_steps(3);
     open_confirmation(&mut h);
     press_dialog_apply(&mut h);
-    assert_eq!(h.state().backups.len(), 2);
+    h.state_mut().dialog = None;
+    let turrets = contents(&env.cache.turret_files);
+    h.state_mut().begin_apply(1, 0);
+    h.run_steps(2);
+    press_dialog_apply(&mut h);
+    h.state_mut().dialog = None;
+    assert_eq!(h.state().backups.len(), 3);
+    assert_ne!(contents(&env.cache.turret_files), turrets);
 
-    h.state_mut().restore_last();
-    h.run_steps(2);
+    // The top bar's Restore asks; Cancel changes nothing.
+    h.run_steps(3);
+    h.get_by_label("Restore").click();
+    h.run_steps(4);
+    let Some(Dialog::RestoreAll {
+        items,
+        replacements,
+        files,
+    }) = h.state().dialog.clone()
+    else {
+        panic!("expected the question, got {:?}", h.state().dialog);
+    };
     assert_eq!(
-        contents(&env.cache.hull_files),
-        first,
-        "back to the first skin"
+        items,
+        ["Railgun M3", "Wasp M3"],
+        "each item once, newest first"
     );
-    h.state_mut().restore_last();
-    h.run_steps(2);
+    assert_eq!((replacements, files), (3, 24));
+    h.get_by_label("Cancel").click();
+    h.run_steps(4);
+    assert!(h.state().dialog.is_none());
+    assert_eq!(h.state().backups.iter().filter(|b| !b.restored).count(), 3);
+
+    h.run_steps(3);
+    h.get_by_label("Restore").click();
+    h.run_steps(4);
+    h.get_all_by_label("Restore")
+        .last()
+        .expect("the question's Restore")
+        .click();
+    h.run_steps(5);
     assert_eq!(
         contents(&env.cache.hull_files),
         original,
-        "back to the original cache"
+        "the hull is back to the original"
     );
+    assert_eq!(contents(&env.cache.turret_files), turrets, "and the turret");
     assert!(!h.state().can_restore(), "nothing left to restore");
 }

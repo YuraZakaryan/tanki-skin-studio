@@ -90,8 +90,9 @@ fn labelled_row(app: &Studio) -> Option<crate::model::ResourceRow> {
 fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
     let label_row = labelled_row(app);
-    let (meta, title, kind_chip, state_chip, note) = if let Some(row) = &label_row {
+    let (icon, meta, title, kind_chip, state_chip, note) = if let Some(row) = &label_row {
         (
+            icons::BOX,
             format!("#{}", row.id),
             format!("#{}", row.id),
             (ChipKind::Neutral, row.kind.clone()),
@@ -100,6 +101,7 @@ fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         )
     } else if let Some(selection) = &app.selection {
         (
+            super::garage::kind_icon(&selection.kind),
             format!("{} · {}", selection.kind, selection.id),
             target_title(&selection.id),
             (
@@ -132,13 +134,7 @@ fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         tokens.stage,
         None,
     );
-    fonts::icon(
-        ui.painter(),
-        thumb.center(),
-        icons::TRUCK,
-        34.0,
-        tokens.primary,
-    );
+    fonts::icon(ui.painter(), thumb.center(), icon, 34.0, tokens.primary);
     let x = inner.min.x + 80.0 + 16.0;
     fonts::draw(
         ui.painter(),
@@ -266,7 +262,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let Some(selection) = selection else {
         return;
     };
-    let options = app.pack_variants(&selection.kind, &selection.id, grade_code(selection.grade));
+    let options = app.pack_variants(&selection.kind, &selection.id);
     if options.is_empty() {
         fonts::draw_centered(
             ui.painter(),
@@ -277,6 +273,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         return;
     }
     let chosen = app.chosen_variant(&selection);
+    let applied_now = app.applied_variant(&selection);
     let mut picked = None;
     let mut apply = false;
     in_rect(ui, inner, |ui| {
@@ -299,14 +296,15 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                             .join(" + ")
                     );
                     let selected = chosen == Some((*item, *variant));
+                    let in_game = applied_now == Some((*item, *variant));
                     let (response, applied) = widgets::skin_row(
                         ui,
                         inner.width(),
                         &v.name,
                         &meta,
                         selected,
-                        selected.then(|| tl!("Apply")),
-                        None,
+                        (selected && !in_game).then(|| tl!("Apply")),
+                        in_game.then(|| (ChipKind::Success, tl!("Applied"))),
                     );
                     if response.clicked() {
                         picked = app.variant_key(*item, *variant);

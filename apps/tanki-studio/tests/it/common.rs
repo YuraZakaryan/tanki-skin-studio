@@ -46,6 +46,8 @@ pub fn harness(env: &Env) -> Harness<'static, Studio> {
             app.file_dialogs = false;
             // Tests want the answer of the content search at once, not a frame later.
             app.background_recognition = false;
+            // …and the imported pack at once, not after a thread is done.
+            app.background_import = false;
             app
         });
     harness.run_steps(4);

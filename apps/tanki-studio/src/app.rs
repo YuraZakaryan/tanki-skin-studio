@@ -12,9 +12,10 @@ use std::{
 use anyhow::Result;
 use eframe::egui::{self, TextureHandle};
 use tanki_core::{
-    apply::BackupEntry,
+    apply::{AppliedSkin, BackupEntry},
+    archive::ArchiveSummary,
     cache::{CacheScan, existing_cache_roots, looks_like_cache, scan_cache},
-    pack::{InstalledPack, PackIssue, PackItem, PackTarget, PackVariant},
+    pack::{ImportProgress, InstalledPack, PackIssue, PackItem, PackTarget, PackVariant},
     paths::app_data_dir,
     session::{SessionState, WindowGeometry},
     state::StateStore,
@@ -102,6 +103,24 @@ pub struct PendingApply {
     pub files: Vec<(String, u64)>,
 }
 
+/// A pack being imported on its own thread: a pack of hundreds of megabytes takes a while to
+/// check and copy, and the window stays responsive meanwhile. See [`Studio::import_path`].
+pub struct ImportJob {
+    /// The file or folder's name, shown on the progress card.
+    pub name: String,
+    /// A model archive: a pack is built from it before the import.
+    pub archive: bool,
+    pub progress: std::sync::Arc<ImportProgress>,
+    pub started: Instant,
+    pub receiver: std::sync::mpsc::Receiver<Result<Imported>>,
+}
+
+/// What a finished import brings into the library.
+pub enum Imported {
+    Pack(InstalledPack),
+    Archive(ArchiveSummary, InstalledPack),
+}
+
 /// A modal dialog.
 #[derive(Clone, Debug)]
 pub enum Dialog {
@@ -115,6 +134,13 @@ pub enum Dialog {
         name: String,
         issues: Vec<PackIssue>,
         message: Option<String>,
+    },
+    /// Restoring puts the cache back as it was before every replacement not restored yet.
+    RestoreAll {
+        /// The items that get their original files back, newest first.
+        items: Vec<String>,
+        replacements: usize,
+        files: usize,
     },
     /// Deleting a pack removes its files from the library, so it is asked first.
     DeletePack {
@@ -150,6 +176,8 @@ pub struct Studio {
     pub packs: Vec<InstalledPack>,
     pub active_pack: Option<InstalledPack>,
     pub backups: Vec<BackupEntry>,
+    /// The skins in the cache now (see `tanki_apply::apply::applied_skins`).
+    pub applied: Vec<AppliedSkin>,
 
     pub page: Page,
     pub garage_tab: String,
@@ -190,6 +218,8 @@ pub struct Studio {
     pub last_session_write: Instant,
     pub window: Option<WindowGeometry>,
     pub window_checked: bool,
+    /// No window was saved yet: the first frames size it to the screen it opens on.
+    pub first_start: bool,
 
     pub started: Instant,
     pub splash_done: bool,
@@ -202,6 +232,10 @@ pub struct Studio {
     /// The cache folder the pending search is for: an answer for another cache is dropped.
     pub recognition_root: Option<PathBuf>,
     pub recognition_announce: bool,
+    /// Packs are imported on their own thread with a progress card. Tests turn this off to get
+    /// the pack at once.
+    pub background_import: bool,
+    pub import_job: Option<ImportJob>,
     /// Elapsed splash time pinned by `TANKI_SPLASH=hold|done`, for screenshots.
     pub splash_freeze: Option<f32>,
 }
@@ -253,6 +287,10 @@ impl Studio {
             .unwrap_or(1.0);
         tanki_ui::fonts::install(&cc.egui_ctx);
         tanki_ui::theme::apply(&cc.egui_ctx, theme);
+        // A size given for screenshots and tests (`TANKI_SIZE`, `TANKI_SHOT`) is kept as it is.
+        let first_start = session.window.is_none()
+            && std::env::var_os("TANKI_SIZE").is_none()
+            && std::env::var_os("TANKI_SHOT").is_none();
         let mut app = Self {
             store,
             data,
@@ -265,6 +303,7 @@ impl Studio {
             packs: Vec::new(),
             active_pack: None,
             backups: Vec::new(),
+            applied: Vec::new(),
             page: Page::from_code(&session.page),
             garage_tab: session.garage_tab.clone(),
             filter: Filter::from_code(&session.resource_filter),
@@ -294,6 +333,7 @@ impl Studio {
             session,
             last_session_write: Instant::now(),
             window_checked: false,
+            first_start,
             started: Instant::now(),
             // Scripted runs skip the splash; TANKI_SPLASH=hold freezes it for screenshots.
             recognised_on_start: false,
@@ -301,6 +341,8 @@ impl Studio {
             recognition: None,
             recognition_root: None,
             recognition_announce: false,
+            background_import: true,
+            import_job: None,
             splash_done: skip_splash
                 || std::env::var("TANKI_SPLASH").map_or_else(
                     |_| {
@@ -430,14 +472,66 @@ impl Studio {
     }
 
     pub fn reload_backups(&mut self) {
-        self.backups =
-            tanki_core::apply::list_backups(&self.data.join("backups")).unwrap_or_default();
+        let root = self.data.join("backups");
+        self.backups = tanki_core::apply::list_backups(&root).unwrap_or_default();
+        self.applied = tanki_core::apply::applied_skins(&root).unwrap_or_default();
+    }
+
+    /// The skin the selected cache modification wears now, whichever pack it came from.
+    pub fn applied_skin(&self, selection: &Selection) -> Option<&AppliedSkin> {
+        let grade = grade_code(selection.grade);
+        self.applied.iter().find(|skin| {
+            skin.target.kind == selection.kind
+                && skin.target.id == selection.id
+                && skin.target.grade == grade
+        })
+    }
+
+    /// The name of the skin the selection wears now, for the Garage caption. A skin of another pack
+    /// than the active one is named with its pack: packs share skin names ("Old"), and the active
+    /// pack's skin of the same name is not the one in the game.
+    pub fn in_game_name(&self, selection: &Selection) -> Option<String> {
+        let skin = self.applied_skin(selection)?;
+        if self
+            .active_pack
+            .as_ref()
+            .is_some_and(|pack| pack.manifest.id == skin.pack_id)
+        {
+            return Some(skin.variant_name.clone());
+        }
+        let pack = self
+            .packs
+            .iter()
+            .find(|p| p.manifest.id == skin.pack_id)
+            .map_or_else(|| skin.pack_id.clone(), |p| p.manifest.name.clone());
+        Some(format!("{} · {pack}", skin.variant_name))
+    }
+
+    /// The variant of the active pack that the selection wears now, if any. A variant id repeats
+    /// in every modification of an item, so the one of the selected modification wins.
+    pub fn applied_variant(&self, selection: &Selection) -> Option<(usize, usize)> {
+        let skin = self.applied_skin(selection)?;
+        let pack = self.active_pack.as_ref()?;
+        if pack.manifest.id != skin.pack_id {
+            return None;
+        }
+        let grade = grade_code(selection.grade);
+        self.pack_variants(&selection.kind, &selection.id)
+            .into_iter()
+            .filter(|&(i, v)| {
+                self.pack_variant(i, v)
+                    .is_some_and(|(_, variant)| variant.id == skin.variant_id)
+            })
+            .min_by_key(|&(i, _)| {
+                self.pack_variant(i, 0)
+                    .is_none_or(|(item, _)| item.target.grade != grade)
+            })
     }
 
     /// Variants of the active pack for the item `kind`/`id`, as (item index, variant index). Every
-    /// modification of the item counts, so any M0..M3 skin can be put on any cache modification;
-    /// `grade` (the selected cache modification) only orders its own modification first.
-    pub fn pack_variants(&self, kind: &str, id: &str, grade: &str) -> Vec<(usize, usize)> {
+    /// modification of the item counts, so any M0..M3 skin can be put on any cache modification.
+    /// Ordered as `model::variant_order` says: M0..M3, then the special editions, each by name.
+    pub fn pack_variants(&self, kind: &str, id: &str) -> Vec<(usize, usize)> {
         let Some(pack) = &self.active_pack else {
             return Vec::new();
         };
@@ -447,10 +541,13 @@ impl Studio {
                 found.extend((0..item.variants.len()).map(|v| (i, v)));
             }
         }
-        // The selected modification first, then M0..M3, then the special editions (XT, Prime...).
-        found.sort_by_key(|(i, _)| {
-            let own = &pack.manifest.items[*i].target.grade;
-            (own != grade, grade_index(own).unwrap_or(4))
+        // A stable sort: variants that compare equal keep the pack's own order.
+        found.sort_by(|&(ai, av), &(bi, bv)| {
+            let (a, b) = (&pack.manifest.items[ai], &pack.manifest.items[bi]);
+            crate::model::variant_order(
+                (&a.target.grade, &a.variants[av].name),
+                (&b.target.grade, &b.variants[bv].name),
+            )
         });
         found
     }
@@ -466,16 +563,14 @@ impl Studio {
         Some((item, item.variants.get(variant)?))
     }
 
-    /// The variant chosen for the selection: the saved choice if it still exists, else the first.
+    /// The variant picked for the selection: the user's saved choice if it still exists, else the
+    /// skin it wears now; none when nothing is picked or applied (Restore resets the choices).
     pub fn chosen_variant(&self, selection: &Selection) -> Option<(usize, usize)> {
-        let options =
-            self.pack_variants(&selection.kind, &selection.id, grade_code(selection.grade));
+        let options = self.pack_variants(&selection.kind, &selection.id);
         let root = self.scan.as_ref()?.root.to_string_lossy().into_owned();
         let saved = self
-            .session
-            .cache(&root)
-            .and_then(|c| c.variants.get(&selection.key()))
-            .cloned();
+            .pick_key(selection)
+            .and_then(|key| self.session.cache(&root)?.variants.get(&key).cloned());
         saved
             .and_then(|key| {
                 options
@@ -483,20 +578,28 @@ impl Studio {
                     .copied()
                     .find(|(i, v)| self.variant_key(*i, *v).as_deref() == Some(key.as_str()))
             })
-            .or_else(|| options.first().copied())
+            .or_else(|| self.applied_variant(selection))
     }
 
     pub fn remember_variant(&mut self, selection: &Selection, variant_id: &str) {
-        if let Some(root) = self
+        let root = self
             .scan
             .as_ref()
-            .map(|s| s.root.to_string_lossy().into_owned())
-        {
+            .map(|s| s.root.to_string_lossy().into_owned());
+        if let (Some(root), Some(key)) = (root, self.pick_key(selection)) {
             self.session
                 .cache_mut(&root)
                 .variants
-                .insert(selection.key(), variant_id.to_owned());
+                .insert(key, variant_id.to_owned());
         }
+    }
+
+    /// Where a pick is remembered: per pack, as a pick names a skin of the pack it was made in.
+    /// Packs share variant ids ("old", "default"), so a pick saved per item alone showed another
+    /// pack's skin of the same id as picked after a switch.
+    fn pick_key(&self, selection: &Selection) -> Option<String> {
+        let pack = self.active_pack.as_ref()?;
+        Some(format!("{}/{}", pack.manifest.id, selection.key()))
     }
 
     pub fn toast(&mut self, text: impl Into<String>, action: Option<ToastAction>) {

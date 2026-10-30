@@ -3,13 +3,17 @@
 //! Everything the user can do. The buttons, the command palette, the shortcuts and the dev hooks
 //! all call these methods, so there is one implementation of each action.
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Instant,
+};
 
 use tanki_core::{
-    apply::{apply_variant, latest_transaction, missing_files, planned_files, restore_transaction},
+    apply::{apply_variant, missing_files, pending_restores, planned_files, restore_all},
     archive,
     cache::{looks_like_cache, scan_cache},
-    pack::{PackRejected, PackTarget, import_pack},
+    pack::{ImportProgress, InstalledPack, PackRejected, PackTarget, import_pack_with},
     process::running_game_processes,
     recognize::recognise_by_content,
 };
@@ -17,7 +21,7 @@ use tanki_i18n::{Lang, fmt, tl};
 use tanki_ui::theme::ThemePreference;
 
 use crate::{
-    app::{Dialog, Page, PendingApply, Selection, Studio, ToastAction},
+    app::{Dialog, ImportJob, Imported, Page, PendingApply, Selection, Studio, ToastAction},
     model::{grade_code, target_name},
 };
 
@@ -131,6 +135,13 @@ impl Studio {
         if !self.file_dialogs {
             return;
         }
+        if self.import_job.is_some() {
+            self.toast(
+                tl!("A pack is being imported. Wait until it is done."),
+                None,
+            );
+            return;
+        }
         let source = if folder {
             rfd::FileDialog::new().pick_folder()
         } else {
@@ -143,21 +154,81 @@ impl Studio {
         }
     }
 
-    /// Build a pack from a model archive folder and import it like any other pack.
-    fn import_archive(&mut self, path: &Path) {
-        let staging = self.data.join(format!(".archive-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&staging);
-        let built = archive::build_model_pack(path, &staging);
-        let result = built.and_then(|summary| {
-            import_pack(&staging, &self.data.join("packs")).map(|pack| (summary, pack))
+    /// Import a pack (a `.tankipack` zip or a folder) or build one from a model archive. The work
+    /// runs on its own thread with a progress card, so a large pack never freezes the window;
+    /// [`Studio::finish_import`] takes the answer. One import runs at a time.
+    pub fn import_path(&mut self, path: &Path) {
+        if self.import_job.is_some() {
+            self.toast(
+                tl!("A pack is being imported. Wait until it is done."),
+                None,
+            );
+            return;
+        }
+        let name = path
+            .file_name()
+            .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
+        let archive = archive::is_model_archive(path);
+        let progress = Arc::new(ImportProgress::default());
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let (source, data, work) = (path.to_path_buf(), self.data.clone(), progress.clone());
+        let job = move || {
+            let _ = sender.send(run_import(&source, &data, archive, &work));
+        };
+        if self.background_import {
+            let spawned = std::thread::Builder::new()
+                .name("tanki-import".into())
+                .spawn(job);
+            if let Err(error) = spawned {
+                self.toast(crate::errors::user_message(&error), None);
+                return;
+            }
+        } else {
+            job();
+        }
+        self.import_job = Some(ImportJob {
+            name,
+            archive,
+            progress,
+            started: Instant::now(),
+            receiver,
         });
-        let _ = std::fs::remove_dir_all(&staging);
+        if !self.background_import {
+            self.finish_import();
+        }
+    }
+
+    /// Stop the running import at its next file; nothing of it stays in the library.
+    pub fn cancel_import(&mut self) {
+        if let Some(job) = &self.import_job {
+            job.progress.cancel();
+        }
+    }
+
+    /// Take the answer of the running import when it is there. Returns whether one is pending.
+    pub fn finish_import(&mut self) -> bool {
+        let Some(job) = &self.import_job else {
+            return false;
+        };
+        let result = match job.receiver.try_recv() {
+            Ok(result) => result,
+            Err(std::sync::mpsc::TryRecvError::Empty) => return true,
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                Err(anyhow::anyhow!("the import stopped unexpectedly"))
+            }
+        };
+        let Some(job) = self.import_job.take() else {
+            return false;
+        };
         match result {
-            Ok((summary, pack)) => {
-                if let Err(error) = self.store.save_pack(&pack) {
-                    self.toast(crate::errors::user_message(&error), None);
-                    return;
-                }
+            Ok(Imported::Pack(pack)) => {
+                let message = fmt(
+                    tl!("Pack “{name}” imported"),
+                    &[("name", &pack.manifest.name)],
+                );
+                self.add_imported(pack, message);
+            }
+            Ok(Imported::Archive(summary, pack)) => {
                 let message = fmt(
                     tl!("Built a pack from the model archive: {items} · {variants}"),
                     &[
@@ -171,44 +242,13 @@ impl Studio {
                         ),
                     ],
                 );
-                let action = ToastAction::UndoImport {
-                    id: pack.manifest.id.clone(),
-                    version: pack.manifest.version.clone(),
-                };
-                self.active_pack = Some(pack);
-                self.packs = self.store.list_packs().unwrap_or_default();
-                self.toast(message, Some(action));
-                self.auto_recognise(true);
+                self.add_imported(pack, message);
             }
-            Err(error) => self.toast(crate::errors::user_message(&error), None),
-        }
-    }
-
-    pub fn import_path(&mut self, path: &Path) {
-        if archive::is_model_archive(path) {
-            return self.import_archive(path);
-        }
-        let name = path
-            .file_name()
-            .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
-        match import_pack(path, &self.data.join("packs")) {
-            Ok(pack) => {
-                if let Err(error) = self.store.save_pack(&pack) {
-                    self.toast(crate::errors::user_message(&error), None);
-                    return;
-                }
-                let action = ToastAction::UndoImport {
-                    id: pack.manifest.id.clone(),
-                    version: pack.manifest.version.clone(),
-                };
-                let message = fmt(
-                    tl!("Pack “{name}” imported"),
-                    &[("name", &pack.manifest.name)],
-                );
-                self.active_pack = Some(pack);
-                self.packs = self.store.list_packs().unwrap_or_default();
-                self.toast(message, Some(action));
-                self.auto_recognise(true);
+            Err(_) if job.progress.is_cancelled() => {
+                self.toast(tl!("Import cancelled. Nothing was added."), None);
+            }
+            Err(error) if job.archive => {
+                self.toast(crate::errors::user_message(&error), None);
             }
             Err(error) => {
                 let (issues, message) = match error.downcast::<PackRejected>() {
@@ -216,12 +256,29 @@ impl Studio {
                     Err(other) => (Vec::new(), Some(format!("{other:#}"))),
                 };
                 self.dialog = Some(Dialog::ImportError {
-                    name,
+                    name: job.name,
                     issues,
                     message,
                 });
             }
         }
+        false
+    }
+
+    /// Remember an imported pack, make it active and offer to undo the import.
+    fn add_imported(&mut self, pack: InstalledPack, message: String) {
+        if let Err(error) = self.store.save_pack(&pack) {
+            self.toast(crate::errors::user_message(&error), None);
+            return;
+        }
+        let action = ToastAction::UndoImport {
+            id: pack.manifest.id.clone(),
+            version: pack.manifest.version.clone(),
+        };
+        self.active_pack = Some(pack);
+        self.packs = self.store.list_packs().unwrap_or_default();
+        self.toast(message, Some(action));
+        self.auto_recognise(true);
     }
 
     pub fn select_pack(&mut self, index: usize) {
@@ -425,9 +482,8 @@ impl Studio {
         }
     }
 
-    /// Put back the files of the most recent replacement not restored yet; each restore goes back
-    /// one replacement. Like applying, never while the game runs.
-    pub fn restore_last(&mut self) {
+    /// Every Restore button and ⌘Z: say what will be put back and ask first.
+    pub fn ask_to_restore(&mut self) {
         if !self.running_game().is_empty() {
             self.toast(
                 tl!("Close the game before restoring the original files."),
@@ -435,22 +491,66 @@ impl Studio {
             );
             return;
         }
-        match latest_transaction(&self.data.join("backups")) {
-            Ok(Some((dir, tx))) => match restore_transaction(&dir, &tx) {
-                Ok(()) => {
-                    let message = fmt(
-                        tl!("Restored {n} files. Restart the game."),
-                        &[("n", &tx.changes.len().to_string())],
-                    );
-                    self.dialog = None;
-                    self.toast(message, None);
-                    self.rescan_quietly();
-                    self.reload_backups();
+        let pending = match pending_restores(&self.data.join("backups")) {
+            Ok(pending) => pending,
+            Err(error) => return self.toast(crate::errors::user_message(&error), None),
+        };
+        if pending.is_empty() {
+            return self.toast(tl!("No backup to restore"), None);
+        }
+        let mut items: Vec<String> = Vec::new();
+        for backup in &pending {
+            let name = backup.tx.target.as_ref().map_or_else(
+                || backup.tx.pack_id.clone(),
+                |t| target_name(&t.id, &t.grade),
+            );
+            if !items.contains(&name) {
+                items.push(name);
+            }
+        }
+        self.dialog = Some(Dialog::RestoreAll {
+            items,
+            replacements: pending.len(),
+            files: pending.iter().map(|b| b.tx.changes.len()).sum(),
+        });
+    }
+
+    /// Put the cache back as it was before every replacement not restored yet (the confirmed
+    /// dialog). Like applying, never while the game runs.
+    pub fn restore_original(&mut self) {
+        self.dialog = None;
+        if !self.running_game().is_empty() {
+            self.toast(
+                tl!("Close the game before restoring the original files."),
+                None,
+            );
+            return;
+        }
+        match restore_all(&self.data.join("backups")) {
+            Ok(summary) if summary.replacements == 0 => {
+                self.toast(tl!("No backup to restore"), None);
+            }
+            Ok(summary) => {
+                let message = fmt(
+                    tl!("Restored {n} files. Restart the game."),
+                    &[("n", &summary.files.to_string())],
+                );
+                self.toast(message, None);
+                // The cache wears no skin any more: the picks made for it are reset too.
+                if let Some(root) = self
+                    .scan
+                    .as_ref()
+                    .map(|s| s.root.to_string_lossy().into_owned())
+                {
+                    self.session.cache_mut(&root).variants.clear();
                 }
-                Err(error) => self.toast(crate::errors::user_message(&error), None),
-            },
-            Ok(None) => self.toast(tl!("No backup to restore"), None),
-            Err(error) => self.toast(crate::errors::user_message(&error), None),
+                self.rescan_quietly();
+                self.reload_backups();
+            }
+            Err(error) => {
+                self.toast(crate::errors::user_message(&error), None);
+                self.reload_backups();
+            }
         }
     }
 
@@ -634,4 +734,25 @@ impl Studio {
             self.page = Page::Packs;
         }
     }
+}
+
+/// The import itself, off the window's thread: a model archive is built into a pack in a staging
+/// folder first, then the pack is checked and copied into the library.
+fn run_import(
+    source: &Path,
+    data: &Path,
+    archive: bool,
+    progress: &ImportProgress,
+) -> anyhow::Result<Imported> {
+    let library = data.join("packs");
+    if !archive {
+        return import_pack_with(source, &library, progress).map(Imported::Pack);
+    }
+    let staging = data.join(format!(".archive-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&staging);
+    let result = archive::build_model_pack(source, &staging).and_then(|summary| {
+        import_pack_with(&staging, &library, progress).map(|pack| Imported::Archive(summary, pack))
+    });
+    let _ = std::fs::remove_dir_all(&staging);
+    result
 }
