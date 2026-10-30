@@ -68,17 +68,11 @@ fn paragraph(
     height
 }
 
-fn package_name(app: &Studio) -> String {
-    app.active_pack
-        .as_ref()
-        .map_or_else(String::new, |p| p.manifest.name.clone())
-}
-
 fn confirm(app: &mut Studio, ctx: &eframe::egui::Context, pending: PendingApply) {
     let tokens = Tokens::get(ctx);
     let title = fmt(
         tl!("Apply {pack} to {target}?"),
-        &[("pack", &package_name(app)), ("target", &pending.target)],
+        &[("pack", &pending.pack_name), ("target", &pending.target)],
     );
     let files_height = 37.0 * pending.files.len() as f32;
     let spec = ModalSpec {
@@ -255,7 +249,7 @@ fn running(
     );
     if recheck {
         app.dialog = None;
-        app.begin_apply(pending.item, pending.variant);
+        app.ask_to_confirm(pending);
     } else if cancel || event == ModalEvent::Dismissed {
         app.dialog = None;
     }

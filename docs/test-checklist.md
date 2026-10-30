@@ -54,7 +54,10 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | A skin missing a file of the item (no model, no alpha): marked Incomplete, Apply off, reason shown, palette refused, nothing written | it `garage`, e2e `a_skin_missing_a_file…`, ui `incomplete` |
 | Confirm lists the files; Cancel changes nothing | it `dialogs`, ui `confirm` |
 | Game running: blocked until closed, Check again | it `dialogs`, ui `game-running`, ui `gui-game-running` |
+| The game started while the confirmation is open: Apply is blocked again; Restore is refused while it runs | it `dialogs` |
+| The confirmation applies the pack it names: a pack dropped meanwhile is not imported, another active pack changes nothing, a removed pack replaces nothing and says so | it `dialogs` |
 | Apply writes every revision and a backup; Restore puts it back; tampered backup refused | e2e, cli, ui `gui-apply`, ui `gui-restore` |
+| Each Restore goes back one replacement (a restored backup is marked and skipped) until the original cache | unit `apply`, it `dialogs` |
 | No backup to restore | it `garage` (one toast, not two) |
 | Preview: the skin's own, none in the pack (said so), the cache picture with its alpha | it, ui `garage` |
 | The chosen variant is scrolled into view | visual check (RU screenshots) |

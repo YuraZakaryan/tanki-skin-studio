@@ -176,3 +176,180 @@ fn deleting_a_pack_from_the_library_removes_it() {
     assert!(h.state().packs.is_empty());
     assert!(h.state().active_pack.is_none());
 }
+
+fn open_confirmation(h: &mut egui_kittest::Harness<'static, tanki_studio::app::Studio>) {
+    open_garage_with_hull(h);
+    h.get_by_label("Apply to Wasp M3").click();
+    h.run_steps(4);
+    assert!(
+        matches!(h.state().dialog, Some(Dialog::Confirm(..))),
+        "{:?}",
+        h.state().dialog
+    );
+}
+
+fn press_dialog_apply(h: &mut egui_kittest::Harness<'static, tanki_studio::app::Studio>) {
+    h.get_all_by_label("Apply")
+        .last()
+        .expect("the dialog's Apply")
+        .click();
+    h.run_steps(5);
+}
+
+#[test]
+fn a_pack_dropped_while_the_confirmation_is_open_is_not_imported() {
+    let env = env("drop-under-confirm");
+    let mut h = harness_with_pack(&env);
+    open_confirmation(&mut h);
+    let other = build_pack_dir(
+        &scratch("drop-under-confirm-src"),
+        &PackOptions {
+            id: "other",
+            ..PackOptions::default()
+        },
+    )
+    .unwrap();
+    h.state_mut().handle_dropped(vec![other]);
+    h.run_steps(3);
+    assert_eq!(
+        h.state().packs.len(),
+        1,
+        "nothing imported under the dialog"
+    );
+    assert!(matches!(h.state().dialog, Some(Dialog::Confirm(..))));
+}
+
+#[test]
+fn the_confirmation_applies_the_pack_it_names_when_another_became_active() {
+    let env = env("swap-under-confirm");
+    let mut h = harness_with_pack(&env);
+    open_confirmation(&mut h);
+    // Another pack becomes active while the dialog is open; its first skin has no model.
+    let other = build_pack_dir(
+        &scratch("swap-under-confirm-src"),
+        &PackOptions {
+            id: "other",
+            hull_without_model: true,
+            ..PackOptions::default()
+        },
+    )
+    .unwrap();
+    h.state_mut().import_path(&other);
+    h.run_steps(3);
+    assert_eq!(
+        h.state()
+            .active_pack
+            .as_ref()
+            .map(|p| p.manifest.id.as_str()),
+        Some("other")
+    );
+    press_dialog_apply(&mut h);
+    let models = env
+        .cache
+        .hull_files
+        .iter()
+        .filter(|p| std::fs::read(p).is_ok_and(|b| b == HULL_MODEL))
+        .count();
+    assert_eq!(
+        models, 2,
+        "the confirmed pack's skin reached both revisions"
+    );
+}
+
+#[test]
+fn a_pack_removed_under_the_confirmation_replaces_nothing() {
+    let env = env("removed-under-confirm");
+    let mut h = harness_with_pack(&env);
+    open_confirmation(&mut h);
+    let before = contents(&env.cache.hull_files);
+    h.state_mut().delete_pack("fixture-pack", "1.0.0");
+    h.run_steps(2);
+    press_dialog_apply(&mut h);
+    assert_eq!(contents(&env.cache.hull_files), before);
+    assert!(h.state().dialog.is_none());
+    assert!(
+        h.state()
+            .toasts
+            .iter()
+            .any(|t| t.text.contains("no longer in the library")),
+        "the player is told why nothing happened"
+    );
+}
+
+#[test]
+fn a_game_started_while_the_confirmation_is_open_stops_the_replacement() {
+    let env = env("started-under-confirm");
+    let mut h = harness_with_pack(&env);
+    open_confirmation(&mut h);
+    let before = contents(&env.cache.hull_files);
+    h.state_mut().game_processes_override = Some(vec!["GameClient.exe".into()]);
+    press_dialog_apply(&mut h);
+    assert!(
+        matches!(h.state().dialog, Some(Dialog::GameRunning(..))),
+        "{:?}",
+        h.state().dialog
+    );
+    assert_eq!(
+        contents(&env.cache.hull_files),
+        before,
+        "nothing was written"
+    );
+}
+
+#[test]
+fn restoring_while_the_game_runs_changes_nothing() {
+    let env = env("restore-running");
+    let mut h = harness_with_pack(&env);
+    open_confirmation(&mut h);
+    press_dialog_apply(&mut h);
+    let applied = contents(&env.cache.hull_files);
+    h.state_mut().game_processes_override = Some(vec!["GameClient.exe".into()]);
+    h.state_mut().restore_last();
+    h.run_steps(2);
+    assert_eq!(contents(&env.cache.hull_files), applied, "the skin stays");
+    assert!(
+        h.state().can_restore(),
+        "the backup is still there to restore"
+    );
+}
+
+#[test]
+fn each_restore_goes_back_one_replacement_until_the_original() {
+    let env = env("restore-chain");
+    let mut h = harness_with_pack(&env);
+    let original = contents(&env.cache.hull_files);
+    open_confirmation(&mut h);
+    press_dialog_apply(&mut h);
+    let first = contents(&env.cache.hull_files);
+    h.state_mut().dialog = None;
+    // The same skin again, from a second pack: a second replacement on top of the first.
+    let second = build_pack_dir(
+        &scratch("restore-chain-src"),
+        &PackOptions {
+            id: "second",
+            ..PackOptions::default()
+        },
+    )
+    .unwrap();
+    h.state_mut().import_path(&second);
+    h.run_steps(3);
+    open_confirmation(&mut h);
+    press_dialog_apply(&mut h);
+    assert_eq!(h.state().backups.len(), 2);
+
+    h.state_mut().restore_last();
+    h.run_steps(2);
+    assert_eq!(
+        contents(&env.cache.hull_files),
+        first,
+        "back to the first skin"
+    );
+    h.state_mut().restore_last();
+    h.run_steps(2);
+    assert_eq!(
+        contents(&env.cache.hull_files),
+        original,
+        "back to the original cache"
+    );
+    assert!(!h.state().can_restore(), "nothing left to restore");
+}

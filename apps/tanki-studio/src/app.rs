@@ -87,6 +87,11 @@ impl Selection {
 /// A replacement waiting for the user's confirmation.
 #[derive(Clone, Debug)]
 pub struct PendingApply {
+    /// The pack the dialog names. The active pack can change while the dialog is open (a pack
+    /// dropped on the window, an Undo), so `item` and `variant` index this pack, never the active one.
+    pub pack_id: String,
+    pub pack_version: String,
+    pub pack_name: String,
     pub item: usize,
     pub variant: usize,
     /// "Wasp M3": the cache modification that gets the files.

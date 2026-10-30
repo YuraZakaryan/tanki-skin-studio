@@ -6,6 +6,17 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Restoring goes back one replacement at a time, down to the original cache. Before, every restore
+  put back the newest backup again, so after two replacements the original files could not be
+  restored from the app.
+- The confirmation applies exactly the pack it names. A pack dropped on the window while it was
+  open became active and its skin was written instead, possibly into another item's files; drops
+  now wait until the dialog is closed.
+- The game is checked again when the replacement is confirmed, and restoring is refused while the
+  game runs.
+
 ## [0.1.1] - 2026-10-29
 
 ### Added
