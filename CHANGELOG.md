@@ -16,6 +16,10 @@ All notable changes are recorded here. The format follows
   now wait until the dialog is closed.
 - The game is checked again when the replacement is confirmed, and restoring is refused while the
   game runs.
+- Deleting a pack asks first. A double click on the bin deleted the next pack too, which had moved
+  under the pointer.
+- A double click on Apply no longer opens and at once closes the confirmation: the second click of a
+  double click never dismisses a dialog.
 
 ## [0.1.1] - 2026-10-29
 

@@ -433,5 +433,6 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::GameRunning(..)) => "game running",
         Some(Dialog::Done { .. }) => "done",
         Some(Dialog::ImportError { .. }) => "import error",
+        Some(Dialog::DeletePack { .. }) => "delete pack",
     }
 }

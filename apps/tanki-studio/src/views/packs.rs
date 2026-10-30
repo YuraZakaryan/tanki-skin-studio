@@ -183,7 +183,7 @@ fn my_packs(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         app.select_pack(index);
     }
     if let Some((id, version)) = delete {
-        app.delete_pack(&id, &version);
+        app.ask_to_delete_pack(&id, &version);
     }
 }
 
