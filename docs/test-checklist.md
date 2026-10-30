@@ -14,7 +14,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 |---|---|
 | Random clicks on every button, Escape, typed text; nothing panics, always a real page | it `monkey` (4 seeds × 250) |
 | …plus window resizes (820–1920 px), ⌘K/⌘Z/⌘+/⌘−/⌘0, Enter/Tab/arrows, any text incl. emoji and Cyrillic | it `chaos` (6 seeds × 400) |
-| …plus the game starting and stopping, good/broken/other-game/archive/not-a-pack drops, the cache folder vanishing and returning, rescans, restarts on the same data | it `chaos` |
+| …plus the game starting and stopping, switching between two packs whose skins share ids, good/broken/other-game/archive/not-a-pack drops, the cache folder vanishing and returning, rescans, restarts on the same data | it `chaos` |
 | Invariants after every step: real page, ≤ 3 toasts, no message twice, active pack in the library, no button or label cut off at the window's sides | it `chaos` |
 | Every replacement made at random undoes to the original cache, byte for byte | it `monkey`, it `chaos`, ui `gui-monkey` |
 | The same in the real window: 5 seeds × 30 random actions incl. out-of-range items, unknown filters, both languages, themes, interface sizes, the palette | ui `gui-monkey` |
@@ -39,6 +39,8 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Broken zip, hostile archive (traversal, size), tampered checksum: refused with every issue listed | e2e, unit `pack`, it `dialogs`, ui `gui-bad-import` |
 | A pack for another game | e2e `apply_refuses_wrong_game…`, it `chaos` |
 | The same pack twice: refused | unit `pack` |
+| Import on its own thread: the window goes on at once, the progress counts every byte to the end, the pack lands in the library | unit `pack`, it `import` |
+| The progress card (stage, percent, time left, Cancel); Cancel stops at the next file or megabyte and leaves nothing in the library; a second import or a drop waits | unit `pack`, it `import`, ui `importing` |
 | Undo an import, delete a pack, the next one becomes active | it `dialogs`, e2e `deleting_a_pack…` |
 | Deleting a pack asks first; Cancel keeps it; a double click on the bin deletes no other pack | it `dialogs` |
 | The second click of a double click never dismisses the dialog its first click opened | it `dialogs` |
@@ -50,6 +52,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 
 | Case | Test |
 |---|---|
+| Skin variants are listed M0..M3, then no modification, then XT, ALT, Prime and other editions, each by modification; names sort naturally (numbers by value, no case) | unit `model`, it `garage` |
 | Any modification's skin goes to the selected modification of the same item | it `dialogs`, ui `gui-apply` |
 | A skin of another item goes to its own item, never to the selected one | it `garage` |
 | One Apply button only (yellow, full width) | it `dialogs`, ui `garage` |
@@ -59,7 +62,9 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | The game started while the confirmation is open: Apply is blocked again; Restore is refused while it runs | it `dialogs` |
 | The confirmation applies the pack it names: a pack dropped meanwhile is not imported, another active pack changes nothing, a removed pack replaces nothing and says so | it `dialogs` |
 | Apply writes every revision and a backup; Restore puts it back; tampered backup refused | e2e, cli, ui `gui-apply`, ui `gui-restore` |
-| Each Restore goes back one replacement (a restored backup is marked and skipped) until the original cache | unit `apply`, it `dialogs` |
+| Which skin is in the game: the newest replacement not restored whose files are untouched; "Applied" badge, honest preview caption, Apply off for the skin already in the game; known after a restart; a file changed since drops it; Restore resets the picks and nothing is picked until a click | unit `apply`, it `garage` |
+| A pick belongs to its pack: switching packs shows no pick of the other pack's skin of the same id, and switching back brings it again; a skin in the game from another pack is named with its pack | it `garage` |
+| Restore asks first (the items listed, Cancel changes nothing), then undoes every replacement not restored yet, newest first, back to the original cache; a restored backup is marked and skipped; a damaged backup writes nothing | unit `apply`, it `dialogs`, ui `restore` |
 | No backup to restore | it `garage` (one toast, not two) |
 | Preview: the skin's own, none in the pack (said so), the cache picture with its alpha | it, ui `garage` |
 | The chosen variant is scrolled into view | visual check (RU screenshots) |
@@ -81,11 +86,15 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Case | Test |
 |---|---|
 | Every page, the palette, dialogs, light theme, narrow window | ui scenes |
+| A first start fits its screen (1440 x 900 when it fits, else 90% x 85%, centred above a taskbar) | unit `session` |
+| The release app opens no terminal on Windows (`windows_subsystem`) | it `preferences` |
+| The Windows installer adds a desktop shortcut (first install on, checkbox, `INSTALLDESKTOPSHORTCUT=0`, kept on update only while on the desktop) and removes it on uninstall | release build (`wix build`), a Windows install by hand |
 | Language and theme survive a restart; a stale session is repaired | it `preferences`, ui `gui-persist`, `gui-language` |
 | A second window on the same data folder is refused (OS file lock, freed on any exit, never stale); other data folders run side by side | unit `instance` |
 | Log file `<data>/logs/tanki-studio.log`: rotated on start (2 old kept), capped at 16 MiB, early records kept, `RUST_LOG` filters, a broken folder or poisoned lock never stops the app; only the window owning the data folder rotates | unit `logging`, real binary (3 starts + a second window) |
 | Every failure shown in a toast is logged in the core's English words; every panic is logged | unit `logging`, `errors::user_message` |
 | Every string translated, no stale rows | `cargo xtask i18n` |
+| The tank icon is the project's own drawing, never a glyph typed from the icon font | unit `fonts` |
 | Every file states its licence and copyright (SPDX headers, `REUSE.toml`, `LICENSES/`) | CI `Licences (REUSE)` (`reuse lint`) |
 | The app's About notice names version, licence, no warranty and source; the licence matches the crates' | unit `about` |
 | Every download carries `THIRD-PARTY-LICENSES.html` (the crate notices) | `cargo about generate --fail` in both packaging scripts |

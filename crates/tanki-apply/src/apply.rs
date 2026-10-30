@@ -401,27 +401,107 @@ pub fn list_backups(backup_root: &Path) -> Result<Vec<BackupEntry>> {
     Ok(entries)
 }
 
+/// The saved original of one change, checked: a plain backup name, the bytes it recorded, and a
+/// cache file still there to receive them.
+fn checked_original(dir: &Path, change: &FileChange) -> Result<Vec<u8>> {
+    anyhow::ensure!(
+        change.backup_name.ends_with(".bin")
+            && change
+                .backup_name
+                .trim_end_matches(".bin")
+                .bytes()
+                .all(|b| b.is_ascii_digit()),
+        "invalid backup name"
+    );
+    let bytes = fs::read(dir.join(&change.backup_name))?;
+    anyhow::ensure!(hash(&bytes) == change.before_sha256, "backup corrupt");
+    anyhow::ensure!(
+        change.target.is_file() && !change.target.is_symlink(),
+        "target missing"
+    );
+    Ok(bytes)
+}
+
 pub fn restore_transaction(dir: &Path, tx: &Transaction) -> Result<()> {
     for change in &tx.changes {
-        anyhow::ensure!(
-            change.backup_name.ends_with(".bin")
-                && change
-                    .backup_name
-                    .trim_end_matches(".bin")
-                    .bytes()
-                    .all(|b| b.is_ascii_digit()),
-            "invalid backup name"
-        );
-        let bytes = fs::read(dir.join(&change.backup_name))?;
-        anyhow::ensure!(hash(&bytes) == change.before_sha256, "backup corrupt");
-        anyhow::ensure!(
-            change.target.is_file() && !change.target.is_symlink(),
-            "target missing"
-        );
+        let bytes = checked_original(dir, change)?;
         atomic_replace(&change.target, &bytes)?;
     }
     fs::write(dir.join(RESTORED), &tx.id).context("could not mark the backup as restored")?;
     Ok(())
+}
+
+/// Every backup not restored yet, newest first: the order that puts the cache back as it was
+/// before the first of them.
+pub fn pending_restores(backup_root: &Path) -> Result<Vec<BackupEntry>> {
+    Ok(list_backups(backup_root)?
+        .into_iter()
+        .filter(|backup| !backup.restored)
+        .collect())
+}
+
+/// A skin that is in the game cache right now.
+#[derive(Clone, Debug)]
+pub struct AppliedSkin {
+    /// The cache item that wears it.
+    pub target: PackTarget,
+    pub pack_id: String,
+    pub variant_id: String,
+    pub variant_name: String,
+}
+
+/// The skins in the cache now: for each item, its newest replacement not restored yet, when every
+/// file it wrote is still byte for byte what it wrote. A file changed since (the game updated it,
+/// another tool) means the item no longer wears that skin.
+pub fn applied_skins(backup_root: &Path) -> Result<Vec<AppliedSkin>> {
+    let mut seen = BTreeSet::new();
+    let mut applied = Vec::new();
+    for backup in pending_restores(backup_root)? {
+        let Some(target) = backup.tx.target.clone() else {
+            continue;
+        };
+        if !seen.insert((target.kind.clone(), target.id.clone(), target.grade.clone())) {
+            continue;
+        }
+        let intact = backup.tx.changes.iter().all(|change| {
+            fs::read(&change.target).is_ok_and(|bytes| hash(&bytes) == change.after_sha256)
+        });
+        if intact {
+            applied.push(AppliedSkin {
+                target,
+                pack_id: backup.tx.pack_id.clone(),
+                variant_id: backup.tx.variant_id.clone(),
+                variant_name: backup.tx.variant_name.clone(),
+            });
+        }
+    }
+    Ok(applied)
+}
+
+/// How much [`restore_all`] put back.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RestoreSummary {
+    pub replacements: usize,
+    pub files: usize,
+}
+
+/// Put the cache back as it was before every replacement not restored yet, newest first. Each
+/// file's last write is the original from its oldest replacement. Every backup is checked before
+/// anything is written, so a damaged one stops the restore with the cache untouched.
+pub fn restore_all(backup_root: &Path) -> Result<RestoreSummary> {
+    let pending = pending_restores(backup_root)?;
+    for backup in &pending {
+        for change in &backup.tx.changes {
+            checked_original(&backup.dir, change)?;
+        }
+    }
+    let mut summary = RestoreSummary::default();
+    for backup in &pending {
+        restore_transaction(&backup.dir, &backup.tx)?;
+        summary.replacements += 1;
+        summary.files += backup.tx.changes.len();
+    }
+    Ok(summary)
 }
 
 #[cfg(test)]
@@ -564,6 +644,104 @@ mod tests {
             "nothing left to restore"
         );
         assert!(list_backups(&backups)?.iter().all(|b| b.restored));
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn restore_all_gives_back_the_original_and_a_damaged_backup_writes_nothing() -> Result<()> {
+        let root = std::env::temp_dir().join(format!(
+            "tanki-apply-all-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        ));
+        let (cache, pack_dir, backups) =
+            (root.join("cache"), root.join("pack"), root.join("backups"));
+        fs::create_dir_all(&cache)?;
+        fs::create_dir_all(&pack_dir)?;
+        let model = cache.join(STANDARD.encode("http://example.test/0/0/10/14/111/object.3ds"));
+        fs::write(&model, b"original")?;
+        let target = PackTarget {
+            kind: "hull".into(),
+            id: "wasp".into(),
+            grade: "m3".into(),
+        };
+        let mut variants = Vec::new();
+        for id in ["one", "two", "three"] {
+            fs::write(pack_dir.join(format!("{id}.3ds")), id)?;
+            variants.push(PackVariant {
+                id: id.into(),
+                name: id.into(),
+                preview: None,
+                resources: vec![PackResource {
+                    role: "model".into(),
+                    path: format!("{id}.3ds"),
+                    sha256: hash(id.as_bytes()),
+                }],
+            });
+        }
+        let pack = InstalledPack {
+            path: pack_dir,
+            manifest: PackManifest {
+                format_version: 1,
+                id: "test".into(),
+                name: "Test".into(),
+                version: "1".into(),
+                author: String::new(),
+                license: String::new(),
+                games: vec!["air-cache".into()],
+                items: vec![PackItem {
+                    target: target.clone(),
+                    variants: variants.clone(),
+                }],
+            },
+        };
+        let scan = scan_cache(&cache, Some("air-cache"))?;
+        let mut first_dir = None;
+        for variant in &variants {
+            let tx = apply_variant(&scan, &pack, &target, variant, &backups)?;
+            first_dir.get_or_insert(backups.join(&tx.id));
+        }
+        assert_eq!(fs::read(&model)?, b"three");
+        assert_eq!(pending_restores(&backups)?.len(), 3);
+        let applied = applied_skins(&backups)?;
+        assert_eq!(applied.len(), 1, "one item, its newest skin");
+        assert_eq!(
+            (
+                applied[0].variant_id.as_str(),
+                applied[0].target.id.as_str()
+            ),
+            ("three", "wasp")
+        );
+        // A cache file changed by something else: the item no longer wears that skin.
+        fs::write(&model, b"game update")?;
+        assert!(applied_skins(&backups)?.is_empty());
+        fs::write(&model, b"three")?;
+
+        // A damaged oldest backup: nothing is written, not even the newer, healthy ones.
+        let damaged = first_dir.expect("a backup").join("0000.bin");
+        let good = fs::read(&damaged)?;
+        fs::write(&damaged, b"tampered")?;
+        assert!(restore_all(&backups).is_err());
+        assert_eq!(fs::read(&model)?, b"three", "the cache is untouched");
+        assert_eq!(pending_restores(&backups)?.len(), 3);
+
+        fs::write(&damaged, good)?;
+        let summary = restore_all(&backups)?;
+        assert_eq!(
+            summary,
+            RestoreSummary {
+                replacements: 3,
+                files: 3
+            }
+        );
+        assert_eq!(fs::read(&model)?, b"original", "every replacement undone");
+        assert!(
+            applied_skins(&backups)?.is_empty(),
+            "nothing applied any more"
+        );
+        assert!(pending_restores(&backups)?.is_empty());
+        assert_eq!(restore_all(&backups)?, RestoreSummary::default());
         fs::remove_dir_all(root)?;
         Ok(())
     }

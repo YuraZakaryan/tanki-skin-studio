@@ -68,7 +68,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     ),
     spec(
         Command::RestoreLast,
-        "Restore last replacement",
+        "Restore original files",
         "Put the original files back",
         icons::ROTATE_CCW,
         Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::Z)),
@@ -223,7 +223,7 @@ impl Studio {
         match command {
             Command::Import => self.import(false),
             Command::ImportFolder => self.import(true),
-            Command::RestoreLast => self.restore_last(),
+            Command::RestoreLast => self.ask_to_restore(),
             Command::Rescan => self.rescan(),
             Command::Recognise => self.auto_recognise(true),
             Command::ChooseCache => self.choose_cache(),

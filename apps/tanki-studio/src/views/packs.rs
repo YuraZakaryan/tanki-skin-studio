@@ -258,11 +258,7 @@ fn pack_items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 for item in &pack.manifest.items {
                     let name = target_name(&item.target.id, &item.target.grade);
                     let meta = tn(item.variants.len() as u64, "{n} variant", "{n} variants");
-                    let icon = match item.target.kind.as_str() {
-                        "turret" => icons::CROSSHAIR,
-                        "paint" => icons::PAINTBRUSH,
-                        _ => icons::TRUCK,
-                    };
+                    let icon = super::garage::kind_icon(&item.target.kind);
                     let kind = super::garage::kind_label(&item.target.kind);
                     if ListRow::new(icon, &name, &meta)
                         .chip(ChipKind::Neutral, kind)
@@ -338,7 +334,7 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             });
     });
     in_rect(ui, button, |ui| {
-        if Button::new(ButtonKind::Danger, tl!("Restore last replacement"))
+        if Button::new(ButtonKind::Danger, tl!("Restore original files"))
             .icon(icons::ROTATE_CCW)
             .width(Width::Fill)
             .height(44.0)
@@ -346,7 +342,7 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .show(ui)
             .clicked()
         {
-            app.restore_last();
+            app.ask_to_restore();
         }
     });
 }

@@ -366,7 +366,7 @@ pub fn skin_row(
     meta: &str,
     selected: bool,
     apply_label: Option<&str>,
-    badge: Option<&str>,
+    badge: Option<(super::ChipKind, &str)>,
 ) -> (Response, bool) {
     let tokens = Tokens::get(ui.ctx());
     let (rect, response) = alloc(ui, Vec2::new(width, 80.0), Sense::click());
@@ -408,8 +408,8 @@ pub fn skin_row(
     let apply = apply_label
         .map(|label| super::Button::new(super::ButtonKind::Primary, label).icon(icons::PLAY));
     let button_width = apply.as_ref().map_or(0.0, |button| button.measure(ui));
-    // A badge (`Incomplete`) sits where a button would, in the danger colour.
-    let badge_width = badge.map_or(0.0, |label| super::chip_width(ui, label));
+    // A badge (`Applied`, `Incomplete`) sits where a button would.
+    let badge_width = badge.map_or(0.0, |(_, label)| super::chip_width(ui, label));
     let text_right = if apply.is_some() {
         rect.max.x - 12.0 - button_width - 12.0
     } else if badge.is_some() {
@@ -417,12 +417,12 @@ pub fn skin_row(
     } else {
         rect.max.x - 12.0
     };
-    if let Some(label) = badge {
+    if let Some((kind, label)) = badge {
         let chip = Rect::from_min_size(
             Pos2::new(rect.max.x - 12.0 - badge_width, rect.center().y - 12.0),
             Vec2::new(badge_width, 24.0),
         );
-        super::paint_chip(ui, chip, super::ChipKind::Danger, label);
+        super::paint_chip(ui, chip, kind, label);
         // Readers of the screen (and tests) learn the state from the badge as well.
         let badge = ui.interact(chip, response.id.with("badge"), Sense::hover());
         describe(&badge, Role::Label, true, None, label);

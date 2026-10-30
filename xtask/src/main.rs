@@ -396,6 +396,8 @@ const SCENES: &[Scene] = &[
     },
     Scene {
         name: "overview",
+        // A skin is picked: the Apply button is on only then.
+        actions: "select:hull;pick:0",
         checks: &[
             has("the lime Import button", PRIMARY, 6, 2_500),
             has("the amber Apply button", ACCENT, 6, 3_000),
@@ -406,7 +408,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "garage",
         page: "garage",
-        actions: "select:hull",
+        actions: "select:hull;pick:0",
         checks: &[
             // The fixture pack's flat hull preview shows on the stage and on the item card.
             has("the skin preview from the pack", [30, 160, 90], 12, 8_000),
@@ -435,7 +437,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "info",
         page: "info",
-        actions: "select:hull",
+        actions: "select:hull;pick:0",
         checks: &[has("the lime Apply button", PRIMARY, 6, 1_500)],
         ..SCENE
     },
@@ -455,7 +457,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "incomplete",
         page: "garage",
-        actions: "select:hull",
+        actions: "select:hull;pick:0",
         incomplete_skin: true,
         checks: &[
             // Measured: 683 ppm at 1x (CI), 2014 at 2x, 0 on a Garage without an incomplete skin. Thin
@@ -507,6 +509,27 @@ const SCENES: &[Scene] = &[
         name: "narrow",
         size: "860x600",
         checks: &[has("the lime Import button", PRIMARY, 6, 1_000)],
+        ..SCENE
+    },
+    // A large pack being imported: the progress card in the corner, the app usable around it.
+    Scene {
+        name: "importing",
+        page: "packs",
+        actions: "dismiss;importing:skins-collection.tankipack:45",
+        checks: &[has("the progress bar's lime fill", PRIMARY, 6, 600)],
+        ..SCENE
+    },
+    // Restore asks first and lists what goes back: two replacements, then the Restore button.
+    // Last on purpose: the scenes share one data folder and cache, and this one writes to them.
+    Scene {
+        name: "restore",
+        page: "garage",
+        actions: "select:hull;apply:0:0;apply:1:0;dismiss;ask-restore",
+        checks: &[
+            has("the dialog surface", DARK_SURFACE_2, 2, 60_000),
+            has("the dialog's warning bar", [50, 48, 24], 6, 6_000),
+            lacks("the confirmation of a replacement", ACCENT, 6, 1_500),
+        ],
         ..SCENE
     },
 ];

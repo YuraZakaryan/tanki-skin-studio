@@ -22,7 +22,9 @@ pub const IMAGE: char = '\u{e0f9}';
 pub const SEARCH: char = '\u{e154}';
 pub const CHECK: char = '\u{e070}';
 pub const TRASH_2: char = '\u{e18d}';
-pub const TRUCK: char = '\u{e193}';
+/// A tank: the project's own drawing, as Lucide has none. Not a glyph of the font: a code point
+/// outside Lucide's range that [`crate::fonts::icon`] draws with strokes on Lucide's 24-unit grid.
+pub const TANK: char = '\u{f8ff}';
 pub const CROSSHAIR: char = '\u{e0b0}';
 pub const HISTORY: char = '\u{e1f4}';
 pub const LAYERS: char = '\u{e52d}';

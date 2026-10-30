@@ -6,11 +6,51 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A pack is imported on its own thread with a progress card in the corner: the stage (reading,
+  checking files, copying into the library, checking the copy), a bar with the percent, the time
+  left once it can be told, and Cancel, which leaves nothing in the library. Before, a pack of
+  hundreds of megabytes froze the window until it was in, and the system called the app not
+  responding. A second import waits until the first is done.
+- The Windows installer puts a shortcut on the desktop, as PdfCraft does: on for a first install,
+  a checkbox on the installer's first page, `INSTALLDESKTOPSHORTCUT=0` for an unattended install.
+  An update keeps it only while it is still on the desktop. Before, the app was only in the Start
+  menu.
+
+### Changed
+
+- When the cache has no garage picture of the selected modification, the Garage says so under
+  "No preview available": the game downloads it only when its own garage shows that
+  modification, so open it there and rescan the cache.
+- Skin variants are listed M0, M1, M2, M3 first, then a skin that names no modification, then the
+  special editions (XT, ALT, Prime, others), each by its modification; names in one modification
+  sort naturally ("Camo 2" before "Camo 10"). Before, the selected modification's skins came
+  first, so an M3 skin could sit above M0.
+- Hulls are shown with a tank icon instead of a truck: the project's own drawing in Lucide's
+  style, as Lucide has none. The palette and the Info page show a turret or paint by its own icon
+  too, instead of the truck for every item.
+
 ### Fixed
 
-- Restoring goes back one replacement at a time, down to the original cache. Before, every restore
-  put back the newest backup again, so after two replacements the original files could not be
-  restored from the app.
+- A picked skin belongs to the pack it was picked in. Packs share skin ids ("old", "default"),
+  so after switching packs the other pack's skin of the same id looked picked and Apply was on
+  for a skin never clicked there. Each pack now keeps its own picks, back when it is active
+  again. A skin in the game from another pack is named with its pack ("Old · Pack name").
+- Windows no longer opens a terminal next to the app: release builds are a window program.
+- A first start fits the screen it opens on: the design's 1440 x 900 frame on a large screen, else
+  90% of the width and 85% of the height, centred above a taskbar. A size the player chose is
+  restored as before.
+- The Garage and the Info page say which skin is in the game: the variant in the cache wears an
+  "Applied" badge and the preview reads "In the game now". Nothing is picked until a skin is
+  clicked, a pick that is not applied reads "Skin preview · not applied", and Restore resets the
+  picks. Before, the first skin looked picked and its preview stayed after Restore, as if it were
+  still in the game.
+- Restore puts the game cache back as it was before every replacement, in one go, after a
+  confirmation that lists the items that get their original files back. Before, every restore put
+  back the newest backup again, so after two replacements the original files could not be restored
+  from the app. A restored backup is marked and never restored twice, and a damaged backup stops
+  the restore before anything is written.
 - The confirmation applies exactly the pack it names. A pack dropped on the window while it was
   open became active and its skin was written instead, possibly into another item's files; drops
   now wait until the dialog is closed.

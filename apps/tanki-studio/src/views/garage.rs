@@ -32,6 +32,15 @@ pub fn kind_label(kind: &str) -> &'static str {
     }
 }
 
+/// The icon of a kind of item: a tank for hulls, a crosshair for turrets, a brush for paints.
+pub fn kind_icon(kind: &str) -> char {
+    match kind {
+        "turret" => icons::CROSSHAIR,
+        "paint" => icons::PAINTBRUSH,
+        _ => icons::TANK,
+    }
+}
+
 fn tab_label(kind: &str) -> &'static str {
     match kind {
         "hull" => tl!("Hulls"),
@@ -56,7 +65,7 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
                 .show(ui)
                 .clicked()
             {
-                app.restore_last();
+                app.ask_to_restore();
             }
         },
     );
@@ -187,22 +196,34 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         let variant = pack.manifest.items.get(i)?.variants.get(v)?.clone();
         app.variant_preview(&ctx, &pack, &variant)
     });
-    // The skin's own picture when the pack has one, else the item as the game shows it.
-    let has_variant = app.chosen_variant(&selection).is_some();
+    // The picked skin's own picture when the pack has one, else the item as the game shows it.
+    // The caption says whether that skin is in the game: a pick is only a pick until applied.
+    let chosen = app.chosen_variant(&selection);
+    let has_variant = chosen.is_some();
+    let in_game = chosen.is_some() && chosen == app.applied_variant(&selection);
+    let worn = app.in_game_name(&selection);
     let (texture, caption) = match (
         variant_texture,
         has_variant,
         row.as_ref().and_then(|r| r.picture_group.clone()),
     ) {
-        (Some(texture), _, _) => (Some(texture), tl!("Skin preview").to_owned()),
+        (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
+        (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
         // A skin of the pack that came without a picture: say so instead of showing another picture.
         (None, true, _) => (None, tl!("This skin has no preview in the pack").to_owned()),
         (None, false, Some(group)) => (
             app.cache_preview(&ctx, &group),
-            tl!("Current look in the game").to_owned(),
+            worn.map_or_else(
+                || tl!("Current look in the game").to_owned(),
+                |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
+            ),
         ),
         (None, false, None) => (None, tl!("No preview available").to_owned()),
     };
+    // The game downloads a modification's garage picture only when its own garage shows it: say
+    // so, and how to get it, when the cache has none.
+    let no_picture =
+        row.is_some() && !has_variant && row.as_ref().is_some_and(|r| r.picture_group.is_none());
     match texture {
         Some(texture) => {
             let area = Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
@@ -240,6 +261,27 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 &caption,
                 Text::mono(12.0, 400, tokens.text_3),
             );
+            if no_picture {
+                let note = fmt(
+                    tl!(
+                        "The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache."
+                    ),
+                    &[(
+                        "name",
+                        &target_name(&selection.id, grade_code(selection.grade)),
+                    )],
+                );
+                let width = (center.width() - 48.0).clamp(120.0, 420.0);
+                let galley = fonts::paragraph_centered(
+                    ui.painter(),
+                    &note,
+                    Text::body(12.0, 400, tokens.text_3),
+                    width,
+                    Some(17.0),
+                );
+                ui.painter()
+                    .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
+            }
         }
     }
     // Modification selector, centred at the bottom.
@@ -290,8 +332,10 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let Some(selection) = app.selection.clone() else {
         return;
     };
-    let options = app.pack_variants(&selection.kind, &selection.id, grade_code(selection.grade));
+    let options = app.pack_variants(&selection.kind, &selection.id);
     let chosen = app.chosen_variant(&selection);
+    let applied_now = app.applied_variant(&selection);
+    let in_game = chosen.is_some() && chosen == applied_now;
     let target = target_name(&selection.id, grade_code(selection.grade));
     // The model and texture files the selected item has in the cache: a skin that does not bring
     // every one of them cannot be applied (the preview is optional).
@@ -365,15 +409,14 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                     );
                     let selected = chosen == Some((*item, *variant));
                     let incomplete = !missing(app, (*item, *variant)).is_empty();
-                    let (response, applied) = widgets::skin_row(
-                        ui,
-                        list.width(),
-                        &v.name,
-                        &meta,
-                        selected,
-                        None,
-                        incomplete.then(|| tl!("Incomplete")),
-                    );
+                    // The skin in the game now says so; a skin that cannot be applied says why.
+                    let badge = if applied_now == Some((*item, *variant)) {
+                        Some((ChipKind::Success, tl!("Applied")))
+                    } else {
+                        incomplete.then(|| (ChipKind::Danger, tl!("Incomplete")))
+                    };
+                    let (response, applied) =
+                        widgets::skin_row(ui, list.width(), &v.name, &meta, selected, None, badge);
                     // Bring the chosen variant into view when the choice changes (another item, a
                     // saved choice further down the list), never while the user scrolls.
                     if selected {
@@ -401,7 +444,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .icon(icons::ZAP)
             .width(Width::Fill)
             .height(46.0)
-            .enabled(chosen.is_some() && blocked.is_none())
+            .enabled(chosen.is_some() && !in_game && blocked.is_none())
             .show(ui);
         apply_clicked |= response.clicked();
     });
@@ -425,10 +468,17 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 .galley(Pos2::new(inner.min.x + 22.0, hint_y), text, tokens.danger);
         }
         None => {
+            let hint = if chosen.is_none() && !options.is_empty() {
+                tl!("Pick a skin above to apply it.")
+            } else if in_game {
+                tl!("This skin is in the game now.")
+            } else {
+                tl!("Close the game before replacing.")
+            };
             fonts::draw(
                 ui.painter(),
                 Pos2::new(inner.min.x, hint_y),
-                tl!("Close the game before replacing."),
+                hint,
                 Text::body(12.0, 400, tokens.text_3),
             );
         }

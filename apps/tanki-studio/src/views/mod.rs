@@ -10,6 +10,7 @@ pub mod info;
 pub mod overview;
 pub mod packs;
 pub mod palette;
+pub mod progress;
 pub mod resources;
 pub mod shell;
 pub mod splash;
@@ -39,6 +40,7 @@ pub fn draw(app: &mut Studio, ui: &mut Ui) {
     let main = Rect::from_min_max(egui::pos2(sidebar.max.x, full.min.y), full.max);
     shell::sidebar(app, ui, sidebar);
     shell::page(app, ui, main);
+    progress::draw(app, &ctx);
     toast::draw(app, &ctx);
     dialogs::draw(app, &ctx);
     palette::draw(app, &ctx);

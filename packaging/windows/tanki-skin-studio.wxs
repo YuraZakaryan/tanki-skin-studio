@@ -1,10 +1,11 @@
 <!--
   The Windows installer (WiX v5), built by package.ps1:
-    wix build tanki-skin-studio.wxs -arch x64 -d Version=0.1.0 -d Stage=<staged files> -o <msi>
+    wix build tanki-skin-studio.wxs installer-ui.wxs -arch x64 -d Version=0.1.0 -d Stage=<staged files> -o <msi>
 
   It installs for the current user only: no administrator rights, into
-  %LOCALAPPDATA%\Programs\Tanki Skin Studio, with a Start menu shortcut and an entry in
-  Settings > Apps that uninstalls it. A newer version replaces an older one in place.
+  %LOCALAPPDATA%\Programs\Tanki Skin Studio, with a Start menu shortcut, a desktop shortcut
+  (a checkbox on the first page, installer-ui.wxs) and an entry in Settings > Apps that
+  uninstalls it. A newer version replaces an older one in place.
 
   The UpgradeCode ties every version together and must never change.
 -->
@@ -26,6 +27,19 @@
     <!-- The icon in Installed apps: the one embedded in the exe by apps/tanki-studio/build.rs. -->
     <Icon Id="AppIcon.exe" SourceFile="$(Stage)\tanki-studio.exe" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
+
+    <!-- Desktop shortcut, as in PdfCraft: on for a first install, a checkbox on the first page,
+         and INSTALLDESKTOPSHORTCUT=0 on the msiexec command line for an unattended install. An
+         update keeps it only if it is still on the desktop, so deleting the shortcut is how a
+         player says no for good. A value given on the command line wins. -->
+    <Property Id="INSTALLDESKTOPSHORTCUT" Secure="yes" />
+    <Property Id="EXISTINGDESKTOPSHORTCUT">
+      <DirectorySearch Id="DesktopSearch" Path="[DesktopFolder]" Depth="0">
+        <FileSearch Name="Tanki Skin Studio.lnk" />
+      </DirectorySearch>
+    </Property>
+    <SetProperty Id="INSTALLDESKTOPSHORTCUT" Value="1" After="AppSearch" Sequence="first" Condition="NOT INSTALLDESKTOPSHORTCUT AND (NOT WIX_UPGRADE_DETECTED OR EXISTINGDESKTOPSHORTCUT)" />
+    <UIRef Id="TankiInstallerUI" />
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="UserProgramsFolder" Name="Programs">
@@ -66,10 +80,26 @@
       <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="Shortcut" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- Its own component with an HKCU key path, so INSTALLDESKTOPSHORTCUT=0 leaves it out and
+         uninstalling removes it. -->
+    <Component Id="DesktopShortcut" Directory="DesktopFolder" Guid="8A5D3972-9C85-43F7-9ACD-24083E0D219A" Condition="INSTALLDESKTOPSHORTCUT = 1">
+      <Shortcut
+        Id="DesktopShortcutLink"
+        Name="Tanki Skin Studio"
+        Description="Skin manager for a local game cache"
+        Target="[INSTALLFOLDER]tanki-studio.exe"
+        Icon="AppIcon.exe"
+        WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU" Key="Software\TankiSkinStudio\Installer" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
     <Feature Id="Main">
       <ComponentRef Id="Application" />
       <ComponentRef Id="Licenses" />
       <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
     </Feature>
   </Package>
 </Wix>

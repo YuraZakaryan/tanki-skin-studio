@@ -48,15 +48,12 @@
 	Close the game and press “Check again”. Restart the game after the replacement.	Закройте игру и нажмите «Проверить снова». После замены запустите игру заново.
 	Close the game before replacing and restart it afterwards.	Закройте игру перед заменой и запустите её заново после неё.
 	Close the game before replacing.	Закройте игру перед заменой.
-	Close the game before restoring the original files.	Закройте игру перед восстановлением оригинальных файлов.
 	Command palette	Палитра команд
 	Could not import pack	Не удалось импортировать пак
 	Custom folder	Своя папка
 	Dark	Тёмная
 	Dark theme	Тёмная тема
-	Delete	Удалить
 	Delete pack	Удалить пак
-	Delete pack “{name}”?	Удалить пак «{name}»?
 	Done	Готово
 	Drop a .tankipack here	Перетащите .tankipack сюда
 	Duplicate entry	Дубликат записи
@@ -133,7 +130,6 @@
 	Pack removed	Пак удалён
 	Pack “{name}” failed validation. Nothing was written to the library and the game cache is unchanged.	Пак «{name}» не прошёл проверку. В библиотеку ничего не записано, кэш игры не изменён.
 	Pack “{name}” imported	Пак «{name}» импортирован
-	Pack “{name}” is no longer in the library. Nothing was replaced.	Пака «{name}» больше нет в библиотеке. Ничего не заменено.
 	Packs	Паки
 	Page	Страница
 	Paint	Краска
@@ -158,7 +154,6 @@
 	Resources	Ресурсы
 	Resources you open appear here.	Здесь появятся открытые вами ресурсы.
 	Restore	Восстановить
-	Restore last replacement	Откатить последнюю замену
 	Restore original	Восстановить оригинал
 	Restored {n} files. Restart the game.	Восстановлено файлов: {n}. Перезапустите игру.
 	Revision	Ревизия
@@ -172,7 +167,6 @@
 	Select a resource to inspect it.	Выберите ресурс, чтобы рассмотреть его.
 	Size	Размер
 	Skin Studio	Skin Studio
-	Skin preview	Превью скина
 	Skin variants	Варианты скина
 	Sound	Звук
 	Sounds	Звуки
@@ -183,8 +177,8 @@
 	The active pack has no skins for {name}.	В активном паке нет скинов для {name}.
 	The game is running ({names}). Replacing files while it runs can corrupt the cache.	Игра запущена ({names}). Замена файлов во время её работы может повредить кэш.
 	The game is running. Replacing files while it runs can corrupt the cache.	Игра запущена. Замена файлов во время её работы может повредить кэш.
+	The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache.	Картинки {name} в кэше игры пока нет. Откройте его в гараже игры, затем перечитайте кэш.
 	The last imported pack becomes active automatically.	Последний импортированный пак становится активным автоматически.
-	The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored.	Пак и его файлы удаляются из библиотеки. Уже применённые скины остаются в кэше игры, их можно восстановить.
 	System	Система
 	System theme	Системная тема
 	Follow the system appearance	Следовать оформлению системы
@@ -209,7 +203,6 @@
 	not found	не найден
 	not in cache	нет в кэше
 	not selected	не выбрана
-	restored	откачено
 	revision {r}	ревизия {r}
 	today	сегодня
 	version {v}	версия {v}
@@ -242,6 +235,7 @@ action	Apply	Применить
 @plural	{n} modification|{n} modifications	{n} модификация|{n} модификации|{n} модификаций
 @plural	{n} resource|{n} resources	{n} ресурс|{n} ресурса|{n} ресурсов
 @plural	{n} pack|{n} packs	{n} пак|{n} пака|{n} паков
+@plural	{n} replacement|{n} replacements	{n} замена|{n} замены|{n} замен
 @plural	{n} validation error|{n} validation errors	{n} ошибка проверки|{n} ошибки проверки|{n} ошибок проверки
 @plural	{n} variant|{n} variants	{n} вариант|{n} варианта|{n} вариантов
 	Current look in the game	Как сейчас выглядит в игре
@@ -260,5 +254,36 @@ action	Apply	Применить
 	A cache file is not where it should be. Rescan the cache and try again.	Файл кэша не на своём месте. Перечитайте кэш и попробуйте снова.
 	The backup is damaged and cannot be restored.	Резервная копия повреждена, восстановить её нельзя.
 	A file to restore is no longer in the cache.	Файла для восстановления больше нет в кэше.
+	and {n} more	и ещё {n}
+	Applied	Применён
+	Close the game before restoring the original files.	Закройте игру перед восстановлением оригинальных файлов.
+	Close the game before restoring.	Закройте игру перед восстановлением.
+	Delete	Удалить
+	Delete pack “{name}”?	Удалить пак «{name}»?
+	Every replacement not restored yet is undone, newest first, and the game cache goes back to how it was.	Все ещё не откаченные замены отменяются, начиная с последней, и кэш игры возвращается к исходному состоянию.
+	In the game now	Сейчас в игре
+	In the game: {name}	В игре: {name}
+	Pack “{name}” is no longer in the library. Nothing was replaced.	Пака «{name}» больше нет в библиотеке. Ничего не заменено.
+	Pick a skin above to apply it.	Выберите скин выше, чтобы применить его.
+	Restore original files	Вернуть оригинальные файлы
+	Restore the original files?	Вернуть оригинальные файлы?
+	restored	откачено
+	Skin preview · not applied	Превью скина · не применён
 	The cache folder is gone. Choose it again.	Папка кэша пропала. Выберите её снова.
 	Tanki Skin Studio is already open. Switch to its window.	Tanki Skin Studio уже открыт. Перейдите в его окно.
+	The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored.	Пак и его файлы удаляются из библиотеки. Уже применённые скины остаются в кэше игры, их можно восстановить.
+	This skin is in the game now.	Этот скин уже в игре.
+	{replacements} · {files}	{replacements} · {files}
+	A pack is being imported. Wait until it is done.	Идёт импорт пака. Дождитесь, пока он закончится.
+	Importing “{name}”	Импорт «{name}»
+	Cancel import	Отменить импорт
+	Cancelling…	Отмена…
+	Reading the pack…	Чтение пака…
+	Building a pack from the archive…	Сборка пака из архива…
+	Checking files…	Проверка файлов…
+	Copying into the library…	Копирование в библиотеку…
+	Checking the copy…	Проверка копии…
+	Estimating the time left…	Оценка оставшегося времени…
+	About {n} s left	Осталось около {n} с
+	About {n} min left	Осталось около {n} мин
+	Import cancelled. Nothing was added.	Импорт отменён. Ничего не добавлено.

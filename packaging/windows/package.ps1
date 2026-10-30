@@ -57,11 +57,12 @@ if ($LASTEXITCODE -ne 0) { throw "cargo about failed with exit code $LASTEXITCOD
 # Sign the executables before they go into the installer and the zip.
 & (Join-Path $PSScriptRoot 'sign.ps1') "$Stage\tanki-studio.exe" "$Stage\tanki-cli.exe"
 
-# The installer: per user, no administrator rights (tanki-skin-studio.wxs). An MSI version is
+# The installer: per user, no administrator rights (tanki-skin-studio.wxs), with its pages
+# (installer-ui.wxs: the desktop shortcut checkbox). An MSI version is
 # numbers only, so a pre-release such as 0.2.0-rc.1 installs as 0.2.0.
 $MsiVersion = $Version -replace '-.*$', ''
 $Msi = Join-Path $Dist "$Name.msi"
-wix build (Join-Path $PSScriptRoot 'tanki-skin-studio.wxs') -arch $Arch `
+wix build (Join-Path $PSScriptRoot 'tanki-skin-studio.wxs') (Join-Path $PSScriptRoot 'installer-ui.wxs') -arch $Arch `
   -d "Version=$MsiVersion" -d "Stage=$((Resolve-Path $Stage).Path)" -o $Msi
 if ($LASTEXITCODE -ne 0) { throw "wix build failed with exit code $LASTEXITCODE" }
 # wix writes debug symbols beside the MSI; they are not a download.

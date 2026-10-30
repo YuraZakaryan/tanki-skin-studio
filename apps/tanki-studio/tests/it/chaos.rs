@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! A deep monkey ("chaos") test: random clicks, keys, shortcuts and text, plus everything the world
 //! can do to the app while it runs: the window is resized, the game starts and stops, packs good and
-//! broken are imported or dropped, the cache folder disappears and comes back, and the app is
-//! restarted on the same data. Seeds are fixed, so a failure replays exactly.
+//! broken are imported or dropped, the active pack is switched, the cache folder disappears and
+//! comes back, and the app is restarted on the same data. Seeds are fixed, so a failure replays
+//! exactly.
 //!
 //! After every step the app must hold its invariants (a real page, an active pack that exists, no
 //! pile of toasts, nothing cut off at the window's sides); at the end every replacement must undo
@@ -57,11 +58,23 @@ const TEXTS: &[&str] = &[
     "🙂",
     "a-very-long-item-name-that-never-ends",
 ];
-const KEY_ACTIONS: &[&str] = &["Apply", "Применить", "Restore", "Восстановить"];
+/// The fixture's skins are among them: nothing is picked until one is clicked.
+const KEY_ACTIONS: &[&str] = &[
+    "Apply",
+    "Применить",
+    "Restore",
+    "Восстановить",
+    "Wasp Red",
+    "Railgun Blue",
+    // A library card's button that makes its pack active: the monkey switches packs.
+    "Select",
+];
 
 /// Packs and folders the monkey imports or drops: good ones and broken ones.
 struct Inputs {
     good_zip: PathBuf,
+    /// A second good pack whose skins share ids with the first, so switching packs matters.
+    second: PathBuf,
     broken_zip: PathBuf,
     other_game: PathBuf,
     archive: PathBuf,
@@ -92,11 +105,20 @@ fn inputs(env: &Env) -> Inputs {
         std::fs::create_dir_all(file.parent().unwrap()).unwrap();
         std::fs::write(file, bytes).unwrap();
     }
+    let second = build_pack_dir(
+        &dir.join("second"),
+        &PackOptions {
+            id: "second-pack",
+            ..PackOptions::default()
+        },
+    )
+    .expect("second pack");
     let not_a_pack = dir.join("notes");
     std::fs::create_dir_all(&not_a_pack).unwrap();
     std::fs::write(not_a_pack.join("readme.txt"), b"hello").unwrap();
     Inputs {
         good_zip: env.zip.clone(),
+        second,
         broken_zip,
         other_game,
         archive,
@@ -194,6 +216,7 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
     let before = contents(&files);
     let mut h = open(&env);
     h.state_mut().import_path(&inputs.good_zip);
+    h.state_mut().import_path(&inputs.second);
     h.run_steps(4);
     let mut rng = Rng(seed);
     let mut size = (1440.0, 900.0);
@@ -226,11 +249,12 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
                 });
             }
             5 => {
-                let path = match rng.below(5) {
+                let path = match rng.below(6) {
                     0 => &inputs.good_zip,
                     1 => &inputs.broken_zip,
                     2 => &inputs.other_game,
                     3 => &inputs.archive,
+                    4 => &inputs.second,
                     _ => &inputs.not_a_pack,
                 };
                 h.state_mut().handle_dropped(vec![path.clone()]);

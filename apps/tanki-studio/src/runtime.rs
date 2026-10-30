@@ -24,6 +24,9 @@ impl eframe::App for Studio {
         if self.finish_recognition() {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }
+        if self.finish_import() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+        }
         crate::dev::autopilot_tick(self, ctx);
         self.handle_shortcuts(ctx);
         let dropped = ctx.input(|i| {
@@ -73,7 +76,14 @@ impl Studio {
                 height: rect.height(),
                 maximized: false,
             };
-            if let Some(fitted) = current.fit_to_screen((monitor.x, monitor.y))
+            // A first start opens at the design's frame, which can be larger than a laptop screen:
+            // size it to this screen instead, centred.
+            let wanted = if self.first_start {
+                tanki_core::session::WindowGeometry::first_start((monitor.x, monitor.y))
+            } else {
+                current.fit_to_screen((monitor.x, monitor.y))
+            };
+            if let Some(fitted) = wanted
                 && fitted != current
             {
                 ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::pos2(

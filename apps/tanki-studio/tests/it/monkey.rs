@@ -38,7 +38,15 @@ fn clickable_labels(h: &egui_kittest::Harness<'static, tanki_studio::app::Studio
 /// The buttons that change the cache, in both languages. A share of the steps presses one of them
 /// (a "smart" monkey): two specific clicks in a row (Apply, then Apply in the dialog) would almost
 /// never happen among dozens of buttons by chance alone.
-const KEY_ACTIONS: &[&str] = &["Apply", "Применить", "Restore", "Восстановить"];
+/// The fixture's skins are among them: nothing is picked until one is clicked.
+const KEY_ACTIONS: &[&str] = &[
+    "Apply",
+    "Применить",
+    "Restore",
+    "Восстановить",
+    "Wasp Red",
+    "Railgun Blue",
+];
 
 /// What one seeded run did: the pages it saw and the replacements it made.
 struct Run {

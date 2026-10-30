@@ -9,6 +9,7 @@ mod chaos;
 mod common;
 mod dialogs;
 mod garage;
+mod import;
 mod monkey;
 mod navigation;
 mod preferences;
