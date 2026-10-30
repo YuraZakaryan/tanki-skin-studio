@@ -60,9 +60,13 @@ pub fn modal(
                 tokens.surface_2,
                 Some((1.0, tokens.border_strong)),
             );
-            // The dialog itself swallows clicks so only the scrim outside it dismisses.
+            // The dialog itself swallows clicks so only the scrim outside it dismisses. The second
+            // click of a double click is not a dismissal: its first click opened the dialog (a
+            // double-clicked Apply would otherwise close its confirmation at once).
             let inside = ui.interact(rect, ui.scope_id().with("inside"), Sense::click());
             if scrim.clicked()
+                && !scrim.double_clicked()
+                && !scrim.triple_clicked()
                 && !inside.hovered()
                 && !rect.contains(scrim.interact_pointer_pos().unwrap_or_default())
             {

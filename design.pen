@@ -5283,7 +5283,7 @@
                                       "content": "Wasp M3 · Desert Camo"
                                     },
                                     "xzbI7": {
-                                      "content": "сегодня, 21:40 · 3 файла"
+                                      "content": "сегодня, 21:40 · 3 файла · откачено"
                                     },
                                     "XbnIw": {
                                       "enabled": false
@@ -11336,7 +11336,7 @@
                                       "content": "Wasp M3 · Desert Camo"
                                     },
                                     "xzbI7": {
-                                      "content": "сегодня, 21:40 · 3 файла"
+                                      "content": "сегодня, 21:40 · 3 файла · откачено"
                                     },
                                     "XbnIw": {
                                       "enabled": false
@@ -24609,7 +24609,7 @@
                                       "content": "Wasp M3 · Desert Camo"
                                     },
                                     "xzbI7": {
-                                      "content": "today, 21:40 · 3 files"
+                                      "content": "today, 21:40 · 3 files · restored"
                                     },
                                     "XbnIw": {
                                       "enabled": false
@@ -34421,7 +34421,7 @@
                                       "content": "Wasp M3 · Desert Camo"
                                     },
                                     "xzbI7": {
-                                      "content": "today, 21:40 · 3 files"
+                                      "content": "today, 21:40 · 3 files · restored"
                                     },
                                     "XbnIw": {
                                       "enabled": false
@@ -44677,6 +44677,3120 @@
                   ]
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "bNWS8",
+      "x": 20280,
+      "y": 3000,
+      "name": "Delete pack / Dark",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "eaOgo",
+          "type": "ref",
+          "ref": "ImzM7",
+          "height": "fill_container",
+          "descendants": {
+            "BRIU8": {
+              "children": [
+                {
+                  "id": "k4iMRG",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Обзор",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "layout-dashboard"
+                    },
+                    "XWA86": {
+                      "content": "Overview"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "S1R1th",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Гараж",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "warehouse"
+                    },
+                    "XWA86": {
+                      "content": "Garage"
+                    },
+                    "Ctrdj": {
+                      "content": "24",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "wqlg9",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Ресурсы",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "database"
+                    },
+                    "XWA86": {
+                      "content": "Resources"
+                    },
+                    "Ctrdj": {
+                      "content": "3,549",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "u6qgKn",
+                  "type": "ref",
+                  "ref": "k0ZyB8",
+                  "name": "Паки",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Z3fxoN": {
+                      "icon": "package"
+                    },
+                    "yJ6Th": {
+                      "content": "Packs"
+                    },
+                    "drFzr": {
+                      "content": "3",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "mY7h6",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Информация",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "info"
+                    },
+                    "XWA86": {
+                      "content": "Info"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                }
+              ]
+            },
+            "JHfO8": {
+              "content": "Game cache"
+            },
+            "j6wxv": {
+              "content": "macOS · 3,549 files"
+            },
+            "Gmbi8/zbRX2": {
+              "content": "Cache found"
+            },
+            "JDwyY": {
+              "fill": "$surface-2"
+            },
+            "ToPwU": {
+              "fill": "$primary"
+            },
+            "NggTy": {
+              "fill": "$text"
+            },
+            "KPV8S": {
+              "fill": "#00000000"
+            },
+            "kRj0m": {
+              "fill": "$text-3"
+            },
+            "PY1hV": {
+              "content": "Русский",
+              "fill": "$text-3"
+            },
+            "USULF": {
+              "fill": "#00000000"
+            },
+            "LInex": {
+              "fill": "$text-3"
+            },
+            "P12EA": {
+              "content": "Light",
+              "fill": "$text-3"
+            },
+            "YXrxM": {
+              "fill": "#00000000"
+            },
+            "waUOM": {
+              "fill": "$text-3"
+            },
+            "kN8TM": {
+              "content": "Dark",
+              "fill": "$text-3"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "xKtGG",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "U3ICo",
+              "type": "ref",
+              "ref": "z7ppN1",
+              "width": "fill_container",
+              "descendants": {
+                "FmyyG": {
+                  "content": "Packs"
+                },
+                "VpbfJ": {
+                  "content": ".tankipack library · active pack"
+                },
+                "W4VMZl": {
+                  "children": [
+                    {
+                      "id": "iE5T5",
+                      "type": "ref",
+                      "ref": "h5FP1K",
+                      "name": "Folder",
+                      "descendants": {
+                        "W9k5B3": {
+                          "icon": "folder-open"
+                        },
+                        "Wkr93": {
+                          "content": "From folder"
+                        }
+                      }
+                    },
+                    {
+                      "id": "GNaNz",
+                      "type": "ref",
+                      "ref": "J6C7gB",
+                      "name": "Import",
+                      "descendants": {
+                        "y5oKr": {
+                          "icon": "upload"
+                        },
+                        "lhvkG": {
+                          "content": "Import ZIP"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "Xf4xc",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Ac5jP",
+                  "name": "Columns",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "id": "jJ3MS",
+                      "type": "ref",
+                      "ref": "pWQbK",
+                      "name": "My Packs",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "descendants": {
+                        "vEfkk": {
+                          "content": "MY PACKS"
+                        },
+                        "f5wuT": {
+                          "content": "3 packs"
+                        },
+                        "gKejC": {
+                          "height": "fill_container",
+                          "gap": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "hzymP",
+                              "name": "Grid",
+                              "width": "fill_container",
+                              "gap": 16,
+                              "children": [
+                                {
+                                  "id": "tEyqF",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Desert Camo",
+                                  "width": "fill_container",
+                                  "stroke": "$primary",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Desert Camo"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.2.0 · Kolya · MIT"
+                                    },
+                                    "ZuyXM": {
+                                      "id": "K9Ixm",
+                                      "type": "ref",
+                                      "ref": "op3pN",
+                                      "descendants": {
+                                        "zbRX2": {
+                                          "content": "Active"
+                                        }
+                                      }
+                                    },
+                                    "XdYnl": {
+                                      "enabled": false
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "Q65tV",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Arctic Ops",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Arctic Ops"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v0.9.3 · Frost · CC-BY"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "5 variants"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "d89Af",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Neon Grid",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Neon Grid"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.0.0 · Vex · MIT"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "3 variants"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "id": "UxPce",
+                              "type": "ref",
+                              "ref": "mjhl6",
+                              "name": "Dropzone",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "descendants": {
+                                "h1UO3P": {
+                                  "content": "Drop a .tankipack here"
+                                },
+                                "A22XO": {
+                                  "content": ".tankipack, .zip or a folder with manifest.json"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "iu7Mg",
+                      "name": "Right",
+                      "width": 420,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "vJCyW",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Active Pack",
+                          "width": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "ACTIVE PACK"
+                            },
+                            "f5wuT": {
+                              "content": "Desert Camo"
+                            },
+                            "gKejC": {
+                              "gap": 10,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "XCV94",
+                                  "name": "Версия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "jwYf2",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Version",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "HHrHV",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "1.2.0",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "baLCS",
+                                  "name": "Автор",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "J3twK",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Author",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "RqVFa",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Kolya",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "J4UoWh",
+                                  "name": "Лицензия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Ae2fZ",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "License",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "uYlo1",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "MIT",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Q80he",
+                                  "name": "Клиенты",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "F3KL98",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Clients",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "MdrJm",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Game cache",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "DPdWa",
+                                  "name": "Контрольные суммы",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "BmlK7",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Checksums",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "hqdtE",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "SHA-256 ✓",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "KhYqy",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Pack Items",
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "PACK ITEMS"
+                            },
+                            "f5wuT": {
+                              "content": "2 items · 6 variants"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fit_content",
+                              "children": [
+                                {
+                                  "id": "Wg5hQ",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "truck"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 variants"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Hull"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "DHFZF",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "crosshair"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 variants"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Turret"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "Y5MMss",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Backups",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "BACKUPS"
+                            },
+                            "f5wuT": {
+                              "content": "2 backups"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fill_container",
+                              "children": [
+                                {
+                                  "id": "gjhwT",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "today, 21:40 · 3 files · restored"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "L72lKY",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "yesterday, 18:12 · 3 files"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "QKFlp",
+                                  "name": "Spacer",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "id": "c4cxV",
+                                  "type": "ref",
+                                  "ref": "oEcWO",
+                                  "name": "Restore",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "descendants": {
+                                    "Z32In": {
+                                      "icon": "rotate-ccw"
+                                    },
+                                    "w1prpV": {
+                                      "content": "Restore last replacement"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "IzZQm",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 1440,
+          "height": 900,
+          "fill": "#000000B8",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "J1aN2Q",
+              "type": "ref",
+              "ref": "zrPc2",
+              "name": "Modal",
+              "descendants": {
+                "LAk1h": {
+                  "content": "Delete pack “Desert Camo”?"
+                },
+                "o4DFkX": {
+                  "type": "frame",
+                  "id": "NBQuv",
+                  "name": "Body",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    0,
+                    24,
+                    20,
+                    24
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VRHMh",
+                      "name": "Text",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                "rDq4X/z1BWX": {
+                  "content": "Cancel"
+                },
+                "fHTMh": {
+                  "id": "rODTT",
+                  "type": "ref",
+                  "ref": "oEcWO",
+                  "name": "Delete",
+                  "descendants": {
+                    "w1prpV": {
+                      "content": "Delete"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "iNyg2",
+      "x": 20280,
+      "y": 4020,
+      "name": "Delete pack / Light",
+      "theme": {
+        "mode": "light"
+      },
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "G72f9B",
+          "type": "ref",
+          "ref": "ImzM7",
+          "height": "fill_container",
+          "descendants": {
+            "BRIU8": {
+              "children": [
+                {
+                  "id": "X74HMI",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Обзор",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "layout-dashboard"
+                    },
+                    "XWA86": {
+                      "content": "Overview"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "aKAB1",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Гараж",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "warehouse"
+                    },
+                    "XWA86": {
+                      "content": "Garage"
+                    },
+                    "Ctrdj": {
+                      "content": "24",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "FiiA5",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Ресурсы",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "database"
+                    },
+                    "XWA86": {
+                      "content": "Resources"
+                    },
+                    "Ctrdj": {
+                      "content": "3,549",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "pzqEK",
+                  "type": "ref",
+                  "ref": "k0ZyB8",
+                  "name": "Паки",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Z3fxoN": {
+                      "icon": "package"
+                    },
+                    "yJ6Th": {
+                      "content": "Packs"
+                    },
+                    "drFzr": {
+                      "content": "3",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "ooz93",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Информация",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "info"
+                    },
+                    "XWA86": {
+                      "content": "Info"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                }
+              ]
+            },
+            "JHfO8": {
+              "content": "Game cache"
+            },
+            "j6wxv": {
+              "content": "macOS · 3,549 files"
+            },
+            "Gmbi8/zbRX2": {
+              "content": "Cache found"
+            },
+            "JDwyY": {
+              "fill": "$surface-2"
+            },
+            "ToPwU": {
+              "fill": "$primary"
+            },
+            "NggTy": {
+              "fill": "$text"
+            },
+            "KPV8S": {
+              "fill": "#00000000"
+            },
+            "kRj0m": {
+              "fill": "$text-3"
+            },
+            "PY1hV": {
+              "content": "Русский",
+              "fill": "$text-3"
+            },
+            "USULF": {
+              "fill": "#00000000"
+            },
+            "LInex": {
+              "fill": "$text-3"
+            },
+            "P12EA": {
+              "fill": "$text-3",
+              "content": "Light"
+            },
+            "YXrxM": {
+              "fill": "#00000000"
+            },
+            "waUOM": {
+              "fill": "$text-3"
+            },
+            "kN8TM": {
+              "fill": "$text-3",
+              "content": "Dark"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "y8cdx3",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "MgFxg",
+              "type": "ref",
+              "ref": "z7ppN1",
+              "width": "fill_container",
+              "descendants": {
+                "FmyyG": {
+                  "content": "Packs"
+                },
+                "VpbfJ": {
+                  "content": ".tankipack library · active pack"
+                },
+                "W4VMZl": {
+                  "children": [
+                    {
+                      "id": "V1b4O",
+                      "type": "ref",
+                      "ref": "h5FP1K",
+                      "name": "Folder",
+                      "descendants": {
+                        "W9k5B3": {
+                          "icon": "folder-open"
+                        },
+                        "Wkr93": {
+                          "content": "From folder"
+                        }
+                      }
+                    },
+                    {
+                      "id": "x8y5mr",
+                      "type": "ref",
+                      "ref": "J6C7gB",
+                      "name": "Import",
+                      "descendants": {
+                        "y5oKr": {
+                          "icon": "upload"
+                        },
+                        "lhvkG": {
+                          "content": "Import ZIP"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "mF65k",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "LOhra",
+                  "name": "Columns",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "id": "M8vsB",
+                      "type": "ref",
+                      "ref": "pWQbK",
+                      "name": "My Packs",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "descendants": {
+                        "vEfkk": {
+                          "content": "MY PACKS"
+                        },
+                        "f5wuT": {
+                          "content": "3 packs"
+                        },
+                        "gKejC": {
+                          "height": "fill_container",
+                          "gap": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "BP1Or",
+                              "name": "Grid",
+                              "width": "fill_container",
+                              "gap": 16,
+                              "children": [
+                                {
+                                  "id": "j5Py5Z",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Desert Camo",
+                                  "width": "fill_container",
+                                  "stroke": "$primary",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Desert Camo"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.2.0 · Kolya · MIT"
+                                    },
+                                    "ZuyXM": {
+                                      "id": "ti4b5",
+                                      "type": "ref",
+                                      "ref": "op3pN",
+                                      "descendants": {
+                                        "zbRX2": {
+                                          "content": "Active"
+                                        }
+                                      }
+                                    },
+                                    "XdYnl": {
+                                      "enabled": false
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "BCxAr",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Arctic Ops",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Arctic Ops"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v0.9.3 · Frost · CC-BY"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "5 variants"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "SD1wD",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Neon Grid",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Neon Grid"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.0.0 · Vex · MIT"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "3 variants"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    },
+                                    "XdYnl/Wkr93": {
+                                      "content": "Select"
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "id": "p3xLls",
+                              "type": "ref",
+                              "ref": "mjhl6",
+                              "name": "Dropzone",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "descendants": {
+                                "h1UO3P": {
+                                  "content": "Drop a .tankipack here"
+                                },
+                                "A22XO": {
+                                  "content": ".tankipack, .zip or a folder with manifest.json"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mABRj",
+                      "name": "Right",
+                      "width": 420,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "LbnX3",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Active Pack",
+                          "width": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "ACTIVE PACK"
+                            },
+                            "f5wuT": {
+                              "content": "Desert Camo"
+                            },
+                            "gKejC": {
+                              "gap": 10,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "MwEvN",
+                                  "name": "Версия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "cGgdk",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Version",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "u5SDLG",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "1.2.0",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "PSNEA",
+                                  "name": "Автор",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "OxBo1",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Author",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "cFeos",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Kolya",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "vEs8c",
+                                  "name": "Лицензия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "c7yQ1g",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "License",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "cT47p",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "MIT",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "RQecA",
+                                  "name": "Клиенты",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "V4Iwf0",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Clients",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "o7ruOC",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Game cache",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "O6gWZ",
+                                  "name": "Контрольные суммы",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "wLsjN",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Checksums",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "I1MJQS",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "SHA-256 ✓",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "SwWyD",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Pack Items",
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "PACK ITEMS"
+                            },
+                            "f5wuT": {
+                              "content": "2 items · 6 variants"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fit_content",
+                              "children": [
+                                {
+                                  "id": "nQncd",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "truck"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 variants"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Hull"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "Qv1WV",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "crosshair"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 variants"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Turret"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "hKRM9",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Backups",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "BACKUPS"
+                            },
+                            "f5wuT": {
+                              "content": "2 backups"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fill_container",
+                              "children": [
+                                {
+                                  "id": "G4DYk",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "today, 21:40 · 3 files · restored"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "k1GipX",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "yesterday, 18:12 · 3 files"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false,
+                                      "content": "412 KB"
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Hm1LJ",
+                                  "name": "Spacer",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "id": "Vi3OY",
+                                  "type": "ref",
+                                  "ref": "oEcWO",
+                                  "name": "Restore",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "descendants": {
+                                    "Z32In": {
+                                      "icon": "rotate-ccw"
+                                    },
+                                    "w1prpV": {
+                                      "content": "Restore last replacement"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "KxsQ4",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 1440,
+          "height": 900,
+          "fill": "#000000B8",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "edD4n",
+              "type": "ref",
+              "ref": "zrPc2",
+              "name": "Modal",
+              "descendants": {
+                "LAk1h": {
+                  "content": "Delete pack “Desert Camo”?"
+                },
+                "o4DFkX": {
+                  "type": "frame",
+                  "id": "Dq7Ia",
+                  "name": "Body",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    0,
+                    24,
+                    20,
+                    24
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GgctN",
+                      "name": "Text",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                "rDq4X/z1BWX": {
+                  "content": "Cancel"
+                },
+                "fHTMh": {
+                  "id": "EbnP8",
+                  "type": "ref",
+                  "ref": "oEcWO",
+                  "name": "Delete",
+                  "descendants": {
+                    "w1prpV": {
+                      "content": "Delete"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "mWtkm",
+      "x": 20280,
+      "y": 5040,
+      "name": "Удаление пака / Dark · RU",
+      "theme": {
+        "mode": "dark"
+      },
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "lHNIb",
+          "type": "ref",
+          "ref": "ImzM7",
+          "height": "fill_container",
+          "descendants": {
+            "BRIU8": {
+              "children": [
+                {
+                  "id": "uJ65s",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Обзор",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "layout-dashboard"
+                    },
+                    "XWA86": {
+                      "content": "Обзор"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "H9TrV3",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Гараж",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "warehouse"
+                    },
+                    "XWA86": {
+                      "content": "Гараж"
+                    },
+                    "Ctrdj": {
+                      "content": "24",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "HEbw0",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Ресурсы",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "database"
+                    },
+                    "XWA86": {
+                      "content": "Ресурсы"
+                    },
+                    "Ctrdj": {
+                      "content": "3 549",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "kxpjN",
+                  "type": "ref",
+                  "ref": "k0ZyB8",
+                  "name": "Паки",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Z3fxoN": {
+                      "icon": "package"
+                    },
+                    "yJ6Th": {
+                      "content": "Паки"
+                    },
+                    "drFzr": {
+                      "content": "3",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "GvPoc",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Информация",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "info"
+                    },
+                    "XWA86": {
+                      "content": "Информация"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                }
+              ]
+            },
+            "JHfO8": {
+              "content": "Кэш игры"
+            },
+            "JDwyY": {
+              "fill": "#00000000"
+            },
+            "ToPwU": {
+              "fill": "$text-3"
+            },
+            "NggTy": {
+              "fill": "$text-3"
+            },
+            "KPV8S": {
+              "fill": "$surface-2"
+            },
+            "kRj0m": {
+              "fill": "$primary"
+            },
+            "PY1hV": {
+              "fill": "$text"
+            },
+            "USULF": {
+              "fill": "#00000000"
+            },
+            "LInex": {
+              "fill": "$text-3"
+            },
+            "P12EA": {
+              "fill": "$text-3"
+            },
+            "YXrxM": {
+              "fill": "#00000000"
+            },
+            "waUOM": {
+              "fill": "$text-3"
+            },
+            "kN8TM": {
+              "fill": "$text-3"
+            },
+            "x6Q1A": {
+              "content": "Системная"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "ryIiX",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "F5JpWf",
+              "type": "ref",
+              "ref": "z7ppN1",
+              "width": "fill_container",
+              "descendants": {
+                "FmyyG": {
+                  "content": "Паки"
+                },
+                "VpbfJ": {
+                  "content": "Библиотека .tankipack · активный пак"
+                },
+                "W4VMZl": {
+                  "children": [
+                    {
+                      "id": "G86NGa",
+                      "type": "ref",
+                      "ref": "h5FP1K",
+                      "name": "Folder",
+                      "descendants": {
+                        "W9k5B3": {
+                          "icon": "folder-open"
+                        },
+                        "Wkr93": {
+                          "content": "Из папки"
+                        }
+                      }
+                    },
+                    {
+                      "id": "b7k3K",
+                      "type": "ref",
+                      "ref": "J6C7gB",
+                      "name": "Import",
+                      "descendants": {
+                        "y5oKr": {
+                          "icon": "upload"
+                        },
+                        "lhvkG": {
+                          "content": "Импортировать ZIP"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "oVd32",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "lMeKi",
+                  "name": "Columns",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "id": "tpp8q",
+                      "type": "ref",
+                      "ref": "pWQbK",
+                      "name": "My Packs",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "descendants": {
+                        "vEfkk": {
+                          "content": "МОИ ПАКИ"
+                        },
+                        "f5wuT": {
+                          "content": "3 пака"
+                        },
+                        "gKejC": {
+                          "height": "fill_container",
+                          "gap": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "MLP2d",
+                              "name": "Grid",
+                              "width": "fill_container",
+                              "gap": 16,
+                              "children": [
+                                {
+                                  "id": "ynZno",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Desert Camo",
+                                  "width": "fill_container",
+                                  "stroke": "$primary",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Desert Camo"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.2.0 · Kolya · MIT"
+                                    },
+                                    "ZuyXM": {
+                                      "id": "eFnO5",
+                                      "type": "ref",
+                                      "ref": "op3pN",
+                                      "descendants": {
+                                        "zbRX2": {
+                                          "content": "Активен"
+                                        }
+                                      }
+                                    },
+                                    "XdYnl": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "dMDLE",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Arctic Ops",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Arctic Ops"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v0.9.3 · Frost · CC-BY"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "5 вариантов"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "oKtTq",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Neon Grid",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Neon Grid"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.0.0 · Vex · MIT"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "id": "UukXd",
+                              "type": "ref",
+                              "ref": "mjhl6",
+                              "name": "Dropzone",
+                              "width": "fill_container",
+                              "height": "fill_container"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vPZgK",
+                      "name": "Right",
+                      "width": 420,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "PgPEg",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Active Pack",
+                          "width": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "АКТИВНЫЙ ПАК"
+                            },
+                            "f5wuT": {
+                              "content": "Desert Camo"
+                            },
+                            "gKejC": {
+                              "gap": 10,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "zq0FY",
+                                  "name": "Версия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "b6mKb",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Версия",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "A38Rja",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "1.2.0",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "pGIwi",
+                                  "name": "Автор",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "eV9ol",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Автор",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "IC7hP",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Kolya",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "LxIGq",
+                                  "name": "Лицензия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "sqrPW",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Лицензия",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "c9BwbD",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "MIT",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "t0J2GP",
+                                  "name": "Клиенты",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "hdMB7",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Клиенты",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "SvGFB",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Кэш игры",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "DTYz2",
+                                  "name": "Контрольные суммы",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "hGEXR",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Контрольные суммы",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "Kxb9h",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "SHA-256 ✓",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "AHDg3",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Pack Items",
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "ПРЕДМЕТЫ ПАКА"
+                            },
+                            "f5wuT": {
+                              "content": "2 предмета · 6 вариантов"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fit_content",
+                              "children": [
+                                {
+                                  "id": "lkZi7",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "truck"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Корпус"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "T56oc4",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "crosshair"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Пушка"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "bGppq",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Backups",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "РЕЗЕРВНЫЕ КОПИИ"
+                            },
+                            "f5wuT": {
+                              "content": "2 копии"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fill_container",
+                              "children": [
+                                {
+                                  "id": "H0rov",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "сегодня, 21:40 · 3 файла · откачено"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "oJDpz",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "вчера, 18:12 · 3 файла"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "aVqQJ",
+                                  "name": "Spacer",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "id": "n0zQtR",
+                                  "type": "ref",
+                                  "ref": "oEcWO",
+                                  "name": "Restore",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "descendants": {
+                                    "Z32In": {
+                                      "icon": "rotate-ccw"
+                                    },
+                                    "w1prpV": {
+                                      "content": "Откатить последнюю замену"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "P7HfT",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 1440,
+          "height": 900,
+          "fill": "#000000B8",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "W7tim",
+              "type": "ref",
+              "ref": "zrPc2",
+              "name": "Modal",
+              "descendants": {
+                "LAk1h": {
+                  "content": "Удалить пак «Desert Camo»?"
+                },
+                "o4DFkX": {
+                  "type": "frame",
+                  "id": "u8kQw",
+                  "name": "Body",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    0,
+                    24,
+                    20,
+                    24
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "R27mXx",
+                      "name": "Text",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Пак и его файлы удаляются из библиотеки. Уже применённые скины остаются в кэше игры, их можно восстановить.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                "rDq4X/z1BWX": {
+                  "content": "Отмена"
+                },
+                "fHTMh": {
+                  "id": "NRhao",
+                  "type": "ref",
+                  "ref": "oEcWO",
+                  "name": "Delete",
+                  "descendants": {
+                    "w1prpV": {
+                      "content": "Удалить"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "B1tEp",
+      "x": 20280,
+      "y": 6060,
+      "name": "Удаление пака / Light · RU",
+      "theme": {
+        "mode": "light"
+      },
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "$bg",
+      "children": [
+        {
+          "id": "JfkNy",
+          "type": "ref",
+          "ref": "ImzM7",
+          "height": "fill_container",
+          "descendants": {
+            "BRIU8": {
+              "children": [
+                {
+                  "id": "C3ATh",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Обзор",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "layout-dashboard"
+                    },
+                    "XWA86": {
+                      "content": "Обзор"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                },
+                {
+                  "id": "b3c87X",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Гараж",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "warehouse"
+                    },
+                    "XWA86": {
+                      "content": "Гараж"
+                    },
+                    "Ctrdj": {
+                      "content": "24",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "NqRb3",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Ресурсы",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "database"
+                    },
+                    "XWA86": {
+                      "content": "Ресурсы"
+                    },
+                    "Ctrdj": {
+                      "content": "3 549",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "rOshq",
+                  "type": "ref",
+                  "ref": "k0ZyB8",
+                  "name": "Паки",
+                  "width": "fill_container",
+                  "descendants": {
+                    "Z3fxoN": {
+                      "icon": "package"
+                    },
+                    "yJ6Th": {
+                      "content": "Паки"
+                    },
+                    "drFzr": {
+                      "content": "3",
+                      "enabled": true
+                    }
+                  }
+                },
+                {
+                  "id": "iC5ul",
+                  "type": "ref",
+                  "ref": "sa3OP",
+                  "name": "Информация",
+                  "width": "fill_container",
+                  "descendants": {
+                    "yzMf0": {
+                      "icon": "info"
+                    },
+                    "XWA86": {
+                      "content": "Информация"
+                    },
+                    "Ctrdj": {
+                      "content": "",
+                      "enabled": false
+                    }
+                  }
+                }
+              ]
+            },
+            "JHfO8": {
+              "content": "Кэш игры"
+            },
+            "JDwyY": {
+              "fill": "#00000000"
+            },
+            "ToPwU": {
+              "fill": "$text-3"
+            },
+            "NggTy": {
+              "fill": "$text-3"
+            },
+            "KPV8S": {
+              "fill": "$surface-2"
+            },
+            "kRj0m": {
+              "fill": "$primary"
+            },
+            "PY1hV": {
+              "fill": "$text"
+            },
+            "USULF": {
+              "fill": "#00000000"
+            },
+            "LInex": {
+              "fill": "$text-3"
+            },
+            "P12EA": {
+              "fill": "$text-3"
+            },
+            "YXrxM": {
+              "fill": "#00000000"
+            },
+            "waUOM": {
+              "fill": "$text-3"
+            },
+            "kN8TM": {
+              "fill": "$text-3"
+            },
+            "x6Q1A": {
+              "content": "Системная"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "YPrsU",
+          "name": "Main",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "goror",
+              "type": "ref",
+              "ref": "z7ppN1",
+              "width": "fill_container",
+              "descendants": {
+                "FmyyG": {
+                  "content": "Паки"
+                },
+                "VpbfJ": {
+                  "content": "Библиотека .tankipack · активный пак"
+                },
+                "W4VMZl": {
+                  "children": [
+                    {
+                      "id": "h9lm6",
+                      "type": "ref",
+                      "ref": "h5FP1K",
+                      "name": "Folder",
+                      "descendants": {
+                        "W9k5B3": {
+                          "icon": "folder-open"
+                        },
+                        "Wkr93": {
+                          "content": "Из папки"
+                        }
+                      }
+                    },
+                    {
+                      "id": "ns5QA",
+                      "type": "ref",
+                      "ref": "J6C7gB",
+                      "name": "Import",
+                      "descendants": {
+                        "y5oKr": {
+                          "icon": "upload"
+                        },
+                        "lhvkG": {
+                          "content": "Импортировать ZIP"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "UeOi2",
+              "name": "Content",
+              "width": "fill_container",
+              "height": "fill_container",
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 32,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "t3gWLL",
+                  "name": "Columns",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "gap": 24,
+                  "children": [
+                    {
+                      "id": "hw72c",
+                      "type": "ref",
+                      "ref": "pWQbK",
+                      "name": "My Packs",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "descendants": {
+                        "vEfkk": {
+                          "content": "МОИ ПАКИ"
+                        },
+                        "f5wuT": {
+                          "content": "3 пака"
+                        },
+                        "gKejC": {
+                          "height": "fill_container",
+                          "gap": 16,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "LPyTS",
+                              "name": "Grid",
+                              "width": "fill_container",
+                              "gap": 16,
+                              "children": [
+                                {
+                                  "id": "d4fYy7",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Desert Camo",
+                                  "width": "fill_container",
+                                  "stroke": "$primary",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Desert Camo"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.2.0 · Kolya · MIT"
+                                    },
+                                    "ZuyXM": {
+                                      "id": "YTtzW",
+                                      "type": "ref",
+                                      "ref": "op3pN",
+                                      "descendants": {
+                                        "zbRX2": {
+                                          "content": "Активен"
+                                        }
+                                      }
+                                    },
+                                    "XdYnl": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "x0vyD",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Arctic Ops",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Arctic Ops"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v0.9.3 · Frost · CC-BY"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "5 вариантов"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "IRoum",
+                                  "type": "ref",
+                                  "ref": "xeeDT",
+                                  "name": "Neon Grid",
+                                  "width": "fill_container",
+                                  "stroke": "$border",
+                                  "descendants": {
+                                    "N0o2dm": {
+                                      "content": "Neon Grid"
+                                    },
+                                    "g1Sl1": {
+                                      "content": "v1.0.0 · Vex · MIT"
+                                    },
+                                    "ZuyXM/e62hp4": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XdYnl": {
+                                      "enabled": true
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "id": "q01h7",
+                              "type": "ref",
+                              "ref": "mjhl6",
+                              "name": "Dropzone",
+                              "width": "fill_container",
+                              "height": "fill_container"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "kCcYO",
+                      "name": "Right",
+                      "width": 420,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 24,
+                      "children": [
+                        {
+                          "id": "c0hf1B",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Active Pack",
+                          "width": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "АКТИВНЫЙ ПАК"
+                            },
+                            "f5wuT": {
+                              "content": "Desert Camo"
+                            },
+                            "gKejC": {
+                              "gap": 10,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "MHpG0",
+                                  "name": "Версия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "cqH9s",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Версия",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "N3dOk",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "1.2.0",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "eer1h",
+                                  "name": "Автор",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "j1JkuG",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Автор",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "R1Zwqt",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Kolya",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ekOGl",
+                                  "name": "Лицензия",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "wRnmk",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Лицензия",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "AFhxS",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "MIT",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "e8iaN",
+                                  "name": "Клиенты",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "yeXb0",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Клиенты",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "IVIYu",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "Кэш игры",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "SySWj",
+                                  "name": "Контрольные суммы",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "J4gYJu",
+                                      "name": "Key",
+                                      "fill": "$text-3",
+                                      "content": "Контрольные суммы",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "uqr4p",
+                                      "name": "Value",
+                                      "fill": "$text",
+                                      "content": "SHA-256 ✓",
+                                      "fontFamily": "$font-body",
+                                      "fontSize": 13,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "ebvMD",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Pack Items",
+                          "width": "fill_container",
+                          "height": "fit_content",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "ПРЕДМЕТЫ ПАКА"
+                            },
+                            "f5wuT": {
+                              "content": "2 предмета · 6 вариантов"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fit_content",
+                              "children": [
+                                {
+                                  "id": "ttr9F",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "truck"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Корпус"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "Hdrp1",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "crosshair"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3"
+                                    },
+                                    "xzbI7": {
+                                      "content": "3 варианта"
+                                    },
+                                    "XbnIw/e62hp4": {
+                                      "content": "Пушка"
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "a7KXU9",
+                          "type": "ref",
+                          "ref": "pWQbK",
+                          "name": "Backups",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "descendants": {
+                            "vEfkk": {
+                              "content": "РЕЗЕРВНЫЕ КОПИИ"
+                            },
+                            "f5wuT": {
+                              "content": "2 копии"
+                            },
+                            "gKejC": {
+                              "padding": 8,
+                              "gap": 2,
+                              "height": "fill_container",
+                              "children": [
+                                {
+                                  "id": "g6e5a",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Wasp M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Wasp M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "сегодня, 21:40 · 3 файла · откачено"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": "VMX3c",
+                                  "type": "ref",
+                                  "ref": "vpjKf",
+                                  "name": "Railgun M3 · Desert Camo",
+                                  "width": "fill_container",
+                                  "descendants": {
+                                    "pyO3v": {
+                                      "icon": "history"
+                                    },
+                                    "sjC8e": {
+                                      "content": "Railgun M3 · Desert Camo"
+                                    },
+                                    "xzbI7": {
+                                      "content": "вчера, 18:12 · 3 файла"
+                                    },
+                                    "XbnIw": {
+                                      "enabled": false
+                                    },
+                                    "Y14svk": {
+                                      "enabled": false
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Su91S",
+                                  "name": "Spacer",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "id": "orwwh",
+                                  "type": "ref",
+                                  "ref": "oEcWO",
+                                  "name": "Restore",
+                                  "width": "fill_container",
+                                  "height": 44,
+                                  "descendants": {
+                                    "Z32In": {
+                                      "icon": "rotate-ccw"
+                                    },
+                                    "w1prpV": {
+                                      "content": "Откатить последнюю замену"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "cGaBr",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Scrim",
+          "width": 1440,
+          "height": 900,
+          "fill": "#000000B8",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "hKjzS",
+              "type": "ref",
+              "ref": "zrPc2",
+              "name": "Modal",
+              "descendants": {
+                "LAk1h": {
+                  "content": "Удалить пак «Desert Camo»?"
+                },
+                "o4DFkX": {
+                  "type": "frame",
+                  "id": "GJQ7j",
+                  "name": "Body",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    0,
+                    24,
+                    20,
+                    24
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "B85mfF",
+                      "name": "Text",
+                      "fill": "$text-2",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Пак и его файлы удаляются из библиотеки. Уже применённые скины остаются в кэше игры, их можно восстановить.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                "rDq4X/z1BWX": {
+                  "content": "Отмена"
+                },
+                "fHTMh": {
+                  "id": "s5BgKE",
+                  "type": "ref",
+                  "ref": "oEcWO",
+                  "name": "Delete",
+                  "descendants": {
+                    "w1prpV": {
+                      "content": "Удалить"
+                    }
+                  }
+                }
+              }
             }
           ]
         }

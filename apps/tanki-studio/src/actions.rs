@@ -237,6 +237,23 @@ impl Studio {
         }
     }
 
+    /// The library's Delete button: deleting removes the pack's files, so it is asked first. A
+    /// double click on the bin then never reaches the card that moves into its place.
+    pub fn ask_to_delete_pack(&mut self, id: &str, version: &str) {
+        let Some(pack) = self
+            .packs
+            .iter()
+            .find(|p| p.manifest.id == id && p.manifest.version == version)
+        else {
+            return;
+        };
+        self.dialog = Some(Dialog::DeletePack {
+            id: id.to_owned(),
+            version: version.to_owned(),
+            name: pack.manifest.name.clone(),
+        });
+    }
+
     pub fn delete_pack(&mut self, id: &str, version: &str) {
         if let Err(error) = self.store.delete_pack(id, version) {
             self.toast(crate::errors::user_message(&error), None);

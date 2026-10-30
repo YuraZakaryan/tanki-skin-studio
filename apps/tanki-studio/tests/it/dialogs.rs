@@ -173,8 +173,107 @@ fn deleting_a_pack_from_the_library_removes_it() {
     h.run_steps(3);
     h.get_by_label("Delete pack").click();
     h.run_steps(4);
+    assert!(
+        matches!(h.state().dialog, Some(Dialog::DeletePack { .. })),
+        "asked first: {:?}",
+        h.state().dialog
+    );
+    assert_eq!(
+        h.state().packs.len(),
+        1,
+        "nothing deleted before the answer"
+    );
+    h.get_by_label("Delete").click();
+    h.run_steps(4);
     assert!(h.state().packs.is_empty());
     assert!(h.state().active_pack.is_none());
+}
+
+#[test]
+fn cancelling_the_deletion_keeps_the_pack() {
+    let env = env("delete-cancel");
+    let mut h = harness_with_pack(&env);
+    h.get_by_label("Packs").click();
+    h.run_steps(3);
+    h.get_by_label("Delete pack").click();
+    h.run_steps(4);
+    h.get_by_label("Cancel").click();
+    h.run_steps(4);
+    assert!(h.state().dialog.is_none());
+    assert_eq!(h.state().packs.len(), 1);
+}
+
+/// Two presses at the same point, as fast as a person double-clicks. A harness step moves egui's
+/// clock by more than the 0.3 s of a double click, so the clock is held still between the presses.
+fn double_click_at(
+    h: &mut egui_kittest::Harness<'static, tanki_studio::app::Studio>,
+    pos: egui::Pos2,
+) {
+    let now = h.ctx.input(|i| i.time);
+    h.input_mut().time = Some(now);
+    for _ in 0..2 {
+        h.event(egui::Event::PointerMoved(pos));
+        for pressed in [true, false] {
+            h.event(egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            });
+        }
+        h.run_steps(1);
+    }
+    h.input_mut().time = None;
+    h.run_steps(3);
+}
+
+#[test]
+fn a_double_click_on_the_bin_deletes_no_other_pack() {
+    let env = env("delete-double");
+    let mut h = harness_with_pack(&env);
+    for id in ["second", "third"] {
+        let pack = build_pack_dir(
+            &scratch(&format!("delete-double-{id}")),
+            &PackOptions {
+                id,
+                ..PackOptions::default()
+            },
+        )
+        .unwrap();
+        h.state_mut().import_path(&pack);
+        h.run_steps(2);
+    }
+    h.state_mut().toasts.clear();
+    h.get_by_label("Packs").click();
+    h.run_steps(3);
+    assert_eq!(h.state().packs.len(), 3);
+    let first = h.state().packs[0].manifest.id.clone();
+    let bin = h
+        .get_all_by_label("Delete pack")
+        .next()
+        .expect("a bin")
+        .rect()
+        .center();
+    double_click_at(&mut h, bin);
+    assert_eq!(h.state().packs.len(), 3, "the double click deleted nothing");
+    let Some(Dialog::DeletePack { id, .. }) = h.state().dialog.clone() else {
+        panic!("expected the question, got {:?}", h.state().dialog);
+    };
+    assert_eq!(id, first, "about the pack whose bin was clicked");
+}
+
+#[test]
+fn a_double_clicked_apply_keeps_its_confirmation_open() {
+    let env = env("apply-double");
+    let mut h = harness_with_pack(&env);
+    open_garage_with_hull(&mut h);
+    let apply = h.get_by_label("Apply to Wasp M3").rect().center();
+    double_click_at(&mut h, apply);
+    assert!(
+        matches!(h.state().dialog, Some(Dialog::Confirm(..))),
+        "{:?}",
+        h.state().dialog
+    );
 }
 
 fn open_confirmation(h: &mut egui_kittest::Harness<'static, tanki_studio::app::Studio>) {

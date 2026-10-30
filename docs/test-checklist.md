@@ -40,6 +40,8 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | A pack for another game | e2e `apply_refuses_wrong_game…`, it `chaos` |
 | The same pack twice: refused | unit `pack` |
 | Undo an import, delete a pack, the next one becomes active | it `dialogs`, e2e `deleting_a_pack…` |
+| Deleting a pack asks first; Cancel keeps it; a double click on the bin deletes no other pack | it `dialogs` |
+| The second click of a double click never dismisses the dialog its first click opened | it `dialogs` |
 | Folders without a manifest, any layout (Flash/2.0/html5, no Old/New, typos, editions XT/Prime/ALT, grouped folders, skins split in folders) | unit `archive::tests` |
 | Files told by content (3DS signature, preview size), import report (unused, unsupported formats, unrecognised, skipped, guesses) | unit `archive::tests` |
 | Same archive → same version; changed archive → new version | unit `archive::tests` |

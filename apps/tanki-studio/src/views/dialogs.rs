@@ -43,6 +43,7 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
             issues,
             message,
         } => import_error(app, ctx, &name, &issues, message.as_deref()),
+        Dialog::DeletePack { id, version, name } => delete_pack(app, ctx, &id, &version, &name),
     }
 }
 
@@ -323,6 +324,51 @@ fn done(app: &mut Studio, ctx: &eframe::egui::Context, target: &str, files: usiz
     if restore {
         app.restore_last();
     } else if close || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+fn delete_pack(app: &mut Studio, ctx: &eframe::egui::Context, id: &str, version: &str, name: &str) {
+    let tokens = Tokens::get(ctx);
+    let title = fmt(tl!("Delete pack “{name}”?"), &[("name", name)]);
+    let spec = ModalSpec {
+        id: "delete-pack",
+        title: &title,
+        close_label: tl!("Close"),
+        width: 520.0,
+        // Two lines of text, in English and in Russian.
+        body_height: 2.0 * 21.0 + 20.0,
+    };
+    let mut delete = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(
+                ui,
+                tl!(
+                    "The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored."
+                ),
+                tokens.text_2,
+                14.0,
+                21.0,
+            );
+        },
+        |ui| {
+            delete = Button::new(ButtonKind::Danger, tl!("Delete"))
+                .icon(icons::TRASH_2)
+                .show(ui)
+                .clicked();
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if delete {
+        app.dialog = None;
+        app.delete_pack(id, version);
+    } else if cancel || event == ModalEvent::Dismissed {
         app.dialog = None;
     }
 }

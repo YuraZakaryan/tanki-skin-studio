@@ -54,7 +54,9 @@
 	Custom folder	Своя папка
 	Dark	Тёмная
 	Dark theme	Тёмная тема
+	Delete	Удалить
 	Delete pack	Удалить пак
+	Delete pack “{name}”?	Удалить пак «{name}»?
 	Done	Готово
 	Drop a .tankipack here	Перетащите .tankipack сюда
 	Duplicate entry	Дубликат записи
@@ -182,6 +184,7 @@
 	The game is running ({names}). Replacing files while it runs can corrupt the cache.	Игра запущена ({names}). Замена файлов во время её работы может повредить кэш.
 	The game is running. Replacing files while it runs can corrupt the cache.	Игра запущена. Замена файлов во время её работы может повредить кэш.
 	The last imported pack becomes active automatically.	Последний импортированный пак становится активным автоматически.
+	The pack and its files are removed from the library. Skins already applied stay in the game cache and can still be restored.	Пак и его файлы удаляются из библиотеки. Уже применённые скины остаются в кэше игры, их можно восстановить.
 	System	Система
 	System theme	Системная тема
 	Follow the system appearance	Следовать оформлению системы

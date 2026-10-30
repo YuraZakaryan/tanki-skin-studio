@@ -116,6 +116,12 @@ pub enum Dialog {
         issues: Vec<PackIssue>,
         message: Option<String>,
     },
+    /// Deleting a pack removes its files from the library, so it is asked first.
+    DeletePack {
+        id: String,
+        version: String,
+        name: String,
+    },
 }
 
 /// What a toast's action button does.
