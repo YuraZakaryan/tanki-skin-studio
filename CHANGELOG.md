@@ -6,6 +6,41 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- When the computer has several game clients, each with its own cache, the app asks which cache to
+  work with: on the first start that finds more than one, and again whenever a new one appears
+  (at start or on a rescan), the new one marked **New**. Each cache is named by its application id
+  from the disk, with its path and when it last changed. The choice is kept for the next starts;
+  closing the question keeps the cache in use. Before, the app opened one of them by itself.
+- The update dialog's "What's new" follows the interface language: release notes now carry a
+  Russian section from `CHANGELOG.ru.md` after the English one, and the app shows the one for its
+  language, English when there is no translation. Copies up to 0.3.0 read the English section
+  only, as before.
+
+### Changed
+
+- The cache card in the sidebar looks like what it is, a picker: a chevron, a highlight on hover, a
+  hand cursor and the tooltip "Switch game cache". It opens the same list of caches as the question
+  at start, now to switch on purpose: the cache in use marked, **Choose folder…** for a folder that
+  is not listed, and Cancel; the arrow keys and Enter work too. Before, it opened a plain menu.
+- Paths in the home folder are written `~/…`, shortened in the middle when they do not fit, with
+  the whole path in a tooltip.
+- The "What's new" box is as high as the notes, and longer notes scroll with the bar in sight.
+  Before, the box cut the notes off, so a heading such as "Fixed" could show no items.
+
+### Fixed
+
+- Russian counts (`1 835`) no longer show a wide hole between the digit groups in the monospace
+  counters of the sidebar: the separator is a narrow no-break space, as Russian writes it, and a
+  count never wraps across lines.
+- A resource with a very long name no longer runs out of the inspector on the Resources page: the
+  name is shortened with an ellipsis and shown whole in a tooltip, and so are long details.
+- In Russian, dialogs no longer break: a text that takes more lines than in English makes the
+  dialog taller instead of running into its buttons, a long title wraps under the close button,
+  warnings wrap inside their box, and a dialog grows to fit its buttons (in Russian, the update
+  offer's Skip this version button stuck out of it).
+
 ## [0.3.0] - 2026-10-31
 
 ### Added

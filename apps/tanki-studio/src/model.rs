@@ -484,9 +484,95 @@ pub fn preview_path(scan: &CacheScan, group: &str) -> Option<PathBuf> {
         .map(|r| r.path.clone())
 }
 
+/// `path` with the home folder `home` written as `~`, the way people read paths in their own
+/// folders; any other path as it is.
+pub fn home_relative(path: &std::path::Path, home: Option<&std::path::Path>) -> String {
+    match home.and_then(|home| path.strip_prefix(home).ok()) {
+        Some(rest) if rest.as_os_str().is_empty() => "~".to_owned(),
+        Some(rest) => format!("~{}{}", std::path::MAIN_SEPARATOR, rest.display()),
+        None => path.display().to_string(),
+    }
+}
+
+/// [`home_relative`] with this user's home folder.
+pub fn home_path(path: &std::path::Path) -> String {
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"));
+    home_relative(path, home.as_deref().map(std::path::Path::new))
+}
+
+/// Whether to ask which game cache to use: `found` are the cache folders on this machine, `known`
+/// the ones the user has seen in the question or chosen (`None` before the first start that
+/// looked). With one folder or none there is nothing to choose. Otherwise the user is asked on the
+/// first start and whenever a folder appears that was not there before. The answer marks which
+/// folders are new; on the first start none is.
+pub fn caches_to_ask(found: &[String], known: Option<&[String]>) -> Option<Vec<bool>> {
+    if found.len() < 2 {
+        return None;
+    }
+    let Some(known) = known else {
+        return Some(vec![false; found.len()]);
+    };
+    let new: Vec<bool> = found.iter().map(|path| !known.contains(path)).collect();
+    new.contains(&true).then_some(new)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn paths(names: &[&str]) -> Vec<String> {
+        names.iter().map(|n| (*n).to_owned()).collect()
+    }
+
+    #[test]
+    fn a_path_in_the_home_folder_starts_with_a_tilde() {
+        let home = std::path::Path::new("/Users/someone");
+        let cache = home.join("Library/Application Support/org.example/Local Store/cache");
+        let sep = std::path::MAIN_SEPARATOR;
+        assert_eq!(
+            home_relative(&cache, Some(home)),
+            format!("~{sep}{}", cache.strip_prefix(home).unwrap().display())
+        );
+        assert_eq!(home_relative(home, Some(home)), "~");
+        let elsewhere = std::path::Path::new("/Volumes/disk/cache");
+        assert_eq!(
+            home_relative(elsewhere, Some(home)),
+            elsewhere.display().to_string()
+        );
+        assert_eq!(home_relative(&cache, None), cache.display().to_string());
+    }
+
+    #[test]
+    fn several_caches_are_offered_on_the_first_start_with_none_marked_new() {
+        assert_eq!(
+            caches_to_ask(&paths(&["/a", "/b"]), None),
+            Some(vec![false, false])
+        );
+    }
+
+    #[test]
+    fn one_cache_or_none_is_never_asked_about() {
+        assert_eq!(caches_to_ask(&paths(&["/a"]), None), None);
+        assert_eq!(caches_to_ask(&[], None), None);
+        assert_eq!(caches_to_ask(&paths(&["/a"]), Some(&paths(&[]))), None);
+    }
+
+    #[test]
+    fn a_cache_that_appears_later_is_asked_about_and_marked_new() {
+        let known = paths(&["/a"]);
+        assert_eq!(
+            caches_to_ask(&paths(&["/a", "/b"]), Some(&known)),
+            Some(vec![false, true])
+        );
+    }
+
+    #[test]
+    fn known_caches_are_not_asked_about_again() {
+        let known = paths(&["/a", "/b"]);
+        assert_eq!(caches_to_ask(&paths(&["/b", "/a"]), Some(&known)), None);
+        // A cache that went away is no reason to ask either.
+        assert_eq!(caches_to_ask(&paths(&["/a"]), Some(&known)), None);
+    }
 
     #[test]
     fn variants_sort_m0_to_m3_then_the_editions_each_by_name_naturally() {
@@ -572,8 +658,8 @@ mod tests {
         let russian = thousands(3660);
         tanki_i18n::set_current(tanki_i18n::Lang::EN);
         assert_eq!(
-            russian, "3\u{a0}660",
-            "Russian groups digits with a no-break space"
+            russian, "3\u{202f}660",
+            "Russian groups digits with a narrow no-break space"
         );
         assert_eq!(thousands(3660), "3,660");
     }

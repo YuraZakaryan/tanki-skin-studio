@@ -251,7 +251,8 @@ fn rail(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         Pos2::new(cx, lang_rect.min.y - 12.0 - 24.0),
         Vec2::splat(48.0),
     );
-    let response = ui.interact(cache_rect, ui.scope_id().with("rail-cache"), Sense::click());
+    let response =
+        cache_picker(ui.interact(cache_rect, ui.scope_id().with("rail-cache"), Sense::click()));
     draw::rounded(
         ui.painter(),
         cache_rect,
@@ -281,7 +282,9 @@ fn rail(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         8.0,
         dot,
     );
-    cache_popup(app, &response);
+    if response.clicked() {
+        app.open_cache_switcher();
+    }
 }
 
 fn page_entry(page: Page) -> (char, &'static str) {
@@ -294,21 +297,30 @@ fn page_entry(page: Page) -> (char, &'static str) {
     }
 }
 
-/// The card with the connected game and cache state. Clicking it opens the cache choices.
+/// The card with the connected game and cache state. It is a picker: the chevron, the hover state,
+/// the hand cursor and the tooltip say so, and clicking it opens the cache switcher.
 fn cache_card(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
     let response = ui.interact(rect, ui.scope_id().with("cache-card"), egui::Sense::click());
-    let fill = if response.hovered() {
-        tokens.surface_3
+    let response = cache_picker(response);
+    let (fill, border, chevron) = if response.hovered() {
+        (tokens.surface_3, tokens.border_strong, tokens.text)
     } else {
-        tokens.surface_2
+        (tokens.surface_2, tokens.border, tokens.text_3)
     };
     draw::rounded(
         ui.painter(),
         rect,
         CornerRadius::same(12),
         fill,
-        Some((1.0, tokens.border)),
+        Some((1.0, border)),
+    );
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(rect.max.x - 14.0 - 8.0, rect.min.y + 22.0),
+        icons::CHEVRONS_UP_DOWN,
+        16.0,
+        chevron,
     );
     let (title, meta, connected) = match &app.scan {
         Some(scan) => (
@@ -333,18 +345,24 @@ fn cache_card(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         16.0,
         tokens.text_2,
     );
+    // The texts give way to the chevron.
+    let room = rect.max.x - 14.0 - 16.0 - 8.0;
+    let title_style = Text::body(13.0, 600, tokens.text);
+    let title = fonts::ellipsize(ui.painter(), &title, title_style, room - (x + 24.0));
     fonts::draw_left(
         ui.painter(),
         x + 24.0,
         rect.min.y + 22.0,
         &title,
-        Text::body(13.0, 600, tokens.text),
+        title_style,
     );
+    let meta_style = Text::body(12.0, 400, tokens.text_3);
+    let meta = fonts::ellipsize(ui.painter(), &meta, meta_style, room - x);
     fonts::draw(
         ui.painter(),
         Pos2::new(x, rect.min.y + 38.0),
         &meta,
-        Text::body(12.0, 400, tokens.text_3),
+        meta_style,
     );
     if connected {
         let label = tl!("Cache found");
@@ -354,30 +372,19 @@ fn cache_card(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         );
         widgets::paint_chip(ui, chip, ChipKind::Success, label);
     }
-    cache_popup(app, &response);
+    if response.clicked() {
+        app.open_cache_switcher();
+    }
 }
 
-/// The menu of cache folders that opens from the cache card (or the rail's cache button).
-fn cache_popup(app: &mut Studio, response: &egui::Response) {
-    let roots = app.roots.clone();
-    let current = app.scan.as_ref().map(|s| s.root.clone());
-    egui::Popup::menu(response).show(|ui| {
-        ui.set_min_width(240.0);
-        for (index, (game, path)) in roots.iter().enumerate() {
-            let selected = current
-                .as_ref()
-                .is_some_and(|c| path.canonicalize().ok().as_ref() == Some(c));
-            let label = format!("{} — {}", game_name(game), path.display());
-            if ui.selectable_label(selected, label).clicked() {
-                app.switch_cache(index);
-                ui.close();
-            }
-        }
-        if ui.button(tl!("Choose cache folder")).clicked() {
-            app.choose_cache();
-            ui.close();
-        }
-    });
+/// The cache card and the rail's cache button open the cache switcher
+/// ([`Studio::open_cache_switcher`]): a hand cursor, a tooltip and an accessible name say so.
+fn cache_picker(response: egui::Response) -> egui::Response {
+    let label = tl!("Switch game cache");
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, label));
+    response
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .on_hover_text(label)
 }
 
 /// Draw the current page into `main` (everything right of the sidebar).

@@ -128,6 +128,89 @@ impl<'a> ListRow<'a> {
     }
 }
 
+/// One option of a single choice, drawn as a bordered card: a radio mark, the name with chips on
+/// the right, and a mono detail line (a path) with a short note on the right. The detail is
+/// shortened in its middle to fit; `tooltip` (the whole path) shows on hover.
+pub struct ChoiceRow<'a> {
+    pub name: &'a str,
+    pub detail: &'a str,
+    pub tooltip: &'a str,
+    pub note: &'a str,
+    pub chips: &'a [(ChipKind, &'a str)],
+    pub selected: bool,
+}
+
+/// The height of a [`ChoiceRow`].
+pub const CHOICE_ROW_HEIGHT: f32 = 64.0;
+
+impl ChoiceRow<'_> {
+    /// Show a full-width row in the layout flow.
+    pub fn show(&self, ui: &mut Ui) -> Response {
+        let width = ui.available_width();
+        let (rect, response) = alloc(ui, Vec2::new(width, CHOICE_ROW_HEIGHT), Sense::click());
+        describe(
+            &response,
+            Role::RadioButton,
+            true,
+            Some(self.selected),
+            self.name,
+        );
+        self.paint(ui, rect, &response);
+        let response = response.on_hover_cursor(egui::CursorIcon::PointingHand);
+        if self.tooltip.is_empty() {
+            response
+        } else {
+            response.on_hover_text(self.tooltip)
+        }
+    }
+
+    fn paint(&self, ui: &Ui, rect: Rect, response: &Response) {
+        let tokens = Tokens::get(ui.ctx());
+        let painter = ui.painter();
+        let (fill, border) = if self.selected {
+            (tokens.primary_soft, tokens.primary)
+        } else if response.hovered() {
+            (tokens.surface_3, tokens.border_strong)
+        } else {
+            (tokens.surface, tokens.border)
+        };
+        draw::rounded(
+            painter,
+            rect,
+            CornerRadius::same(12),
+            fill,
+            Some((1.0, border)),
+        );
+        let top = rect.min.y + 22.0;
+        let bottom = rect.min.y + 44.0;
+        let radio = Pos2::new(rect.min.x + 16.0 + 9.0, top);
+        let ring = if self.selected {
+            tokens.primary
+        } else {
+            tokens.text_3
+        };
+        painter.circle_stroke(radio, 8.0, egui::Stroke::new(1.5, ring));
+        if self.selected {
+            draw::dot(painter, radio, 9.0, tokens.primary);
+        }
+        let text_x = rect.min.x + 16.0 + 18.0 + 12.0;
+        let mut right = rect.max.x - 16.0;
+        for (kind, label) in self.chips.iter().rev() {
+            let width = chip_at_right(ui, right, top, *kind, label);
+            right -= width + 8.0;
+        }
+        let name_style = Text::body(14.0, 600, tokens.text);
+        let name = fonts::ellipsize(painter, self.name, name_style, (right - text_x).max(0.0));
+        fonts::draw_left(painter, text_x, top, &name, name_style);
+        let note_style = Text::body(12.0, 400, tokens.text_3);
+        let used = fonts::draw_right(painter, rect.max.x - 16.0, bottom, self.note, note_style);
+        let detail_style = Text::mono(12.0, 400, tokens.text_3);
+        let room = (used.min.x - 16.0 - text_x).max(0.0);
+        let detail = fonts::ellipsize_middle(painter, self.detail, detail_style, room);
+        fonts::draw_left(painter, text_x, bottom, &detail, detail_style);
+    }
+}
+
 /// One file of a list inside a bordered box (the files of a replacement, validation errors).
 pub fn file_line(
     ui: &Ui,
@@ -153,12 +236,15 @@ pub fn file_line(
     } else {
         Text::body(13.0, 400, tokens.text)
     };
-    fonts::draw_left(painter, rect.min.x + 40.0, cy, name, name_style);
-    fonts::draw_right(
+    // The right text first: the name gives way to it, shortened with an ellipsis.
+    let used = fonts::draw_right(
         painter,
         rect.max.x - 14.0,
         cy,
         right,
         Text::mono(12.0, 400, tokens.text_3),
     );
+    let room = (used.min.x - 14.0 - (rect.min.x + 40.0)).max(0.0);
+    let name = fonts::ellipsize(painter, name, name_style, room);
+    fonts::draw_left(painter, rect.min.x + 40.0, cy, &name, name_style);
 }

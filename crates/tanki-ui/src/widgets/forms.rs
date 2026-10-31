@@ -93,8 +93,9 @@ pub fn toggle(ui: &mut Ui, value: &mut bool, label: &str) -> Response {
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
-/// A label on the left and its value on the right of `rect` (one 16-high line).
-pub fn key_value(ui: &Ui, rect: Rect, key: &str, value: &str, mono: bool) {
+/// A label on the left and its value on the right of `rect` (one 16-high line). Returns whether
+/// the value had to be shortened to fit, so the caller can offer the whole of it.
+pub fn key_value(ui: &Ui, rect: Rect, key: &str, value: &str, mono: bool) -> bool {
     let tokens = Tokens::get(ui.ctx());
     fonts::draw_left(
         ui.painter(),
@@ -111,8 +112,9 @@ pub fn key_value(ui: &Ui, rect: Rect, key: &str, value: &str, mono: bool) {
     // A long value gives way: it is shortened to the room left of the key.
     let key_width = fonts::width(ui.painter(), key, Text::body(13.0, 400, tokens.text_3));
     let room = rect.width() - key_width - 16.0;
-    let value = fonts::ellipsize(ui.painter(), value, style, room);
-    fonts::draw_right(ui.painter(), rect.max.x, rect.center().y, &value, style);
+    let shown = fonts::ellipsize(ui.painter(), value, style, room);
+    fonts::draw_right(ui.painter(), rect.max.x, rect.center().y, &shown, style);
+    shown.as_ref() != value
 }
 
 /// A horizontal progress bar: 6 high track with a lime fill (`fraction` in 0..=1).

@@ -12,6 +12,8 @@ on:
     paths:
       - ".github/workflows/release.yml"
       - "packaging/**"
+      - "CHANGELOG.md"
+      - "CHANGELOG.ru.md"
   workflow_dispatch:
     inputs:
       version:
@@ -229,7 +231,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="v$VERSION"
-          # The version's CHANGELOG section leads the notes: the app shows it when it offers the release.
+          # The version's CHANGELOG sections lead the notes, English then Russian: the app shows the
+          # one of its language when it offers the release.
           packaging/release-notes.sh "$VERSION" > "$RUNNER_TEMP/notes.md"
           if gh release view "$tag" --json isDraft --jq .isDraft > is-draft 2>/dev/null; then
             if [ "$(cat is-draft)" != "true" ]; then

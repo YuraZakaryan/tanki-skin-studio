@@ -23,7 +23,9 @@ Release builds use no build cache, so nothing cached by another branch can reach
 ## Cutting a release
 
 1. In a pull request, set the version in the workspace `Cargo.toml` (`[workspace.package] version`)
-   and move the `Unreleased` notes in [CHANGELOG.md](../CHANGELOG.md) under that version. Merge it.
+   and move the `Unreleased` notes in [CHANGELOG.md](../CHANGELOG.md) under that version; do the
+   same in Russian in [CHANGELOG.ru.md](../CHANGELOG.ru.md) (same headings in Russian: Добавлено,
+   Изменено, Исправлено). Merge it.
 2. Point `release` at the merged `main` (this needs the signing secrets; without them, run the
    workflow manually from `main` instead):
 
@@ -33,8 +35,11 @@ Release builds use no build cache, so nothing cached by another branch can reach
 
 3. The **Release** workflow builds both platforms and creates the draft release `v<version>` with the
    files, their checksums and the notes from [packaging/release-notes.sh](../packaging/release-notes.sh):
-   the version's CHANGELOG section under "What's new" (the app shows it when it offers the update),
-   then [packaging/release-notes.md](../packaging/release-notes.md).
+   the version's CHANGELOG section under "What's new", its CHANGELOG.ru.md section under
+   "Что нового" (the app shows the one of its interface language, English when the Russian one is
+   missing; the script then warns), then [packaging/release-notes.md](../packaging/release-notes.md).
+   Keep the English section first and both as `## ` headings: copies up to 0.3.0 read only the
+   first "What's new" section and stop at the next `## ` heading.
    Pushing `release` again replaces the files of the same draft.
 4. Download the files from the draft, try them on a Mac and on Windows, then press **Publish
    release**. Publishing creates the tag. A published version is never rebuilt: the next release
