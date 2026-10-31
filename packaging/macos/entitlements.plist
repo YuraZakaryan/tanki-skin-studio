@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Hardened-runtime entitlements for Tanki Skin Studio. Deliberately empty, as in WordCraft: the
+<!-- Hardened-runtime entitlements for Tanki Skin Studio. Deliberately empty: the
      app is pure Rust, loads no unsigned code, needs no JIT, and is not sandboxed (it reads and
      writes a game cache the user chooses). Add an exception here only with a reason in a comment. -->
 <plist version="1.0">

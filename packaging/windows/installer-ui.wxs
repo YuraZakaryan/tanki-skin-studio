@@ -1,7 +1,7 @@
 <!--
-  The installer's pages, built with tanki-skin-studio.wxs (see its header). The layout follows
-  PdfCraft's: a first page with the desktop shortcut checkbox, Repair and Remove for an installed
-  copy, a progress page, and the end pages. The install is per user, so no page asks for
+  The installer's pages, built with tanki-skin-studio.wxs (see its header). The pages: a
+  first page with the desktop shortcut checkbox, Repair and Remove for an installed copy, a
+  progress page, and the end pages. The install is per user, so no page asks for
   administrator rights. Without these pages Windows Installer shows only a progress bar, and the
   shortcut could not be chosen.
 -->

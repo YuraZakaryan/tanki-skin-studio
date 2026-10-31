@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 # CI only: import the Developer ID certificate into a temporary keychain so codesign can use it.
-# The same approach as WordCraft and PdfCraft.
 #
 # Inputs (env): APPLE_CERTIFICATE (base64 .p12), APPLE_CERTIFICATE_PASSWORD, KEYCHAIN_PASSWORD
 # (optional; random if unset), RUNNER_TEMP (or TMPDIR).

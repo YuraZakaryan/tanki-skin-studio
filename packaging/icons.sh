@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Regenerate every app icon from assets/app-icon/tanki-skin-studio.svg, as WordCraft does. The
+# Regenerate every app icon from assets/app-icon/tanki-skin-studio.svg. The
 # mark itself is drawn in design.pen ("Mark B · 512"); export its shapes to the SVG when it changes.
 #
 # Needs: resvg (cargo install resvg / brew install resvg). On macOS, iconutil also writes the

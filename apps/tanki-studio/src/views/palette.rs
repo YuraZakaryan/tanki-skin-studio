@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! The ⌘K command palette: items, resources and every command of the registry, with a
-//! substring match that falls back to a subsequence match (PdfCraft's ranking), searched in both
+//! substring match that falls back to a subsequence match, searched in both
 //! the translated and the English text.
 
 use eframe::egui::{
@@ -181,7 +181,7 @@ pub fn draw(app: &mut Studio, ctx: &Context) {
     let Some(state) = app.palette.as_mut() else {
         return;
     };
-    // A new query starts at the top, as in PdfCraft.
+    // A new query starts at the top.
     if state.query != state.last_query {
         state.selected = 0;
         state.last_query = state.query.clone();

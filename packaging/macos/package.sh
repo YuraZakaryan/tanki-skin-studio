@@ -10,7 +10,7 @@
 # targets (rustup target add aarch64-apple-darwin x86_64-apple-darwin). The licences of the Rust
 # crates come from cargo-about (cargo install cargo-about --locked --features cli).
 #
-# Signing and notarization, as in WordCraft and PdfCraft (CI fills these from secrets through
+# Signing and notarization (CI fills these from secrets through
 # import-cert.sh; see docs/releasing.md):
 #   MACOS_SIGN_IDENTITY   "Developer ID Application" identity (name or SHA-1). Unset: ad-hoc
 #                         signing, which runs elsewhere only after System Settings > Privacy &

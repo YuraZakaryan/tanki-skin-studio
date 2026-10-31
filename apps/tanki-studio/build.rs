@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Windows only: embed the app icon and the version details into tanki-studio.exe, so Explorer,
-//! the taskbar, the Start menu shortcut and Installed apps show them, as WordCraft does. A build
+//! the taskbar, the Start menu shortcut and Installed apps show them. A build
 //! without the resource compiler only warns; the release sets TANKI_REQUIRE_WINRES so it fails.
 
 const ICON: &str = "../../assets/app-icon/tanki-skin-studio.ico";

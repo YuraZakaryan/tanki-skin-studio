@@ -1,9 +1,8 @@
 # Releasing
 
 Downloads are built by GitHub Actions ([release.yml](../.github/workflows/release.yml)), never on a
-developer's machine, and every file carries a build-provenance attestation. The pattern follows
-PdfCraft: a push to the `release` branch builds everything and drafts a GitHub Release, and a person
-publishes it.
+developer's machine, and every file carries a build-provenance attestation. A push to the `release`
+branch builds everything and drafts a GitHub Release, and a person publishes it.
 
 ## What a release contains
 
@@ -52,9 +51,9 @@ gh attestation verify tanki-skin-studio-0.1.0-macos-universal.dmg -R YuraZakarya
 
 ## Signing
 
-Signing works as in WordCraft and PdfCraft. The build scripts sign when the secrets are there and
-warn and ship unsigned when they are not, so test builds keep working. On the `release` branch a
-missing secret fails the build instead: a release from `release` is always signed. Until the
+The build scripts sign when the secrets are there and warn and ship unsigned when they are not, so
+test builds keep working. On the `release` branch a missing secret fails the build instead: a
+release from `release` is always signed. Until the
 certificates exist, release with a manual run of the workflow from `main` (unsigned).
 
 The secrets belong to the **`release` environment** (**Settings → Environments → release**; it
@@ -94,8 +93,8 @@ signatures. It takes either:
 - **a code-signing certificate** as a `.pfx` (for example from Certum or another certificate
   authority; an open-source or OV certificate): `WINDOWS_CERTIFICATE` (the `.pfx`, base64) and
   `WINDOWS_CERTIFICATE_PASSWORD`; or
-- **[Azure Trusted Signing](https://azure.microsoft.com/products/artifact-signing)**, as WordCraft
-  uses (open to organisations and, for individuals, only in some countries): `AZURE_TENANT_ID`,
+- **[Azure Trusted Signing](https://azure.microsoft.com/products/artifact-signing)**
+  (open to organisations and, for individuals, only in some countries): `AZURE_TENANT_ID`,
   `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SIGNING_ENDPOINT`, `AZURE_SIGNING_ACCOUNT`,
   `AZURE_CERT_PROFILE`. The signing client is pinned by version and SHA-256.
 

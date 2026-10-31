@@ -11,7 +11,7 @@
     dotnet tool install --global wix --version 5.0.2
     cargo install cargo-about --locked --features cli
 
-  Signing, as in WordCraft and PdfCraft: sign.ps1 signs both executables and then the installer
+  Signing: sign.ps1 signs both executables and then the installer
   with a code-signing certificate (WINDOWS_CERTIFICATE) or Azure Trusted Signing (AZURE_*), and
   leaves them unsigned with a warning when neither is set (see docs\releasing.md).
 

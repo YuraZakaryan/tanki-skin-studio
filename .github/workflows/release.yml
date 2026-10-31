@@ -71,7 +71,7 @@ jobs:
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
-      # On the release branch an unsigned build fails here instead of shipping, as in WordCraft.
+      # On the release branch an unsigned build fails here instead of shipping.
       - name: Require signing secrets on the release branch
         if: github.ref == 'refs/heads/release'
         env:

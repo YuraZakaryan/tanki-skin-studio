@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Project automation, run as `cargo xtask <command>` (same pattern as PdfCraft's xtask).
+//! Project automation, run as `cargo xtask <command>`.
 
 use std::{
     path::{Path, PathBuf},
@@ -1211,8 +1211,8 @@ fn unescape_rust(text: &str) -> String {
         .replace("\\n", "\n")
 }
 
-/// `cargo xtask i18n`: the catalog and the code must agree (PdfCraft keeps the same invariant with
-/// tests; here the sources are scanned, so a string added to the UI cannot ship untranslated).
+/// `cargo xtask i18n`: the catalog and the code must agree. The sources are scanned, so a string
+/// added to the UI cannot ship untranslated.
 fn i18n(args: &[String]) -> Result<()> {
     let (plain, plural) = source_strings()?;
     let text = std::fs::read_to_string(root().join("crates/tanki-i18n/src/ru.tsv"))?;

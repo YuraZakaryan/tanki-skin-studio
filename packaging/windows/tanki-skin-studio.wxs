@@ -28,7 +28,7 @@
     <Icon Id="AppIcon.exe" SourceFile="$(Stage)\tanki-studio.exe" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
 
-    <!-- Desktop shortcut, as in PdfCraft: on for a first install, a checkbox on the first page,
+    <!-- Desktop shortcut: on for a first install, a checkbox on the first page,
          and INSTALLDESKTOPSHORTCUT=0 on the msiexec command line for an unattended install. An
          update keeps it only if it is still on the desktop, so deleting the shortcut is how a
          player says no for good. A value given on the command line wins. -->
