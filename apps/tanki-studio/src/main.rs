@@ -48,6 +48,11 @@ fn configure_gpu(options: &mut eframe::NativeOptions) {
 }
 
 fn main() -> eframe::Result<()> {
+    // A copy of this program started to finish an update (Windows) does only that.
+    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    if let Some(code) = tanki_core::update::install::helper::run(&args) {
+        std::process::exit(code);
+    }
     // First, so the panic hook and every start-up warning are recorded (`logging`).
     let logger = logging::install();
     logging::install_panic_hook();
@@ -130,7 +135,11 @@ fn main() -> eframe::Result<()> {
         options,
         Box::new(move |cc| {
             Studio::new(cc, startup)
-                .map(|app| Box::new(app) as Box<dyn eframe::App>)
+                .map(|mut app| {
+                    // Scripted runs (screenshots, the UI tests) never ask GitHub.
+                    app.updates.startup_check = !tanki_studio::dev::scripted();
+                    Box::new(app) as Box<dyn eframe::App>
+                })
                 .map_err(|e| e.into())
         }),
     )

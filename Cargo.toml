@@ -6,6 +6,7 @@ members = [
     "crates/tanki-pack",
     "crates/tanki-apply",
     "crates/tanki-state",
+    "crates/tanki-update",
     "crates/tanki-core",
     "crates/tanki-ui",
     "crates/tanki-i18n",

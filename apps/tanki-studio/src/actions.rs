@@ -726,7 +726,8 @@ impl Studio {
     /// Files dropped on the window are imported as packs, but not while a dialog is open: a pack
     /// imported under a confirmation would change the active pack it was asked about.
     pub fn handle_dropped(&mut self, paths: Vec<PathBuf>) {
-        if self.dialog.is_some() {
+        // An open dialog goes first; during an update a new import would be cut off by the restart.
+        if self.dialog.is_some() || self.updates.view.is_some() {
             return;
         }
         if let Some(path) = paths.into_iter().next() {

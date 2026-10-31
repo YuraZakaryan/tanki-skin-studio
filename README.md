@@ -13,7 +13,7 @@
   <img alt="Written in Rust" src="https://img.shields.io/badge/written%20in-Rust-4d7c0f?style=flat-square">
   <img alt="Platforms: macOS, Windows" src="https://img.shields.io/badge/runs%20on-macOS%20%C2%B7%20Windows-a3e635?style=flat-square">
   <img alt="No game assets in this repository" src="https://img.shields.io/badge/game%20assets-none-4d7c0f?style=flat-square">
-  <img alt="No account, no network, no telemetry" src="https://img.shields.io/badge/no%20account-no%20network-a3e635?style=flat-square">
+  <img alt="No account, no telemetry" src="https://img.shields.io/badge/no%20account-no%20telemetry-a3e635?style=flat-square">
 </p>
 
 <p align="center">
@@ -65,8 +65,8 @@ failure rolls everything back, and **Restore** puts the cache back byte for byte
 <td width="33%" valign="top">
 
 ### Clean
-No game assets in the source, no network code, no account, no telemetry. The app touches only the
-cache folder you point it at, and only after you confirm.
+No game assets in the source, no account, no telemetry. The app touches only the cache folder you
+point it at, and only after you confirm; online it only asks GitHub for its own new releases.
 
 </td>
 </tr>
@@ -149,6 +149,10 @@ cache folder you point it at, and only after you confirm.
   columns.
 - **One window per data folder.** A second launch is refused, so two windows never write the same
   cache at once.
+- **Updates itself.** When a new release is out, the app offers it at start with what is new in it.
+  **Update and restart** downloads it from GitHub, checks it against the release's checksums,
+  installs it and opens the new version; **Later** and **Skip this version** leave it. A portable
+  copy is offered the download instead.
 
 <table>
 <tr>
@@ -202,8 +206,11 @@ else's game content.
 ### What the app does and does not do
 
 - It **reads and writes only the cache folder you select**, plus its own data folder.
-- It **has no network code.** Nothing is downloaded or uploaded, there is no account, and no usage
-  data is collected.
+- It **goes online only for its own updates.** At start, at most every twelve hours, it asks
+  GitHub for the newest release of this repository, and it downloads one only when you choose
+  **Update and restart**. The check sends nothing but the request itself; turn it off with
+  **Don't check for updates at start** in the command palette. Nothing is uploaded, there is no
+  account, and no usage data is collected.
 - It **changes cosmetic files only**: models, textures and previews in the local cache. It does not
   touch the game's executable or memory, and it does not talk to any game server. A skin is visible
   only on your own screen.
@@ -248,6 +255,7 @@ A Cargo workspace of focused crates, layered so the core never depends on the in
 | 0 | `tanki-i18n` | Localisation: English keys in code, the Russian catalogue, plural rules, digit grouping |
 | 1 | `tanki-cache` | Finding and scanning a cache; the item table and consecutive modification ids |
 | 1 | `tanki-pack` | The `.tankipack` format, safe import from ZIP or folder, and building packs from plain folders |
+| 1 | `tanki-update` | Updates from this repository's GitHub releases: the check, the download checked against `SHA256SUMS.txt`, the install and the restart |
 | 2 | `tanki-apply` | Recognition by content, transactional apply with backup, verification and rollback, restore, game-running check |
 | 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, preferences, session) and the data folder |
 | 3 | `tanki-core` | The façade every front end uses, and the end-to-end tests that cross all layers |

@@ -3,6 +3,15 @@
 
 [graph]
 all-features = true
+# The platforms the app is built for. A dependency only another platform pulls in (the WebAssembly
+# root certificates under rustls-platform-verifier) is never built, so it is not checked.
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+]
 
 [advisories]
 # Vulnerabilities fail the check anywhere in the tree. "Unmaintained" notices fail only for our own

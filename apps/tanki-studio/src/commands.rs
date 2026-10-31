@@ -22,6 +22,9 @@ pub enum Command {
     SetTheme(ThemePreference),
     SetLanguage(&'static str),
     Zoom(i32),
+    CheckUpdates,
+    /// Turn the check for updates at start on or off.
+    UpdateCheckAtStart(bool),
     About,
 }
 
@@ -193,6 +196,27 @@ pub const COMMANDS: &[CommandSpec] = &[
         None,
     ),
     spec(
+        Command::CheckUpdates,
+        "Check for updates",
+        "New versions on GitHub",
+        icons::DOWNLOAD,
+        None,
+    ),
+    spec(
+        Command::UpdateCheckAtStart(true),
+        "Check for updates at start",
+        "Updates",
+        icons::REFRESH_CW,
+        None,
+    ),
+    spec(
+        Command::UpdateCheckAtStart(false),
+        "Don't check for updates at start",
+        "Updates",
+        icons::REFRESH_CW,
+        None,
+    ),
+    spec(
         Command::About,
         "About Tanki Skin Studio",
         "Version, licence and source",
@@ -215,6 +239,8 @@ impl Studio {
     pub fn command_enabled(&self, command: Command) -> bool {
         match command {
             Command::RestoreLast => self.can_restore(),
+            Command::CheckUpdates => !self.updates.checking(),
+            Command::UpdateCheckAtStart(on) => self.updates.check_at_start != on,
             _ => true,
         }
     }
@@ -231,6 +257,8 @@ impl Studio {
             Command::Go(page) => self.go(page),
             Command::SetTheme(pref) => self.set_theme_preference(pref),
             Command::Zoom(direction) => self.zoom(direction),
+            Command::CheckUpdates => self.check_for_updates(),
+            Command::UpdateCheckAtStart(on) => self.set_update_check_at_start(on),
             Command::About => self.toast(crate::about::notice(), None),
             Command::SetLanguage(code) => {
                 if let Some(lang) = Lang::from_code(code) {
@@ -243,7 +271,7 @@ impl Studio {
     /// Run the command whose shortcut was pressed this frame, if any. Shortcuts that would clash
     /// with text editing (undo) are left to the focused text field.
     pub fn handle_shortcuts(&mut self, ctx: &egui::Context) {
-        if self.dialog.is_some() {
+        if self.dialog.is_some() || self.updates.view.is_some() {
             return;
         }
         // ⌘+ is ⌘⇧= on most keyboards: accept the plus key as well as equals.

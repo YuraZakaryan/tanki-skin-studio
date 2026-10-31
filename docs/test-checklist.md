@@ -20,6 +20,34 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | The same in the real window: 5 seeds × 30 random actions incl. out-of-range items, unknown filters, both languages, themes, interface sizes, the palette | ui `gui-monkey` |
 | The monkey really goes around the app (≥ 4 pages, at least one replacement), so a monkey that only misses fails | it `monkey`, it `chaos` |
 
+## Updates
+
+| Case | Test |
+|---|---|
+| Tests and scripted runs never ask GitHub; the desktop app checks at start | it `nothing_asks_github_until_the_desktop_app_turns_the_check_on` |
+| A newer release is offered at start with its notes; Later closes it | it `a_newer_release_is_offered_at_start…`, ui `update` |
+| The check at start asks at most every 12 hours, never when turned off, and the choice survives a restart | it `the_check_at_start_asks_at_most_every_twelve_hours…` |
+| A failed check at start says nothing; Check for updates says why, and offers Try again | it `a_failed_check_at_start_says_nothing…` |
+| Check for updates on the newest version says so; its switch turns the check at start off | it `check_for_updates_says_when_this_is_the_newest_version` |
+| Skip this version: not offered at start again, a newer one is, a requested check shows it | it `a_skipped_version_is_not_offered…` |
+| Update and restart installs the release, records it and closes the app | it `update_and_restart_installs…` |
+| A failed update is offered again with the reason (Try again, Download); a cancelled download returns quietly | it `a_failed_update_is_offered_again…` |
+| A portable copy is offered the download; nothing is installed | it `a_copy_that_cannot_update_itself…` |
+| An update waits until a pack import is done; a pack dropped while the update dialog is open is not imported | it `an_update_waits_until_a_pack_is_imported`, it `a_pack_dropped_during_an_update_is_not_imported` |
+| A start into another version does not claim the update; a check time in the future does not hold the check off | it `a_start_into_another_version…`, it `a_check_time_in_the_future…` |
+| After the restart: "updated to" once, or the helper's failure; leftovers removed | it `after_the_restart_the_new_version_or_the_failure_is_reported_once` |
+| The download progress: bar, bytes, Cancel | ui `updating` |
+| Only a newer version is offered; a release beats its release candidate; drafts, pre-releases and odd tags are not offered | unit `version`, unit `release` |
+| Links outside this repository's releases are refused; GitHub's digest is read | unit `release` |
+| What's new is read from the notes as plain text | unit `release` |
+| A download must be listed in SHA256SUMS.txt and agree with GitHub's digest; a mismatch installs nothing | unit `verify`, unit `install` |
+| The release file is named by version and platform; a development build and a portable copy do not replace themselves | unit `install` |
+| macOS: only this app's bundle is replaced, whole, from a real disk image; another version in the image replaces nothing | unit `install::macos` |
+| The helper waits until the app lets go of its lock; the restart waits for the old process; a failure is reported once | unit `install::helper` |
+| An installer changed after its check is not run, and the app starts again | unit `an_installer_changed_after_its_check_is_not_run…` |
+| A cancel is told apart from a failure: a failure after Cancel is still reported | unit `progress`, it `a_failed_update_is_offered_again…` |
+| The real GitHub answers (by hand: `cargo test -p tanki-update -- --ignored`) | unit `the_published_release_is_offered_to_an_older_version` |
+
 ## Cache
 
 | Case | Test |

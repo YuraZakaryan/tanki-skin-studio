@@ -25,4 +25,7 @@ What happens next:
 - reading or writing outside the chosen cache folder or the app's data folder;
 - a pack, archive or cache file that crashes the app, hangs it or exhausts memory or disk;
 - an apply or restore that leaves the cache damaged or cannot be undone;
-- anything that makes the app reach the network.
+- anything that makes the app reach the network other than its update check and the download of
+  an update from this repository's GitHub releases;
+- an update that installs a file which does not match the release's `SHA256SUMS.txt`, or that comes
+  from anywhere but this repository's releases.

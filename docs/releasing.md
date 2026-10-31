@@ -32,11 +32,19 @@ Release builds use no build cache, so nothing cached by another branch can reach
    ```
 
 3. The **Release** workflow builds both platforms and creates the draft release `v<version>` with the
-   files, their checksums and the notes from [packaging/release-notes.md](../packaging/release-notes.md).
+   files, their checksums and the notes from [packaging/release-notes.sh](../packaging/release-notes.sh):
+   the version's CHANGELOG section under "What's new" (the app shows it when it offers the update),
+   then [packaging/release-notes.md](../packaging/release-notes.md).
    Pushing `release` again replaces the files of the same draft.
 4. Download the files from the draft, try them on a Mac and on Windows, then press **Publish
    release**. Publishing creates the tag. A published version is never rebuilt: the next release
    raises the version.
+
+Once a release is published, every installed copy older than it offers it at its next start
+(at most every twelve hours). To try that path on an installed copy before the next release, start it
+with `TANKI_PRETEND_VERSION=0.0.1`: it then takes itself for that version, offers the current
+release, and **Update and restart** installs it over itself. The update only installs a file the
+release's `SHA256SUMS.txt` lists, so a release must always carry it.
 
 A manual run (**Actions → Release → Run workflow**) can name a test version such as `0.2.0-rc.1`;
 it drafts a pre-release. A pull request that changes packaging builds both platforms without

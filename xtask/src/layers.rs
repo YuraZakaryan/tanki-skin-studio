@@ -23,6 +23,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("tanki-i18n", Class::Layer(0)),
     ("tanki-cache", Class::Layer(1)),
     ("tanki-pack", Class::Layer(1)),
+    ("tanki-update", Class::Layer(1)),
     ("tanki-apply", Class::Layer(2)),
     ("tanki-state", Class::Layer(2)),
     ("tanki-core", Class::Layer(3)),

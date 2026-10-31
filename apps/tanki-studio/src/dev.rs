@@ -13,7 +13,11 @@
 //!   question), `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
 //!   (closes the toasts, which are never part of what a restart restores), `close` (closes the
 //!   dialog, as its Done or Cancel does), `importing:<name>:<percent>` (the progress card of an
-//!   import that stays at that point, copying, about 20 seconds from the end).
+//!   import that stays at that point, copying, about 20 seconds from the end),
+//!   `update-offer:<version>` (the offer of a release with notes, by a copy that updates itself),
+//!   `update-manual:<version>` (the same offer to a portable copy), `updating:<version>:<percent>`
+//!   (the download at that point), `update-current` and `update-failed` (the outcomes of Check for
+//!   updates). The release is made up: nothing is downloaded.
 //!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
 //!   switches and shortcuts, so the choice is stored like a real one.
 //! - `TANKI_GAME_PROCESSES=<a,b>`: the processes "found" when checking whether the game runs
@@ -116,6 +120,9 @@ pub fn run_actions(app: &mut Studio) {
             "dismiss" => app.toasts.clear(),
             "close" => app.dialog = None,
             "importing" => importing(app, arg),
+            "update-offer" | "update-manual" | "updating" | "update-current" | "update-failed" => {
+                update_scene(app, verb, arg)
+            }
             "lang" => {
                 if let Some(lang) = tanki_i18n::Lang::from_code(arg) {
                     app.set_language(lang);
@@ -152,6 +159,73 @@ pub fn run_actions(app: &mut Studio) {
             other => app.toast(format!("unknown dev action: {other}"), None),
         }
     }
+}
+
+/// Whether this run is scripted (a screenshot, a scene, an autopilot): such a run never asks
+/// GitHub for a release.
+pub fn scripted() -> bool {
+    ["TANKI_VIEW", "TANKI_SHOT", "TANKI_ACTIONS", "TANKI_SCRIPT"]
+        .iter()
+        .any(|v| std::env::var_os(v).is_some())
+}
+
+/// A made-up release for the update scenes, with notes like a real one's.
+pub fn sample_release(version: &str) -> tanki_core::update::Release {
+    use tanki_core::update::NoteLine;
+    let version = tanki_core::update::version::parse(version)
+        .unwrap_or_else(|| tanki_core::update::version::Version::new(0, 3, 0));
+    tanki_core::update::Release {
+        tag: format!("v{version}"),
+        page: format!("{}/tag/v{version}", tanki_core::update::RELEASES_PAGE),
+        notes: vec![
+            NoteLine::Heading("Added".into()),
+            NoteLine::Item(
+                "Tanki Skin Studio offers a new release when it starts, and updates itself: the new version is downloaded, checked against the release's checksums, installed, and opened.".into(),
+            ),
+            NoteLine::Item("Check for updates in the command palette.".into()),
+            NoteLine::Heading("Fixed".into()),
+            NoteLine::Item("A pack dropped on the window while a dialog is open waits for it.".into()),
+        ],
+        assets: Vec::new(),
+        version,
+    }
+}
+
+fn update_scene(app: &mut Studio, verb: &str, arg: &str) {
+    use crate::updates::UpdateView;
+    use tanki_core::update::{
+        UpdateProgress, UpdateStage,
+        install::{Install, Manual},
+    };
+    let (version, percent) = arg.split_once(':').unwrap_or((arg, "40"));
+    let release = sample_release(version);
+    app.updates.install = if verb == "update-manual" {
+        Install::Manual(Manual::Portable)
+    } else {
+        Install::MacApp(PathBuf::from("/Applications/Tanki Skin Studio.app"))
+    };
+    app.updates.view = Some(match verb {
+        "updating" => {
+            let total = 21_153_371;
+            let percent = percent.parse::<u64>().unwrap_or(40).min(99);
+            UpdateView::Installing {
+                release,
+                progress: std::sync::Arc::new(UpdateProgress::at(
+                    UpdateStage::Downloading,
+                    total * percent / 100,
+                    total,
+                )),
+            }
+        }
+        "update-current" => UpdateView::UpToDate,
+        "update-failed" => UpdateView::Failed(
+            "could not reach GitHub (io: failed to lookup address information)".into(),
+        ),
+        _ => UpdateView::Offer {
+            release,
+            error: None,
+        },
+    });
 }
 
 /// `select:hull` picks the first recognised hull; `select:/0/0/10/12/` the group with that marker.

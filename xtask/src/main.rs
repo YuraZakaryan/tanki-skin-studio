@@ -519,6 +519,26 @@ const SCENES: &[Scene] = &[
         checks: &[has("the progress bar's lime fill", PRIMARY, 6, 600)],
         ..SCENE
     },
+    // A newer release offered at start: what is new in it, and Update and restart.
+    Scene {
+        name: "update",
+        actions: "dismiss;update-offer:0.3.0",
+        checks: &[
+            has("the dialog surface", DARK_SURFACE_2, 2, 60_000),
+            has("the lime Update and restart button", PRIMARY, 6, 2_000),
+        ],
+        ..SCENE
+    },
+    // The update downloading: the bar, the bytes, Cancel.
+    Scene {
+        name: "updating",
+        actions: "dismiss;updating:0.3.0:40",
+        checks: &[
+            has("the dialog surface", DARK_SURFACE_2, 2, 40_000),
+            has("the download bar's lime fill", PRIMARY, 6, 300),
+        ],
+        ..SCENE
+    },
     // Restore asks first and lists what goes back: two replacements, then the Restore button.
     // Last on purpose: the scenes share one data folder and cache, and this one writes to them.
     Scene {
