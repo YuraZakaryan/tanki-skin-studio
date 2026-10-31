@@ -19,6 +19,10 @@ removed in **Settings → Apps**; a newer `.msi` updates it in place. Or unzip t
 anywhere and run `tanki-studio.exe`. If SmartScreen says it protected your PC (an unsigned build,
 or a new certificate it does not know yet), choose **More info**, then **Run anyway**.
 
+**Updates:** from version 0.3.0 on, the app offers each new release when it starts, with what is
+new in it, and **Update and restart** installs it (the portable copy opens this page instead).
+Earlier versions do not update themselves: install this one over them once.
+
 ## Licence and source
 
 Tanki Skin Studio is free software under GPL-3.0-or-later and comes with no warranty. The source of
