@@ -53,7 +53,7 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
 }
 
 /// Wrapped body text; returns its height.
-fn paragraph(
+pub(crate) fn paragraph(
     ui: &mut Ui,
     text: &str,
     color: eframe::egui::Color32,

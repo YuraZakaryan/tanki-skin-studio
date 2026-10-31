@@ -15,6 +15,7 @@ pub mod resources;
 pub mod shell;
 pub mod splash;
 pub mod toast;
+pub mod update;
 
 use eframe::egui::{self, Rect, ScrollArea, Sense, Ui, UiBuilder, Vec2};
 use tanki_ui::theme::Tokens;
@@ -43,6 +44,7 @@ pub fn draw(app: &mut Studio, ui: &mut Ui) {
     progress::draw(app, &ctx);
     toast::draw(app, &ctx);
     dialogs::draw(app, &ctx);
+    update::draw(app, &ctx);
     palette::draw(app, &ctx);
 }
 

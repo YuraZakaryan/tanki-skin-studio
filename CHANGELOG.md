@@ -6,6 +6,24 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The app updates itself from this repository's GitHub releases. At start, at most every twelve
+  hours, it asks for the newest release and offers it with what is new in it: **Update and
+  restart** downloads the file for this copy, checks it against the release's `SHA256SUMS.txt` and
+  GitHub's own digest, installs it (on macOS the new bundle from the `.dmg`, on Windows the `.msi`
+  once the app has closed) and opens the new version, which then says it was updated. **Later**
+  asks again next time, **Skip this version** waits for a newer one, and a portable copy is offered
+  the download. **Check for updates** in the command palette asks at once, and the check at start
+  can be turned off there or in the dialog. A failed check at start says nothing.
+- A release's notes begin with its CHANGELOG section under "What's new" (`packaging/release-notes.sh`),
+  which the update dialog shows.
+
+### Changed
+
+- The app is no longer offline-only: it reaches GitHub for its update check and, when asked, the
+  download of an update. Nothing else goes online. README and SECURITY.md say so.
+
 ## [0.2.0] - 2026-10-30
 
 ### Added

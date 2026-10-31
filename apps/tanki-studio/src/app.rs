@@ -238,6 +238,8 @@ pub struct Studio {
     pub import_job: Option<ImportJob>,
     /// Elapsed splash time pinned by `TANKI_SPLASH=hold|done`, for screenshots.
     pub splash_freeze: Option<f32>,
+    /// New releases: the check, the update dialog and the update itself (see [`crate::updates`]).
+    pub updates: crate::updates::Updates,
 }
 
 /// Everything the app needs from outside to start: where its data lives, the state it was left
@@ -288,6 +290,7 @@ impl Studio {
         tanki_ui::fonts::install(&cc.egui_ctx);
         tanki_ui::theme::apply(&cc.egui_ctx, theme);
         // A size given for screenshots and tests (`TANKI_SIZE`, `TANKI_SHOT`) is kept as it is.
+        let check_at_start = store.get("update_check_at_start")?.as_deref() != Some("off");
         let first_start = session.window.is_none()
             && std::env::var_os("TANKI_SIZE").is_none()
             && std::env::var_os("TANKI_SHOT").is_none();
@@ -357,12 +360,14 @@ impl Studio {
                 Ok("done") => Some(2.5),
                 _ => None,
             },
+            updates: crate::updates::Updates::new(check_at_start),
         };
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();
         app.active_pack = app.store.active_pack().ok().flatten();
         app.open_initial_cache();
         app.reload_backups();
+        app.report_finished_update();
         crate::dev::run_actions(&mut app);
         Ok(app)
     }

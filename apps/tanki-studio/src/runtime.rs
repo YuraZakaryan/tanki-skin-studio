@@ -27,6 +27,7 @@ impl eframe::App for Studio {
         if self.finish_import() {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }
+        self.poll_updates(ctx);
         crate::dev::autopilot_tick(self, ctx);
         self.handle_shortcuts(ctx);
         let dropped = ctx.input(|i| {

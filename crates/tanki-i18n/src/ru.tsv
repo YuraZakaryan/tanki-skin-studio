@@ -287,3 +287,38 @@ action	Apply	Применить
 	About {n} s left	Осталось около {n} с
 	About {n} min left	Осталось около {n} мин
 	Import cancelled. Nothing was added.	Импорт отменён. Ничего не добавлено.
+	Asking GitHub for the newest version…	Спрашиваем GitHub о новой версии…
+	Check for updates	Проверить обновления
+	Check for updates at start	Проверять обновления при запуске
+	Check for updates when the app starts	Проверять обновления при запуске
+	Check the connection and try again.	Проверьте подключение и попробуйте снова.
+	Checking the download…	Проверяем загруженный файл…
+	Could not check for updates	Не удалось проверить обновления
+	Don't check for updates at start	Не проверять обновления при запуске
+	Download	Скачать
+	Download the new version from its page.	Скачайте новую версию с её страницы.
+	Downloading…	Скачиваем…
+	Installing…	Устанавливаем…
+	Later	Позже
+	Move Tanki Skin Studio to Applications to update it from here. Until then, download the new version.	Переместите Tanki Skin Studio в «Программы», чтобы обновлять его отсюда. А пока скачайте новую версию.
+	New versions on GitHub	Новые версии на GitHub
+	Skip this version	Пропустить эту версию
+	Tanki Skin Studio checks for updates when it starts.	Tanki Skin Studio проверяет обновления при запуске.
+	Tanki Skin Studio closes and opens the new version by itself.	Tanki Skin Studio сам закроется и откроет новую версию.
+	Tanki Skin Studio is updated to {version}.	Tanki Skin Studio обновлён до {version}.
+	Tanki Skin Studio no longer checks for updates when it starts.	Tanki Skin Studio больше не проверяет обновления при запуске.
+	Tanki Skin Studio {new} is out. You have {current}.	Вышла Tanki Skin Studio {new}. У вас {current}.
+	Tanki Skin Studio {version} is the newest version.	Tanki Skin Studio {version} — последняя версия.
+	The update failed: {error}	Обновление не удалось: {error}
+	The update was not installed: {error}	Обновление не установлено: {error}
+	This copy is built from source. Download the new version or build it from the new source.	Эта копия собрана из исходников. Скачайте новую версию или соберите её из новых исходников.
+	This copy was unzipped by hand. Download the new version and unzip it over this one.	Эта копия распакована вручную. Скачайте новую версию и распакуйте её поверх этой.
+	Try again	Попробовать снова
+	Update and restart	Обновить и перезапустить
+	Update available	Доступно обновление
+	Updates	Обновления
+	Updating to {version}	Обновление до {version}
+	What is new is listed on the release page.	Список изменений — на странице релиза.
+	What's new	Что нового
+	You have the newest version	У вас последняя версия
+	{done} of {total}	{done} из {total}

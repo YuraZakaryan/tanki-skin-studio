@@ -14,3 +14,4 @@ mod monkey;
 mod navigation;
 mod preferences;
 mod recognise;
+mod updates;

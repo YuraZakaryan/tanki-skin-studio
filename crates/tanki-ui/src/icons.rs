@@ -47,3 +47,5 @@ pub const ZOOM_IN: char = '\u{e1b5}';
 pub const ZOOM_OUT: char = '\u{e1b6}';
 pub const SCAN: char = '\u{e256}';
 pub const MONITOR: char = '\u{e120}';
+pub const DOWNLOAD: char = '\u{e0b6}';
+pub const EXTERNAL_LINK: char = '\u{e0bd}';

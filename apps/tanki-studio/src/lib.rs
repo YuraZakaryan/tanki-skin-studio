@@ -16,4 +16,5 @@ pub mod logging;
 pub mod model;
 pub mod previews;
 pub mod runtime;
+pub mod updates;
 pub mod views;

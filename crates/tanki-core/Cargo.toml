@@ -13,6 +13,7 @@ tanki-cache = { path = "../tanki-cache" }
 tanki-pack = { path = "../tanki-pack" }
 tanki-apply = { path = "../tanki-apply" }
 tanki-state = { path = "../tanki-state" }
+tanki-update = { path = "../tanki-update" }
 
 [dev-dependencies]
 anyhow.workspace = true

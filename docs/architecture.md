@@ -9,6 +9,7 @@ of a **lower** layer, and `cargo xtask layers` (part of `cargo xtask ci`) enforc
 | 0 | `tanki-i18n` | UI localisation (English keys in code, `ru.tsv` catalog, plural rules, current language). Knows nothing about the app. |
 | 1 | `tanki-cache` | Find and scan a game cache; recognise which resource groups are which item (`targets`: built-in table, hand labels, consecutive-id modifications). |
 | 1 | `tanki-pack` | The `.tankipack` format: validation, checksums, safe import from zip or folder. |
+| 1 | `tanki-update` | Updates from the project's GitHub releases: check, download checked against the release's `SHA256SUMS.txt`, install (the macOS bundle from the `.dmg`, the Windows `.msi` after exit), restart. |
 | 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; backup history; "is the game running" check. |
 | 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the saved session) and the app data folder. |
 | 3 | `tanki-core` | Thin facade re-exporting the layers above, plus the end-to-end tests that cross all of them. |

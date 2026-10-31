@@ -229,6 +229,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="v$VERSION"
+          # The version's CHANGELOG section leads the notes: the app shows it when it offers the release.
+          packaging/release-notes.sh "$VERSION" > "$RUNNER_TEMP/notes.md"
           if gh release view "$tag" --json isDraft --jq .isDraft > is-draft 2>/dev/null; then
             if [ "$(cat is-draft)" != "true" ]; then
               echo "::error::$tag is already published; raise the version in Cargo.toml"
@@ -242,11 +244,11 @@ jobs:
             gh release upload "$tag" dist/*
             # The notes and title are refreshed too, so a rebuilt draft never keeps stale text.
             gh release edit "$tag" --target "$GITHUB_SHA" --prerelease="$PRERELEASE" \
-              --title "Tanki Skin Studio $VERSION" --notes-file packaging/release-notes.md
+              --title "Tanki Skin Studio $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
           else
             echo "Creating the draft $tag"
             pre=()
             if [ "$PRERELEASE" = "true" ]; then pre=(--prerelease); fi
             gh release create "$tag" dist/* --draft "${pre[@]}" --target "$GITHUB_SHA" \
-              --title "Tanki Skin Studio $VERSION" --notes-file packaging/release-notes.md
+              --title "Tanki Skin Studio $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
           fi
