@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! A release as GitHub's REST API describes it (`GET /repos/{repo}/releases/latest`): its version,
-//! page, files and the "What's new" part of its notes.
+//! page, files and the "What's new" part of its notes, in each language the notes have.
+//!
+//! The notes hold one section per language: `## What's new in <version>` first, then
+//! `## Что нового в <version>` (`packaging/release-notes.sh`). A copy up to 0.3.0 reads only the
+//! English one ([`whats_new`]), so adding languages changes nothing for it.
 
 use anyhow::{Context, Result};
 use serde::Deserialize;
@@ -16,8 +20,9 @@ pub struct Release {
     pub version: Version,
     /// The release's page on GitHub.
     pub page: String,
-    /// The "What's new" section of the notes, empty when the notes have none.
-    pub notes: Vec<NoteLine>,
+    /// The "What's new" sections of the notes by language code (`en`, `ru`); none when the notes
+    /// have none. See [`Release::notes_in`].
+    pub notes: Vec<(String, Vec<NoteLine>)>,
     pub assets: Vec<Asset>,
 }
 
@@ -44,7 +49,21 @@ impl Release {
     pub fn asset(&self, name: &str) -> Option<&Asset> {
         self.assets.iter().find(|a| a.name == name)
     }
+
+    /// What is new in the language `lang`, else in English; empty when the notes say nothing.
+    pub fn notes_in(&self, lang: &str) -> &[NoteLine] {
+        let find = |code: &str| {
+            self.notes
+                .iter()
+                .find(|(l, lines)| l == code && !lines.is_empty())
+                .map(|(_, lines)| lines.as_slice())
+        };
+        find(lang).or_else(|| find("en")).unwrap_or_default()
+    }
 }
+
+/// The headings of the "What's new" sections and their languages, lowercase.
+const SECTIONS: [(&str, &str); 2] = [("what's new", "en"), ("что нового", "ru")];
 
 #[derive(Deserialize)]
 struct ApiRelease {
@@ -106,14 +125,29 @@ pub fn parse_latest(json: &str) -> Result<Option<Release>> {
         tag: api.tag_name,
         version,
         page: api.html_url,
-        notes: whats_new(api.body.as_deref().unwrap_or_default()),
+        notes: notes_by_language(api.body.as_deref().unwrap_or_default()),
         assets,
     }))
 }
 
-/// The `## What's new` section of release notes in Markdown, as headings and list items in plain
-/// text. Wrapped list items (continuation lines indented) are joined.
+/// Every "What's new" section of release notes, by language, each as [`section`] reads it.
+pub fn notes_by_language(body: &str) -> Vec<(String, Vec<NoteLine>)> {
+    SECTIONS
+        .iter()
+        .map(|(heading, lang)| ((*lang).to_owned(), section(body, heading)))
+        .filter(|(_, lines)| !lines.is_empty())
+        .collect()
+}
+
+/// The English `## What's new` section, the one copies up to 0.3.0 read.
 pub fn whats_new(body: &str) -> Vec<NoteLine> {
+    section(body, "what's new")
+}
+
+/// The first `## ` section of release notes in Markdown whose title starts with `heading`
+/// (lowercase), as headings and list items in plain text. Wrapped list items (continuation lines
+/// indented) are joined.
+pub fn section(body: &str, heading: &str) -> Vec<NoteLine> {
     let mut lines = Vec::new();
     let mut inside = false;
     let mut item: Option<String> = None;
@@ -123,7 +157,7 @@ pub fn whats_new(body: &str) -> Vec<NoteLine> {
             if inside {
                 break;
             }
-            inside = title.trim().to_ascii_lowercase().starts_with("what's new");
+            inside = title.trim().to_lowercase().starts_with(heading);
             continue;
         }
         if !inside {
@@ -260,6 +294,64 @@ mod tests {
                 NoteLine::Item("See the guide.".into()),
                 NoteLine::Heading("Fixed".into()),
                 NoteLine::Item("One fix.".into()),
+            ]
+        );
+    }
+
+    const BILINGUAL: &str = "## What's new in 0.4.0\n\n### Added\n\n- A choice of cache.\n\n## Что нового в 0.4.0\n\n### Добавлено\n\n- Выбор кэша.\n\n## Downloads\n\n- a file\n";
+
+    fn release(body: &str) -> Release {
+        parse_latest(&json("v0.4.0", false, false, body))
+            .unwrap()
+            .unwrap()
+    }
+
+    #[test]
+    fn the_notes_are_shown_in_the_interface_language() {
+        let release = release(BILINGUAL);
+        assert_eq!(
+            release.notes_in("ru"),
+            [
+                NoteLine::Heading("Добавлено".into()),
+                NoteLine::Item("Выбор кэша.".into()),
+            ]
+        );
+        assert_eq!(
+            release.notes_in("en"),
+            [
+                NoteLine::Heading("Added".into()),
+                NoteLine::Item("A choice of cache.".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn notes_without_a_translation_are_shown_in_english() {
+        let english = release("## What's new in 0.4.0\n\n- Only English.\n");
+        assert_eq!(
+            english.notes_in("ru"),
+            [NoteLine::Item("Only English.".into())]
+        );
+        assert_eq!(
+            english.notes_in("de"),
+            [NoteLine::Item("Only English.".into())]
+        );
+        assert!(
+            release("## Downloads\n\n- a file\n")
+                .notes_in("ru")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn a_copy_that_reads_only_english_sees_the_english_notes_alone() {
+        // 0.3.0 reads the first "What's new" section and stops at the next heading: the Russian
+        // section after it never mixes in.
+        assert_eq!(
+            whats_new(BILINGUAL),
+            [
+                NoteLine::Heading("Added".into()),
+                NoteLine::Item("A choice of cache.".into()),
             ]
         );
     }

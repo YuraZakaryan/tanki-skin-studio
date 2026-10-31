@@ -29,7 +29,10 @@ use crate::{
 
 /// Wide enough for the three buttons of an offer in Russian.
 const WIDTH: f32 = 560.0;
-const NOTES_HEIGHT: f32 = 176.0;
+/// The notes box grows with what is new up to this height, then scrolls.
+const NOTES_MAX: f32 = 260.0;
+/// The width of a heading in the notes box; items are indented by 14 more.
+const NOTES_TEXT: f32 = WIDTH - 48.0 - 16.0 - 8.0 - 12.0;
 /// The text width inside a message box: the dialog's, less the box's icon and padding.
 const NOTE_TEXT: f32 = WIDTH - 48.0 - (14.0 + 18.0 + 10.0) - 14.0;
 
@@ -312,15 +315,43 @@ fn failed(app: &mut Studio, ctx: &Context, error: &str) {
     }
 }
 
-/// The notes' "What's new", in a box that scrolls when it is long.
+/// What is new in the release, in the interface's language when the notes have it, else in
+/// English.
+fn release_notes(release: &Release) -> &[NoteLine] {
+    release.notes_in(tanki_i18n::current().code())
+}
+
+/// The whole height of the notes box for `lines`: its caption, every heading and item as wrapped,
+/// and the margins. The box shows at most [`NOTES_MAX`] of it.
+fn notes_height(ctx: &Context, lines: &[NoteLine]) -> f32 {
+    if lines.is_empty() {
+        return 52.0;
+    }
+    let painter = ctx.layer_painter(eframe::egui::LayerId::background());
+    let measure = |text: &str, weight: u16, width: f32| {
+        let style = Text::body(13.0, weight, eframe::egui::Color32::WHITE);
+        fonts::paragraph(&painter, text, style, width, Some(19.0))
+            .size()
+            .y
+    };
+    let content: f32 = lines
+        .iter()
+        .map(|line| match line {
+            NoteLine::Heading(title) => 2.0 + measure(title, 600, NOTES_TEXT) + 6.0,
+            NoteLine::Item(text) => measure(text, 400, NOTES_TEXT - 14.0) + 6.0,
+        })
+        .sum();
+    36.0 + content + 10.0
+}
+
+/// The notes' "What's new", in a box as high as they are, which scrolls (with its bar in sight)
+/// when they are longer than [`NOTES_MAX`].
 fn notes(ui: &mut Ui, release: &Release) {
     let tokens = Tokens::get(ui.ctx());
     let width = ui.available_width();
-    let height = if release.notes.is_empty() {
-        52.0
-    } else {
-        NOTES_HEIGHT
-    };
+    let lines = release_notes(release);
+    let full = notes_height(ui.ctx(), lines);
+    let height = full.min(NOTES_MAX);
     let (rect, _) = ui.allocate_exact_size(Vec2::new(width, height), Sense::hover());
     draw::rounded(
         ui.painter(),
@@ -329,7 +360,7 @@ fn notes(ui: &mut Ui, release: &Release) {
         tokens.surface,
         Some((1.0, tokens.border)),
     );
-    if release.notes.is_empty() {
+    if lines.is_empty() {
         fonts::draw_left(
             ui.painter(),
             rect.min.x + 16.0,
@@ -354,10 +385,15 @@ fn notes(ui: &mut Ui, release: &Release) {
         ScrollArea::vertical()
             .id_salt("update-notes")
             .auto_shrink([false, false])
+            .scroll_bar_visibility(if full > NOTES_MAX {
+                eframe::egui::scroll_area::ScrollBarVisibility::AlwaysVisible
+            } else {
+                eframe::egui::scroll_area::ScrollBarVisibility::AlwaysHidden
+            })
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing = Vec2::new(0.0, 6.0);
                 let text_width = ui.available_width() - 12.0;
-                for line in &release.notes {
+                for line in lines {
                     match line {
                         NoteLine::Heading(title) => {
                             ui.add_space(2.0);
@@ -401,11 +437,7 @@ fn notes(ui: &mut Ui, release: &Release) {
 fn offer(app: &mut Studio, ctx: &Context, release: &Release, error: Option<&str>) {
     let tokens = Tokens::get(ctx);
     let manual = manual_reason(&app.updates.install);
-    let notes_height = if release.notes.is_empty() {
-        52.0
-    } else {
-        NOTES_HEIGHT
-    };
+    let notes_height = notes_height(ctx, release_notes(release)).min(NOTES_MAX);
     let error = error.map(|error| fmt(tl!("The update failed: {error}"), &[("error", error)]));
     let boxes: f32 = manual
         .iter()

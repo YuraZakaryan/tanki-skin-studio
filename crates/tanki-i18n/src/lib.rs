@@ -46,8 +46,9 @@ pub struct LangInfo {
     /// Plural form index for a count (English: 0 = one, 1 = other). A catalog's `@plural` entries
     /// list one form per index.
     pub plural: fn(u64) -> usize,
-    /// What separates groups of three digits in a count: `3,549` in English, `3 549` (a no-break
-    /// space, so a number never wraps) in Russian.
+    /// What separates groups of three digits in a count: `3,549` in English, `3 549` in Russian
+    /// with a narrow no-break space (U+202F, CLDR's Russian group separator): a full space is a
+    /// hole in the monospace counters. Wrapped text keeps a number on one line (`tanki_ui::fonts`).
     pub digit_group: char,
     catalog: OnceLock<Catalog>,
 }
@@ -83,7 +84,7 @@ pub static LANGUAGES: [LangInfo; 2] = [
         name: "Русский",
         source: include_str!("ru.tsv"),
         plural: plural_russian,
-        digit_group: '\u{a0}',
+        digit_group: '\u{202f}',
         catalog: OnceLock::new(),
     },
 ];
@@ -357,14 +358,19 @@ mod tests {
         assert_eq!(Lang::EN.group_digits(1_000_000), "1,000,000");
         assert_eq!(
             ru.group_digits(3549),
-            "3\u{a0}549",
-            "a no-break space, not a comma"
+            "3\u{202f}549",
+            "a narrow no-break space, not a comma or a full space"
+        );
+        assert_eq!(ru.group_digits(1_234_567), "1\u{202f}234\u{202f}567");
+        assert!(
+            !ru.group_digits(1_234_567).contains([' ', '\u{a0}']),
+            "no full-width space in a count"
         );
         assert_eq!(ru.group_digits(999), "999");
         assert_eq!(ru.group_digits(0), "0");
         assert_eq!(
             trn(ru, 1108, "{n} file", "{n} files"),
-            "1\u{a0}108 файлов",
+            "1\u{202f}108 файлов",
             "counts in messages are grouped too"
         );
     }

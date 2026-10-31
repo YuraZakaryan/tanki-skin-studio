@@ -24,8 +24,16 @@ pub fn env(label: &str) -> Env {
 
 /// The app opened on `env` (the same data folder every time, so a second harness is a restart).
 pub fn harness(env: &Env) -> Harness<'static, Studio> {
+    harness_with_caches(env, vec![env.cache.root.clone()])
+}
+
+/// The app opened on `env`'s data folder with these cache folders found on the machine.
+pub fn harness_with_caches(env: &Env, caches: Vec<PathBuf>) -> Harness<'static, Studio> {
     let data = env.work.join("data");
-    let root = env.cache.root.clone();
+    let roots: Vec<(String, PathBuf)> = caches
+        .into_iter()
+        .map(|root| ("air-cache".to_owned(), root))
+        .collect();
     let mut harness = Harness::builder()
         .with_size(egui::vec2(1440.0, 900.0))
         .build_eframe(move |cc| {
@@ -36,7 +44,7 @@ pub fn harness(env: &Env) -> Harness<'static, Studio> {
                 store,
                 session,
                 data,
-                roots: Some(vec![("air-cache".into(), root)]),
+                roots: Some(roots),
                 skip_splash: true,
             };
             let mut app = Studio::new(cc, startup).expect("studio starts");

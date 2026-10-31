@@ -49,3 +49,4 @@ pub const SCAN: char = '\u{e256}';
 pub const MONITOR: char = '\u{e120}';
 pub const DOWNLOAD: char = '\u{e0b6}';
 pub const EXTERNAL_LINK: char = '\u{e0bd}';
+pub const CHEVRONS_UP_DOWN: char = '\u{e210}';

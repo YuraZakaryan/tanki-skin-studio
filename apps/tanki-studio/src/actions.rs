@@ -12,7 +12,7 @@ use std::{
 use tanki_core::{
     apply::{apply_variant, missing_files, pending_restores, planned_files, restore_all},
     archive,
-    cache::{looks_like_cache, scan_cache},
+    cache::{client_id, looks_like_cache, scan_cache},
     pack::{ImportProgress, InstalledPack, PackRejected, PackTarget, import_pack_with},
     process::running_game_processes,
     recognize::recognise_by_content,
@@ -21,8 +21,11 @@ use tanki_i18n::{Lang, fmt, tl};
 use tanki_ui::theme::ThemePreference;
 
 use crate::{
-    app::{Dialog, ImportJob, Imported, Page, PendingApply, Selection, Studio, ToastAction},
-    model::{grade_code, target_name},
+    app::{
+        CacheChoice, Dialog, ImportJob, Imported, Page, PendingApply, Selection, Studio,
+        ToastAction,
+    },
+    model::{caches_to_ask, grade_code, target_name},
 };
 
 impl Studio {
@@ -74,6 +77,7 @@ impl Studio {
             if let Some((game, path)) = self.roots.first().cloned() {
                 self.open_cache(&game, &path);
             }
+            self.check_caches();
             return;
         };
         let (game, root) = (scan.game.clone(), scan.root.clone());
@@ -85,6 +89,8 @@ impl Studio {
             }
             Err(error) => self.toast(crate::errors::user_message(&error), None),
         }
+        // A client installed since the start brings a cache of its own.
+        self.check_caches();
     }
 
     pub fn choose_cache(&mut self) {
@@ -116,6 +122,8 @@ impl Studio {
         match scan_cache(path, None) {
             Ok(scan) => {
                 let _ = self.store.set("custom_cache", &scan.root.to_string_lossy());
+                // A folder the user picked is never news to them.
+                self.remember_caches(vec![cache_key(&scan.root)]);
                 self.set_scan(scan);
                 self.reload_roots();
                 self.restore_cache_selection();
@@ -128,6 +136,121 @@ impl Studio {
         if let Some((game, path)) = self.roots.get(index).cloned() {
             self.persist(true);
             self.open_cache(&game, &path);
+            // The cache chosen is the one the next start opens.
+            self.persist(true);
+        }
+    }
+
+    /// Ask which cache to use when several were found and one of them is new to the user (or
+    /// this is the first start that looked; see [`caches_to_ask`]). With nothing to ask, the
+    /// caches found are remembered, so one that appears later is asked about. Another open dialog
+    /// is not replaced: the question waits for the next look.
+    pub fn check_caches(&mut self) {
+        let found: Vec<String> = self.roots.iter().map(|(_, p)| cache_key(p)).collect();
+        let known = self.known_caches();
+        let Some(new) = caches_to_ask(&found, known.as_deref()) else {
+            self.remember_caches(found);
+            return;
+        };
+        if self.dialog.is_some() {
+            return;
+        }
+        let choices = self.cache_choices(&new);
+        let selected = choices.iter().position(|c| c.current).unwrap_or(0);
+        self.dialog = Some(Dialog::ChooseCache {
+            choices,
+            selected,
+            switching: false,
+        });
+    }
+
+    /// The cache card was clicked: the same list of caches, to switch on purpose, with a way to
+    /// choose a folder that is not listed. The caches are looked for again first.
+    pub fn open_cache_switcher(&mut self) {
+        if self.dialog.is_some() {
+            return;
+        }
+        self.reload_roots();
+        let choices = self.cache_choices(&vec![false; self.roots.len()]);
+        let selected = choices.iter().position(|c| c.current).unwrap_or(0);
+        self.dialog = Some(Dialog::ChooseCache {
+            choices,
+            selected,
+            switching: true,
+        });
+    }
+
+    /// The switcher's Choose folder…: the folder chooser instead of the list.
+    pub fn choose_cache_folder_instead(&mut self) {
+        self.dialog = None;
+        self.choose_cache();
+    }
+
+    /// The cache folders found, as the question lists them; `new` marks the ones new to the user.
+    fn cache_choices(&self, new: &[bool]) -> Vec<CacheChoice> {
+        let current = self.scan.as_ref().map(|s| cache_key(&s.root));
+        self.roots
+            .iter()
+            .enumerate()
+            .map(|(root, (game, path))| CacheChoice {
+                root,
+                path: path.clone(),
+                name: if game == "custom" {
+                    crate::views::shell::game_name(game)
+                } else {
+                    cache_name(path)
+                },
+                modified: last_change(path),
+                new: new.get(root).copied().unwrap_or(false),
+                current: current.as_deref() == Some(cache_key(path).as_str()),
+            })
+            .collect()
+    }
+
+    /// The answer to [`Studio::check_caches`]: work with `choice`'s cache from now on, this start
+    /// and the next ones.
+    pub fn pick_cache(&mut self, choice: &CacheChoice) {
+        self.answer_cache_question();
+        if !choice.current {
+            self.switch_cache(choice.root);
+        }
+    }
+
+    /// The question which cache to use was closed: the current one stays, and the caches it
+    /// offered are not asked about again.
+    pub fn keep_cache(&mut self) {
+        self.answer_cache_question();
+        self.persist(true);
+    }
+
+    fn answer_cache_question(&mut self) {
+        if let Some(Dialog::ChooseCache { choices, .. }) = self.dialog.take() {
+            self.remember_caches(choices.iter().map(|c| cache_key(&c.path)).collect());
+        }
+    }
+
+    /// The caches the user has been asked about or has chosen; `None` before the first look.
+    fn known_caches(&self) -> Option<Vec<String>> {
+        let stored = self.store.get(KNOWN_CACHES).ok().flatten()?;
+        serde_json::from_str(&stored).ok()
+    }
+
+    fn remember_caches(&mut self, caches: Vec<String>) {
+        let stored = self.known_caches();
+        let mut known = stored.clone().unwrap_or_default();
+        for cache in caches {
+            if !known.contains(&cache) {
+                known.push(cache);
+            }
+        }
+        if stored.as_ref() == Some(&known) {
+            return;
+        }
+        let saved = serde_json::to_string(&known)
+            .map_err(anyhow::Error::from)
+            .and_then(|json: String| self.store.set(KNOWN_CACHES, &json));
+        if let Err(error) = saved {
+            log::warn!("could not save the known caches: {error}");
         }
     }
 
@@ -756,4 +879,53 @@ fn run_import(
     });
     let _ = std::fs::remove_dir_all(&staging);
     result
+}
+
+/// The settings key of the caches the user has been asked about (a JSON list of paths).
+const KNOWN_CACHES: &str = "known_caches";
+
+/// A cache folder as remembered: its canonical path, so two spellings of one folder are one.
+fn cache_key(path: &Path) -> String {
+    path.canonicalize()
+        .unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// The name that tells this cache from the others on this machine: the AIR application id its
+/// path holds, else the folder's own name (the parent's for a folder called `cache`).
+pub(crate) fn cache_name(path: &Path) -> String {
+    if let Some(id) = client_id(path) {
+        return id;
+    }
+    let named = if path.file_name().is_some_and(|n| n == "cache") {
+        path.parent().unwrap_or(path)
+    } else {
+        path
+    };
+    named.file_name().map_or_else(
+        || path.to_string_lossy().into_owned(),
+        |n| n.to_string_lossy().into_owned(),
+    )
+}
+
+/// When something in the cache folder last changed (Unix seconds): the newest of the folder and
+/// the entries right in it. A client that is played writes there, so the cache in use is the
+/// recent one. Looks at a few thousand entries at most.
+fn last_change(path: &Path) -> Option<u64> {
+    let modified = |meta: std::fs::Metadata| {
+        meta.modified()
+            .ok()?
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()
+            .map(|d| d.as_secs())
+    };
+    let own = std::fs::metadata(path).ok().and_then(modified);
+    let entries = std::fs::read_dir(path)
+        .into_iter()
+        .flatten()
+        .filter_map(|e| e.ok())
+        .take(4096)
+        .filter_map(|e| e.metadata().ok().and_then(modified));
+    own.into_iter().chain(entries).max()
 }

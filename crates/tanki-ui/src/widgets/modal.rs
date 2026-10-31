@@ -13,8 +13,36 @@ pub struct ModalSpec<'a> {
     /// The accessible name of the × button (translated by the caller).
     pub close_label: &'a str,
     pub width: f32,
-    /// Height of the body area between header (78) and footer (72), bottom padding included.
+    /// Height of the body area between header (78, more for a title that wraps) and footer (72),
+    /// bottom padding included.
     pub body_height: f32,
+}
+
+/// The room a title has: the dialog less its margins and the × button.
+fn title_width(spec: &ModalSpec<'_>) -> f32 {
+    spec.width - 24.0 - 12.0 - 38.0 - 24.0
+}
+
+/// The header's height: 78 for a title on one line, one line more for each line it wraps to (a
+/// translation can be longer than the English title).
+pub fn header_height(ctx: &Context, spec: &ModalSpec<'_>) -> f32 {
+    let painter = ctx.layer_painter(egui::LayerId::background());
+    let galley = title_galley(&painter, spec, egui::Color32::WHITE);
+    (galley.size().y + 52.0).max(78.0)
+}
+
+fn title_galley(
+    painter: &egui::Painter,
+    spec: &ModalSpec<'_>,
+    color: egui::Color32,
+) -> std::sync::Arc<egui::Galley> {
+    fonts::paragraph(
+        painter,
+        spec.title,
+        Text::display(20.0, 700, color),
+        title_width(spec),
+        Some(26.0),
+    )
 }
 
 /// What the user did with the dialog this frame.
@@ -27,7 +55,8 @@ pub enum ModalEvent {
 
 /// Draw the scrim, then a centred dialog: header with title and close button, the body closure
 /// (given a `Ui` inset by 24 on the sides), a footer rule and the footer closure, which lays its
-/// buttons out right to left (put the primary action first).
+/// buttons out right to left (put the primary action first). The dialog is at least `spec.width`
+/// wide and grows to fit its buttons: a translation's labels can be wider than the English ones.
 pub fn modal(
     ctx: &Context,
     spec: &ModalSpec<'_>,
@@ -37,14 +66,20 @@ pub fn modal(
     let tokens = Tokens::get(ctx);
     let screen = ctx.content_rect();
     let mut event = ModalEvent::None;
+    // The buttons' width is known once they are laid out: it is kept from the pass before, and a
+    // pass that finds them wider than the dialog is discarded and drawn again, never shown.
+    let footer_id = Id::unique(("modal-footer", spec.id));
+    let footer_needed: f32 = ctx.data(|d| d.get_temp(footer_id)).unwrap_or(0.0);
+    let width = spec.width.max(footer_needed + 48.0);
     Area::new(Id::unique(("modal", spec.id)))
         .order(Order::Foreground)
         .fixed_pos(screen.min)
         .show(ctx, |ui| {
             let scrim = ui.allocate_rect(screen, Sense::click());
             ui.painter().rect_filled(screen, 0.0, tokens.scrim);
-            let height = 78.0 + spec.body_height + 72.0;
-            let rect = Rect::from_center_size(screen.center(), Vec2::new(spec.width, height));
+            let header = header_height(ctx, spec);
+            let height = header + spec.body_height + 72.0;
+            let rect = Rect::from_center_size(screen.center(), Vec2::new(width, height));
             draw::shadow(
                 ui.painter(),
                 rect,
@@ -64,6 +99,10 @@ pub fn modal(
             // click of a double click is not a dismissal: its first click opened the dialog (a
             // double-clicked Apply would otherwise close its confirmation at once).
             let inside = ui.interact(rect, ui.scope_id().with("inside"), Sense::click());
+            let title = spec.title.to_owned();
+            inside.widget_info(move || {
+                egui::WidgetInfo::labeled(egui::Role::Dialog, true, title.clone())
+            });
             if scrim.clicked()
                 && !scrim.double_clicked()
                 && !scrim.triple_clicked()
@@ -72,12 +111,11 @@ pub fn modal(
             {
                 event = ModalEvent::Dismissed;
             }
-            fonts::draw_left(
-                ui.painter(),
-                rect.min.x + 24.0,
-                rect.min.y + 39.0,
-                spec.title,
-                Text::display(20.0, 700, tokens.text),
+            let title = title_galley(ui.painter(), spec, tokens.text);
+            ui.painter().galley(
+                Pos2::new(rect.min.x + 24.0, rect.min.y + 26.0),
+                title,
+                tokens.text,
             );
             let close = Rect::from_min_size(
                 Pos2::new(rect.max.x - 24.0 - 38.0, rect.min.y + 20.0),
@@ -92,8 +130,8 @@ pub fn modal(
                 event = ModalEvent::Dismissed;
             }
             let body_rect = Rect::from_min_size(
-                Pos2::new(rect.min.x + 24.0, rect.min.y + 78.0),
-                Vec2::new(spec.width - 48.0, spec.body_height - 20.0),
+                Pos2::new(rect.min.x + 24.0, rect.min.y + header),
+                Vec2::new(width - 48.0, spec.body_height - 20.0),
             );
             ui.scope_builder(UiBuilder::new().max_rect(body_rect), |ui| {
                 ui.spacing_mut().item_spacing = Vec2::ZERO;
@@ -111,15 +149,25 @@ pub fn modal(
                 Pos2::new(rect.min.x + 24.0, footer_top + 16.0),
                 Pos2::new(rect.max.x - 24.0, footer_top + 56.0),
             );
-            ui.scope_builder(
-                UiBuilder::new()
-                    .max_rect(buttons)
-                    .layout(Layout::right_to_left(egui::Align::Center)),
-                |ui| {
-                    ui.spacing_mut().item_spacing.x = 12.0;
-                    footer(ui);
-                },
-            );
+            let used = ui
+                .scope_builder(
+                    UiBuilder::new()
+                        .max_rect(buttons)
+                        .layout(Layout::right_to_left(egui::Align::Center)),
+                    |ui| {
+                        ui.spacing_mut().item_spacing.x = 12.0;
+                        footer(ui);
+                        ui.min_rect().width()
+                    },
+                )
+                .inner;
+            // Kept as it is now, so shorter labels (another language) let the dialog shrink back.
+            if (used - footer_needed).abs() > 0.5 {
+                ctx.data_mut(|d| d.insert_temp(footer_id, used));
+                if used > footer_needed {
+                    ctx.request_discard("a dialog grows to fit its buttons");
+                }
+            }
         });
     if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
         event = ModalEvent::Dismissed;

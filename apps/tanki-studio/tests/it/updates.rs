@@ -452,3 +452,25 @@ fn a_check_time_in_the_future_does_not_hold_the_check_off() {
         "a clock set back still checks"
     );
 }
+
+#[test]
+fn the_offer_fits_its_longer_russian_buttons() {
+    let env = env("update-offer-ru");
+    let (source, _) = source(Ok(Some("9.0.0")));
+    let mut h = starting(&env, &source);
+    settle(&mut h, |app| offered(app).is_some());
+    h.state_mut()
+        .set_language(tanki_i18n::Lang::from_code("ru").expect("Russian"));
+    h.run_steps(4);
+    let dialog = h
+        .get_by_role_and_label(egui::Role::Dialog, "Доступно обновление")
+        .rect();
+    for label in ["Обновить и перезапустить", "Позже", "Пропустить эту версию"]
+    {
+        let button = h.get_by_label(label).rect();
+        assert!(
+            dialog.contains_rect(button),
+            "“{label}” ({button:?}) stays inside the dialog ({dialog:?})"
+        );
+    }
+}

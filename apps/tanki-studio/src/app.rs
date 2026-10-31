@@ -148,6 +148,31 @@ pub enum Dialog {
         version: String,
         name: String,
     },
+    /// Which game cache the app works with: asked when several were found (see
+    /// [`Studio::check_caches`]), or opened from the cache card to switch on purpose
+    /// (`switching`, see [`Studio::open_cache_switcher`]).
+    ChooseCache {
+        choices: Vec<CacheChoice>,
+        selected: usize,
+        switching: bool,
+    },
+}
+
+/// A cache folder offered when the user chooses which cache to use.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CacheChoice {
+    /// Index into [`Studio::roots`].
+    pub root: usize,
+    pub path: PathBuf,
+    /// The AIR application id read from the folder's own path, else the folder's name: whatever
+    /// tells the clients apart on this machine.
+    pub name: String,
+    /// When something in the folder last changed (Unix seconds).
+    pub modified: Option<u64>,
+    /// Not there the last time the app looked.
+    pub new: bool,
+    /// The cache open now.
+    pub current: bool,
 }
 
 /// What a toast's action button does.
@@ -281,6 +306,8 @@ impl Studio {
             skip_splash,
         } = startup;
         let lang = Lang::from_pref(store.language()?.as_deref());
+        // Texts made while starting (a toast of a scripted import) are in the chosen language too.
+        tanki_i18n::set_current(lang);
         let theme_pref = ThemePreference::from_pref(store.theme()?.as_deref());
         let theme = theme_pref.resolve(cc.egui_ctx.system_theme());
         let ui_scale = store
@@ -366,6 +393,7 @@ impl Studio {
         app.packs = app.store.list_packs().unwrap_or_default();
         app.active_pack = app.store.active_pack().ok().flatten();
         app.open_initial_cache();
+        app.check_caches();
         app.reload_backups();
         app.report_finished_update();
         crate::dev::run_actions(&mut app);

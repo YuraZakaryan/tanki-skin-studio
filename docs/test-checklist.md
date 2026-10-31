@@ -58,6 +58,10 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | A model archive chosen as the cache becomes a pack | it `archive` |
 | The cache folder disappears and comes back while the app runs | it `chaos` |
 | Rescan | it `chaos`, ui `gui-monkey` |
+| Several caches: asked on the first start and when a new one appears (also by a rescan), the new one marked; the choice and a closed question are kept | unit `caches_to_ask`, it `caches` |
+| The cache card is a picker (chevron, hover, tooltip) and opens the switcher: the same list, Choose folder…, Cancel and Esc keep the cache, arrows and Enter switch, one cache listed too | it `caches` |
+| Russian counts: narrow no-break space between digit groups, narrow in mono, never wrapped | unit `counts_are_grouped_the_way_each_language_writes_them`, unit `a_russian_count_is_narrow_in_mono_and_never_wraps` |
+| Paths as `~/…`, shortened in the middle, whole in a tooltip | unit `a_path_in_the_home_folder_starts_with_a_tilde`, unit `fonts` |
 
 ## Packs
 
@@ -130,4 +134,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Counts grouped as each language writes them (3,660 / 3 660) | unit `tanki-i18n`, unit `model` |
 | A missing author or license leaves no stray separator | unit `model` |
 | Russian labels fit: Resources filters wrap to more rows, labelling chips go to a second row | it `chaos` (cut-off check), RU screenshots |
+| A very long resource name stays inside the inspector, shortened, whole in a tooltip | it `resources` |
+| Release notes in the interface language (Russian section), English when there is no translation; a copy up to 0.3.0 sees the English section alone; the notes box shows every line | unit `release::tests`, RU/EN screenshots |
+| Dialogs fit Russian: texts sized to their lines, titles and warnings wrap, buttons inside the dialog | it `the_offer_fits_its_longer_russian_buttons`, RU screenshots (`cargo xtask shot … --lang ru`) |
 | Core failures said in the interface language | unit `errors` |

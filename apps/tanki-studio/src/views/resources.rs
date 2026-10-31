@@ -292,6 +292,18 @@ fn catalog(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     }
 }
 
+fn title_style(tokens: &Tokens) -> Text {
+    Text::display(20.0, 700, tokens.text)
+}
+
+/// The resource's name on one line of `rect`, shortened with an ellipsis when it is wider: a name
+/// is a file name of any length, and the panel does not grow. Returns where the text went.
+fn heading_line(ui: &Ui, rect: Rect, title: &str) -> Rect {
+    let style = title_style(&Tokens::get(ui.ctx()));
+    let shown = fonts::ellipsize(ui.painter(), title, style, rect.width());
+    fonts::draw(ui.painter(), rect.min, &shown, style)
+}
+
 fn inspector(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
     let selected = app
@@ -390,14 +402,20 @@ fn inspector(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             );
         }
     }
-    // Heading and chips.
+    // Heading and chips. A long name is shortened to the panel; the whole of it is the tooltip.
     let heading = parts[1];
-    fonts::draw(
-        ui.painter(),
-        heading.min,
-        &row.title(),
-        Text::display(20.0, 700, tokens.text),
+    let title = row.title();
+    let shown = heading_line(ui, heading, &title);
+    let response = ui.interact(
+        shown,
+        ui.scope_id().with("resource-title"),
+        egui::Sense::hover(),
     );
+    let label = title.clone();
+    response.widget_info(move || egui::WidgetInfo::labeled(egui::Role::Label, true, &label));
+    if shown.width() + 0.5 < fonts::width(ui.painter(), &title, title_style(&tokens)) {
+        response.on_hover_text(&title);
+    }
     let (kind, chip_label) = kind_chip(&row);
     let mut x = heading.min.x;
     let y = heading.min.y + 34.0;
@@ -450,7 +468,14 @@ fn inspector(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             Pos2::new(details.min.x, details.min.y + index as f32 * 26.0),
             Vec2::new(details.width(), 16.0),
         );
-        widgets::key_value(ui, line, key, value, *mono);
+        if widgets::key_value(ui, line, key, value, *mono) {
+            ui.interact(
+                line,
+                ui.scope_id().with(("fact", index)),
+                egui::Sense::hover(),
+            )
+            .on_hover_text(value);
+        }
     }
     // Actions.
     let open = parts[4];

@@ -322,3 +322,15 @@ action	Apply	Применить
 	What's new	Что нового
 	You have the newest version	У вас последняя версия
 	{done} of {total}	{done} из {total}
+	Choose the game cache	Выберите кэш игры
+	In use	Используется
+	Keep current	Оставить текущий
+	New	Новый
+	Several game clients are installed on this computer, each with its own cache. Choose the one the studio works with.	На этом компьютере установлено несколько игровых клиентов, у каждого свой кэш. Выберите, с каким из них работает студия.
+	Switch game cache	Сменить кэш игры
+	Use this cache	Использовать этот кэш
+	You can switch later from the cache card in the sidebar.	Сменить кэш можно позже — в карточке кэша на боковой панели.
+	changed {time}	изменён {time}
+	Choose the cache the studio works with. A folder that is not listed can be chosen by hand.	Выберите кэш, с которым работает студия. Папку, которой нет в списке, можно выбрать вручную.
+	Choose folder…	Выбрать папку…
+	No game cache was found on this computer.	На этом компьютере не найден кэш игры.

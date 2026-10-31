@@ -11,8 +11,8 @@ use std::sync::Arc;
 
 use egui::epaint::text::VariationCoords;
 use egui::{
-    Align2, Color32, Context, FontData, FontDefinitions, FontFamily, FontId, Galley, Painter, Pos2,
-    Rect, Vec2,
+    Align2, Color32, Context, FontData, FontDefinitions, FontFamily, FontId, FontTweak, Galley,
+    Painter, Pos2, Rect, Vec2,
     text::{LayoutJob, TextFormat},
 };
 
@@ -29,20 +29,34 @@ fn named(name: &str) -> FontFamily {
 /// Register the bundled fonts. Takes effect from the next frame.
 pub fn install(ctx: &Context) {
     let mut fonts = FontDefinitions::default();
-    for (name, bytes) in [
-        ("chakra-600", CHAKRA_600),
-        ("chakra-700", CHAKRA_700),
-        ("inter", INTER),
-        ("mono", MONO),
-        ("lucide", LUCIDE),
+    // The narrow no-break space between the digit groups of a Russian count (`3 549`) is drawn
+    // as the text font's `thin_space_width` of its own space (its blank glyph comes from Inter,
+    // which Chakra Petch and JetBrains Mono fall back to). A proportional face keeps a whole
+    // space, already narrow; monospace text gets half a cell instead of a full-width hole.
+    let whole = FontTweak {
+        thin_space_width: 1.0,
+        ..FontTweak::default()
+    };
+    let half = FontTweak {
+        thin_space_width: 0.5,
+        ..FontTweak::default()
+    };
+    for (name, bytes, tweak) in [
+        ("chakra-600", CHAKRA_600, whole.clone()),
+        ("chakra-700", CHAKRA_700, whole.clone()),
+        ("inter", INTER, whole.clone()),
+        ("mono", MONO, half.clone()),
+        ("lucide", LUCIDE, whole.clone()),
     ] {
-        fonts
-            .font_data
-            .insert(name.to_owned(), Arc::new(FontData::from_static(bytes)));
+        fonts.font_data.insert(
+            name.to_owned(),
+            Arc::new(FontData::from_static(bytes).tweak(tweak)),
+        );
         // Each family falls back to egui's built-in fonts for glyphs the file lacks (arrows, ✓).
-        // Chakra Petch has no Cyrillic: Inter, drawn at the same weight, stands in for it.
+        // Chakra Petch has no Cyrillic: Inter, drawn at the same weight, stands in for it, as it
+        // does for JetBrains Mono's missing glyphs.
         let mut chain = vec![name.to_owned()];
-        if name.starts_with("chakra") {
+        if name.starts_with("chakra") || name == "mono" {
             chain.push("inter".to_owned());
         }
         chain.extend(
@@ -143,6 +157,12 @@ pub fn line(painter: &Painter, text: &str, style: Text) -> Arc<Galley> {
     painter.layout_job(LayoutJob::single_section(text.to_owned(), style.format()))
 }
 
+/// egui may wrap a line at a narrow no-break space (U+202F, between the digit groups of a Russian
+/// count): wrapped text gets a no-break space (U+00A0) there instead, which it never breaks.
+fn unbreakable(text: &str) -> String {
+    text.replace('\u{202f}', "\u{a0}")
+}
+
 /// Lay out wrapped text no wider than `width`, with an optional line height.
 pub fn paragraph(
     painter: &Painter,
@@ -153,7 +173,7 @@ pub fn paragraph(
 ) -> Arc<Galley> {
     let mut format = style.format();
     format.line_height = line_height;
-    let mut job = LayoutJob::single_section(text.to_owned(), format);
+    let mut job = LayoutJob::single_section(unbreakable(text), format);
     job.wrap.max_width = width;
     painter.layout_job(job)
 }
@@ -168,7 +188,7 @@ pub fn paragraph_centered(
 ) -> Arc<Galley> {
     let mut format = style.format();
     format.line_height = line_height;
-    let mut job = LayoutJob::single_section(text.to_owned(), format);
+    let mut job = LayoutJob::single_section(unbreakable(text), format);
     job.wrap.max_width = width;
     job.halign = egui::Align::Center;
     painter.layout_job(job)
@@ -209,6 +229,41 @@ pub fn ellipsize<'a>(
         shortened.pop();
     }
     std::borrow::Cow::Owned(shortened + "…")
+}
+
+/// Shorten `text` to `max_width` by taking characters out of its middle: both ends of a path stay
+/// readable (`~/Library/…/Local Store/cache`).
+pub fn ellipsize_middle<'a>(
+    painter: &Painter,
+    text: &'a str,
+    style: Text,
+    max_width: f32,
+) -> std::borrow::Cow<'a, str> {
+    if max_width <= 0.0 {
+        return std::borrow::Cow::Borrowed("");
+    }
+    if width(painter, text, style) <= max_width {
+        return std::borrow::Cow::Borrowed(text);
+    }
+    // Binary search for the most characters kept, split between the start and the end.
+    let chars: Vec<char> = text.chars().collect();
+    let candidate = |kept: usize| -> String {
+        let tail = kept / 2;
+        let head = kept - tail;
+        let start: String = chars[..head].iter().collect();
+        let end: String = chars[chars.len() - tail..].iter().collect();
+        start + "…" + &end
+    };
+    let (mut low, mut high) = (0, chars.len());
+    while low < high {
+        let middle = (low + high).div_ceil(2);
+        if width(painter, &candidate(middle), style) <= max_width {
+            low = middle;
+        } else {
+            high = middle - 1;
+        }
+    }
+    std::borrow::Cow::Owned(candidate(low))
 }
 
 /// Draw one line with its top-left corner at `pos`; returns the rectangle it occupies.
@@ -329,6 +384,47 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_russian_count_is_narrow_in_mono_and_never_wraps() {
+        let ctx = egui::Context::default();
+        install(&ctx);
+        let mut checked = false;
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            let painter = ui.painter();
+            let style = Text::mono(12.0, 400, Color32::WHITE);
+            let narrow = width(painter, "1\u{202f}835", style);
+            let full = width(painter, "1 835", style);
+            assert!(
+                narrow < full - 2.0,
+                "the gap is narrower than a monospace space: {narrow} vs {full}"
+            );
+            assert!(
+                narrow > width(painter, "1835", style) + 2.0,
+                "but still a gap: {narrow}"
+            );
+            // In proportional text the gap stays a whole (narrow) space, not a sliver.
+            let body = Text::body(13.0, 400, Color32::WHITE);
+            let spaced = width(painter, "1\u{202f}835", body);
+            assert!(
+                (spaced - width(painter, "1 835", body)).abs() < 0.5,
+                "a whole proportional space: {spaced}"
+            );
+            // Room for the count but not for the label before it: the label goes on its own row and
+            // the count stays whole, never split at its narrow space to fill the first row.
+            let body = Text::body(13.0, 400, Color32::WHITE);
+            let room = width(painter, "3\u{a0}549\u{a0}120", body) + 4.0;
+            let galley = paragraph(painter, "файлов: 3\u{202f}549\u{202f}120", body, room, None);
+            let rows: Vec<String> = galley.rows.iter().map(|row| row.text()).collect();
+            assert!(
+                rows.iter().any(|row| row.contains("3\u{a0}549\u{a0}120")),
+                "the count stays on one row: {rows:?}"
+            );
+            checked = true;
+        });
+        output.textures_delta.clear();
+        assert!(checked);
+    }
+
+    #[test]
     fn long_text_is_shortened_to_the_room_and_short_text_is_left_alone() {
         let ctx = egui::Context::default();
         let mut checked = false;
@@ -343,6 +439,12 @@ mod tests {
             assert!(width(painter, &shortened, style) <= full / 2.0 + 0.01);
             assert!(shortened.len() > 8, "as much as fits is kept: {shortened}");
             assert_eq!(ellipsize(painter, long, style, 0.0), "");
+            let path = "~/Library/Application Support/org.example.client/Local Store/cache";
+            let middle = ellipsize_middle(painter, path, style, width(painter, path, style) / 2.0);
+            assert!(middle.starts_with("~/Lib"), "{middle}");
+            assert!(middle.ends_with("cache"), "{middle}");
+            assert!(middle.contains('…'), "{middle}");
+            assert_eq!(ellipsize_middle(painter, "short", style, full), "short");
             checked = true;
         });
         // A bare context uploads the font atlas; nothing paints it here.

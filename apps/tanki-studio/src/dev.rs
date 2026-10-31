@@ -10,7 +10,8 @@
 //!   `pick:<n>` (picks the selection's n-th skin, as a click on it does),
 //!   `apply:<item>:<variant>` (applies at once), `begin:<item>:<variant>` (opens the dialog),
 //!   `confirm`, `restore` (everything back, no question), `ask-restore` (the Restore button's
-//!   question), `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
+//!   question), `cache-switcher` (the cache card's switcher, in place of any question at start),
+//!   `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
 //!   (closes the toasts, which are never part of what a restart restores), `close` (closes the
 //!   dialog, as its Done or Cancel does), `importing:<name>:<percent>` (the progress card of an
 //!   import that stays at that point, copying, about 20 seconds from the end),
@@ -117,6 +118,10 @@ pub fn run_actions(app: &mut Studio) {
             }
             "restore" => app.restore_original(),
             "ask-restore" => app.ask_to_restore(),
+            "cache-switcher" => {
+                app.dialog = None;
+                app.open_cache_switcher();
+            }
             "dismiss" => app.toasts.clear(),
             "close" => app.dialog = None,
             "importing" => importing(app, arg),
@@ -178,13 +183,34 @@ pub fn sample_release(version: &str) -> tanki_core::update::Release {
         tag: format!("v{version}"),
         page: format!("{}/tag/v{version}", tanki_core::update::RELEASES_PAGE),
         notes: vec![
-            NoteLine::Heading("Added".into()),
-            NoteLine::Item(
-                "Tanki Skin Studio offers a new release when it starts, and updates itself: the new version is downloaded, checked against the release's checksums, installed, and opened.".into(),
+            (
+                "en".into(),
+                vec![
+                    NoteLine::Heading("Added".into()),
+                    NoteLine::Item(
+                        "Tanki Skin Studio offers a new release when it starts, and updates itself: the new version is downloaded, checked against the release's checksums, installed, and opened.".into(),
+                    ),
+                    NoteLine::Item("Check for updates in the command palette.".into()),
+                    NoteLine::Heading("Fixed".into()),
+                    NoteLine::Item(
+                        "A pack dropped on the window while a dialog is open waits for it.".into(),
+                    ),
+                ],
             ),
-            NoteLine::Item("Check for updates in the command palette.".into()),
-            NoteLine::Heading("Fixed".into()),
-            NoteLine::Item("A pack dropped on the window while a dialog is open waits for it.".into()),
+            (
+                "ru".into(),
+                vec![
+                    NoteLine::Heading("Добавлено".into()),
+                    NoteLine::Item(
+                        "Tanki Skin Studio предлагает новый релиз при запуске и обновляется сам: новая версия скачивается, сверяется с контрольными суммами релиза, устанавливается и открывается.".into(),
+                    ),
+                    NoteLine::Item("Проверка обновлений в палитре команд.".into()),
+                    NoteLine::Heading("Исправлено".into()),
+                    NoteLine::Item(
+                        "Пак, брошенный на окно при открытом диалоге, ждёт его закрытия.".into(),
+                    ),
+                ],
+            ),
         ],
         assets: Vec::new(),
         version,
@@ -533,6 +559,7 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::ImportError { .. }) => "import error",
         Some(Dialog::DeletePack { .. }) => "delete pack",
         Some(Dialog::RestoreAll { .. }) => "restore all",
+        Some(Dialog::ChooseCache { .. }) => "choose cache",
     }
 }
 
