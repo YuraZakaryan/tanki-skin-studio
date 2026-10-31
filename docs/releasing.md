@@ -53,8 +53,8 @@ gh attestation verify tanki-skin-studio-0.1.0-macos-universal.dmg -R YuraZakarya
 
 The build scripts sign when the secrets are there and warn and ship unsigned when they are not, so
 test builds keep working. On the `release` branch a missing secret fails the build instead: a
-release from `release` is always signed. Until the
-certificates exist, release with a manual run of the workflow from `main` (unsigned).
+release from `release` is always signed. Until the certificates exist, release with a manual run
+of the workflow from `main` (unsigned).
 
 The secrets belong to the **`release` environment** (**Settings → Environments → release**; it
 appears after the first run, or create it). Pull requests build without that environment, so their
