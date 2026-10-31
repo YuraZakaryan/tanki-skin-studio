@@ -15,7 +15,7 @@ All notable changes are recorded here. The format follows
   left once it can be told, and Cancel, which leaves nothing in the library. Before, a pack of
   hundreds of megabytes froze the window until it was in, and the system called the app not
   responding. A second import waits until the first is done.
-- The Windows installer puts a shortcut on the desktop, as PdfCraft does: on for a first install,
+- The Windows installer puts a shortcut on the desktop: on for a first install,
   a checkbox on the installer's first page, `INSTALLDESKTOPSHORTCUT=0` for an unattended install.
   An update keeps it only while it is still on the desktop. Before, the app was only in the Start
   menu.
@@ -94,7 +94,7 @@ All notable changes are recorded here. The format follows
 - Release workflow: a push to the `release` branch builds a universal macOS `.dmg` and, for Windows
   x64 and ARM, a per-user `.msi` installer and a portable `.zip` from source, with checksums and a
   build-provenance attestation, and drafts a GitHub Release.
-- Code signing as in WordCraft and PdfCraft: Developer ID signing and notarization for macOS,
+- Code signing: Developer ID signing and notarization for macOS,
   Authenticode with a certificate or Azure Trusted Signing for Windows, from the secrets of the
   `release` environment; a release from the `release` branch fails without them.
 - Quality gate: provenance check, formatting, translations, Clippy, crate layering, unit, UI and

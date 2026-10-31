@@ -1,6 +1,6 @@
 # Architecture
 
-The workspace is split into layers, the way PdfCraft does it: a crate may depend only on crates
+The workspace is split into layers: a crate may depend only on crates
 of a **lower** layer, and `cargo xtask layers` (part of `cargo xtask ci`) enforces it.
 
 | Layer | Crate | Responsibility |
@@ -39,7 +39,7 @@ design pixel by pixel.
 state, splash) and per overlay (dialogs, command palette, toasts); `shell.rs` is the sidebar and page frame.
 
 - State lives in `app.rs`; everything the user can do is a method in `actions.rs`, called by buttons, the
-  command palette (`commands.rs`, one registry with labels, icons and shortcuts, as in PdfCraft), the
+  command palette (`commands.rs`, one registry with labels, icons and shortcuts), the
   keyboard and the test hooks (`dev.rs`).
 - The view model (`model.rs`: resource rows, garage items, sizes, times) is plain data with unit tests.
 - Responsive: the sidebar becomes an icon rail below 1100 points, two-column pages stack below 860 points
@@ -61,6 +61,6 @@ own keys so a damaged session can never lose them.
 ## Testing
 
 `tanki-studio` is a library plus a thin binary, so its UI is tested in-process with `egui_kittest`
-(`apps/tanki-studio/tests/it`), as PdfCraft does; widgets carry accessible names (`widget_info`) both for
+(`apps/tanki-studio/tests/it`); widgets carry accessible names (`widget_info`) both for
 screen readers and for those tests. See the README: `cargo xtask ci` runs everything that needs no window,
 `cargo xtask e2e-ui` runs the real window on a fixture cache and checks pixels and the disk.

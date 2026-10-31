@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! `cargo xtask ico <out.ico> <in.png>...`: pack square PNGs into a Windows icon, as WordCraft does.
+//! `cargo xtask ico <out.ico> <in.png>...`: pack square PNGs into a Windows icon.
 //! Every size is stored as PNG data inside the ICO (Windows Vista and later read that), so the file
 //! is the images as rendered, with no conversion. packaging/icons.sh calls this.
 

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! The provenance check, enforced by `cargo xtask assets` (part of `cargo xtask ci`), the way
-//! PdfCraft guards its assets.
+//! The provenance check, enforced by `cargo xtask assets` (part of `cargo xtask ci`).
 //!
 //! The repository must never carry game content: whatever reaches a public commit stays in its
 //! history for good. So every file that git would commit is checked for game file types and names,

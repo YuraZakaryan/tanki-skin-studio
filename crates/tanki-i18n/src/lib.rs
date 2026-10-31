@@ -6,10 +6,9 @@
 //! and tests are unaffected. A string without a translation is shown in English, so coverage can
 //! grow incrementally (`cargo xtask i18n` keeps the catalog and the code in step).
 //!
-//! The design follows PdfCraft's `i18n` module (English-keyed TSV catalogs, a thread-local current
-//! language set once per frame, plural rules per language), reduced to the languages this app
-//! ships. English is the default; the user's choice is stored in the app database (see
-//! `tanki-state`) and restored at the next start.
+//! English-keyed TSV catalogs, a thread-local current language set once per frame, and plural
+//! rules per language, for the languages this app ships. English is the default; the user's
+//! choice is stored in the app database (see `tanki-state`) and restored at the next start.
 //!
 //! # Adding a language
 //! 1. Add `xx.tsv` next to `ru.tsv` (copy its header; translate from the *meaning* of the English
@@ -178,7 +177,7 @@ impl Lang {
 }
 
 thread_local! {
-    // Per thread, as in PdfCraft: independent app and test threads must not change each other's
+    // Per thread: independent app and test threads must not change each other's
     // drawing language.
     static CURRENT: Cell<Lang> = const { Cell::new(Lang::EN) };
 }

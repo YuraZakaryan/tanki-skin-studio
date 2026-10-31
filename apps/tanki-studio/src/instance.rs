@@ -3,9 +3,9 @@
 //! One Tanki Skin Studio per data folder. A second window on the same data would write the same
 //! database and the same game cache at once (two applies, two restores racing).
 //!
-//! As PdfCraft does for its launch election, the guard is an exclusive OS lock on a file: the OS
-//! drops it when the process ends, however it ends, so a crash never leaves a stale lock, and a
-//! failure to take it lets the app run rather than refusing to start. Different data folders (the
+//! The guard is an exclusive OS lock on a file: the OS drops it when the process ends, however it
+//! ends, so a crash never leaves a stale lock, and a failure to take it lets the app run rather
+//! than refusing to start. Different data folders (the
 //! tests, `TANKI_DATA_DIR`) never block each other.
 
 use std::{

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! The window, Dock and taskbar icon: the app mark from assets/app-icon (drawn in design.pen,
-//! rendered by packaging/icons.sh), as WordCraft does. macOS gets the version on Apple's icon grid,
+//! rendered by packaging/icons.sh). macOS gets the version on Apple's icon grid,
 //! with its transparent margin, so it sits in the Dock like the icons beside it.
 
 use eframe::egui::IconData;

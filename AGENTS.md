@@ -43,7 +43,7 @@ theirs.
 ## 3. Architecture
 
 - Crates are layered; a crate depends only on lower layers (`cargo xtask layers`,
-  [docs/architecture.md](docs/architecture.md)). The pattern follows PdfCraft.
+  [docs/architecture.md](docs/architecture.md)).
 - The app is a library (`tanki_studio`): state in `app.rs`, every user action a method in
   `actions.rs`, one file per screen in `views/`, widgets from `tanki-ui`.
 - Interface strings are English keys (`tl!("…")`) with a Russian row in

@@ -1,7 +1,6 @@
 <#
 .SYNOPSIS
   Authenticode-sign files with signtool, using whichever signing material is configured.
-  The same approach as WordCraft and PdfCraft.
 .DESCRIPTION
   Tries, in order:
     1. A code-signing certificate file:   WINDOWS_CERTIFICATE (base64 .pfx), WINDOWS_CERTIFICATE_PASSWORD

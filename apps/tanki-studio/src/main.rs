@@ -15,7 +15,7 @@ use tanki_studio::{
 /// Wayland/desktop application id (the `.desktop` file name when packaged for Linux).
 const APP_ID: &str = "tanki-skin-studio";
 
-/// GPU settings, as in PdfCraft: a restored window on a high-DPI display can ask for a surface
+/// GPU settings: a restored window on a high-DPI display can ask for a surface
 /// larger than the 8192 pixels egui-wgpu requests (3440 points at 250% is 8600) and otherwise
 /// panics before the app starts, so the adapter's real texture size is enabled; and on Windows,
 /// Direct3D 12 presents through a DirectComposition visual, so text does not shimmer while the
