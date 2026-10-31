@@ -6,6 +6,8 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-31
+
 ### Added
 
 - The app updates itself from this repository's GitHub releases. At start, at most every twelve
@@ -118,7 +120,8 @@ All notable changes are recorded here. The format follows
 - Quality gate: provenance check, formatting, translations, Clippy, crate layering, unit, UI and
   real-window tests, dependency policy (`cargo-deny`), minimum Rust version check.
 
-[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/YuraZakaryan/tanki-skin-studio/releases/tag/v0.1.0
