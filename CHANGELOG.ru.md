@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-01
+
 ### Добавлено
 
 - Если на компьютере несколько игровых клиентов, у каждого свой кэш, приложение спрашивает, с каким
@@ -40,4 +42,5 @@
   предупреждения переносятся внутри своей плашки, а диалог расширяется под свои кнопки (в окне
   обновления «Пропустить эту версию» выходила за край).
 
-[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.3.0...v0.4.0
