@@ -7,6 +7,8 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/YuraZakaryan/tanki-skin-studio/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/YuraZakaryan/tanki-skin-studio/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/YuraZakaryan/tanki-skin-studio/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/YuraZakaryan/tanki-skin-studio?style=flat-square&color=a3e635"></a>
   <img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-a3e635?style=flat-square">
   <img alt="Written in Rust" src="https://img.shields.io/badge/written%20in-Rust-4d7c0f?style=flat-square">
   <img alt="Platforms: macOS, Windows" src="https://img.shields.io/badge/runs%20on-macOS%20%C2%B7%20Windows-a3e635?style=flat-square">
@@ -105,6 +107,15 @@ cache folder you point it at, and only after you confirm.
 - **An import report** says what could not be used, so a differently laid-out archive never
   quietly imports less: unused files, formats the client cannot read, unrecognised folders, guesses
   to check.
+- **A large pack never freezes the window.** It is imported on its own thread, with a card that
+  shows the stage, the percent, the time left and **Cancel**. A cancelled import leaves nothing in
+  the library.
+
+<p align="center">
+  <img src="docs/images/importing.png" alt="The Packs page with the import card in the corner: Importing skins-collection.tankipack, Copying into the library, 45 percent, about 21 seconds left and a Cancel button" width="100%">
+  <br>
+  <sub>A large pack being imported: the window stays usable, and Cancel stops it cleanly.</sub>
+</p>
 
 ### Applies only what will work
 
@@ -227,9 +238,9 @@ backups back, and a backup that was tampered with is refused rather than written
 
 ## How it's built
 
-A Cargo workspace of focused crates, layered so the core never depends on the interface. The
-pattern follows [PdfCraft](https://github.com/storytold/pdfcraft). `cargo xtask layers` enforces the
-layering on every CI run, and [docs/architecture.md](docs/architecture.md) has the details.
+A Cargo workspace of focused crates, layered so the core never depends on the interface.
+`cargo xtask layers` enforces the layering on every CI run, and
+[docs/architecture.md](docs/architecture.md) has the details.
 
 | Layer | Crate | What it does |
 |---|---|---|
@@ -252,7 +263,7 @@ layering on every CI run, and [docs/architecture.md](docs/architecture.md) has t
 - `rustfmt`, and Clippy with warnings as errors;
 - a check that every interface string has a Russian translation and no translation is stale;
 - the crate layering rules;
-- 125+ unit, integration and UI tests, with good and bad paths, hostile archives and tampered
+- 160+ unit, integration and UI tests, with good and bad paths, hostile archives and tampered
   backups.
 
 Beside it, CI checks that every file states its licence (REUSE), checks the dependencies with

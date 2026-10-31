@@ -5,8 +5,7 @@ security problem in it matters even though it never goes online.
 
 ## Supported versions
 
-Only the latest code on `main` (and, once there are releases, the latest release) gets security
-fixes.
+Only the latest release and the latest code on `main` get security fixes.
 
 ## Reporting a vulnerability
 
