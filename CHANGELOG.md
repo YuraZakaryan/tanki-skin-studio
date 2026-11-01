@@ -6,6 +6,20 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Apply to all items**: one look on every hull and turret that has it. Skins of the same name in
+  your packs (the item's own name in front left out, the pack's edition added: XT, Prime…) are one
+  look, gathered from every installed pack, the active one first. Pick a look, then choose for each
+  modification M0–M3 whether it changes and which skin it gets (its own, or another
+  modification's), and even per item; a table shows every item and modification with what happens
+  and why one is skipped (no such skin, no such modification in the game, already on, incomplete).
+  The last step lists every change and what is skipped before anything is written. The run goes
+  item by item off the window's thread, with a progress list and **Stop after this item**; every
+  write is a transaction with a backup, and an item that fails is put back as it was while the
+  others go on. **Undo all** puts the run back, and in **Packs → Backups** the run is one entry
+  that undoes it. Open it from the Garage's **Apply to all items** button or the command palette.
+
 ## [0.4.0] - 2026-11-01
 
 ### Added

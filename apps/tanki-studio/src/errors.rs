@@ -15,7 +15,13 @@ pub fn user_message(error: impl std::fmt::Display) -> String {
     let text = format!("{error:#}");
     log::warn!("{text}");
     // The more specific message first: "target missing" is part of "target resources missing".
-    let known: [(&str, Say); 10] = [
+    let known: [(&str, Say); 13] = [
+        // Another program holds the file open (Windows' sharing violation, a busy file).
+        ("being used by another process", || {
+            tl!("The file is in use.")
+        }),
+        ("os error 32", || tl!("The file is in use.")),
+        ("Resource busy", || tl!("The file is in use.")),
         ("target not recognized in this cache", || {
             tl!("This item is not recognised in this cache.")
         }),

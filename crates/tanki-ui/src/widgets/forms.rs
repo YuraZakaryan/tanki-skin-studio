@@ -80,7 +80,8 @@ pub fn toggle(ui: &mut Ui, value: &mut bool, label: &str) -> Response {
     let (fill, knob) = if *value {
         (tokens.primary, tokens.on_primary)
     } else {
-        (tokens.surface_3, tokens.text_3)
+        // The knob keeps its colour, as the design's switch does: only the track changes.
+        (tokens.surface_3, tokens.on_primary)
     };
     draw::rounded(ui.painter(), rect, CornerRadius::same(11), fill, None);
     let x = if *value {

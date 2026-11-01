@@ -227,6 +227,7 @@
 
 # Contexts: one English word with different meanings.
 action	Apply	Применить
+step	Check and apply	Проверьте и наденьте
 
 # Plural forms: one (1) | few (2-4) | many (0, 5+).
 @plural	{n} backup|{n} backups	{n} копия|{n} копии|{n} копий
@@ -334,3 +335,133 @@ action	Apply	Применить
 	Choose the cache the studio works with. A folder that is not listed can be chosen by hand.	Выберите кэш, с которым работает студия. Папку, которой нет в списке, можно выбрать вручную.
 	Choose folder…	Выбрать папку…
 	No game cache was found on this computer.	На этом компьютере не найден кэш игры.
+
+# Apply to all items (one look on every item).
+	Add a pack	Добавить пак
+	Add a pack with skins. Skins with the same name for different items show up here as one look.	Добавьте пак со скинами. Скины с одинаковым названием для разных предметов появятся здесь как один образ.
+	Already on	Уже надет
+	Apply a look to all items	Надеть образ на все предметы
+	Apply to all items	Надеть на все предметы
+	Applying {look} to {items}	Надеваем {look} на {items}
+	Back	Назад
+	Check	Проверка
+	Check and apply	Проверить и надеть
+	Choose M0–M3	Выберите M0–M3
+	Choose what each modification gets. Items that have the chosen skin change; the others are listed with the reason.	Выберите, что получит каждая модификация. Предметы с выбранным скином изменятся, остальные показаны с причиной.
+	Close the game before applying.	Перед заменой закройте игру.
+	Close without applying	Закрыть без замены
+	Close without applying?	Закрыть без замены?
+	Don't touch	Не трогать
+	Each item is backed up, replaced and checked	Для каждого предмета: бэкап, замена, проверка
+	Each modification can get its own skin or stay as it is	Каждая модификация получит свой скин или останется как есть
+	Including skins you put on earlier, one by one. Nothing else in the game changes.	В том числе скины, которые вы надевали раньше по одному. Больше в игре ничего не меняется.
+	Items already done stay done; you can undo them after.	Уже готовые предметы останутся, их можно будет отменить.
+	Keep choosing	Продолжить выбор
+	Look	Образ
+	Look: {look} · check what will change	Образ: {look} · проверьте, что изменится
+	Look: {look} · {items} {packs}	Образ: {look} · {items} {packs}
+	Make a backup first	Сначала сделать бэкап
+	Needed to undo everything in one click, so it is always on.	Нужен, чтобы отменить всё одной кнопкой, поэтому включён всегда.
+	Next: where	Далее: куда
+	No items here.	Здесь нет предметов.
+	No look matches “{query}”.	Ни один образ не подходит под «{query}».
+	No looks to apply yet	Пока нечего надевать
+	No {modification} in game	Нет {modification} в игре
+	No {skin}	Нет {skin}
+	No {skin} in the packs, {modification} stays as it is	В паках нет {skin}, {modification} останется как есть
+	Not touched	Не трогаем
+	Nothing has been replaced yet. The choices made for this look are not kept.	Пока ничего не заменено. Выбор для этого образа не сохранится.
+	Nothing is skipped.	Ничего не пропущено.
+	Nothing was put on	Ничего не надето
+	Off	Выкл
+	On	Вкл
+	One look on every hull and turret at once	Один образ сразу на все корпуса и пушки
+	Only for {item}:	Только для {item}:
+	Modification of {item}	Модификация {item}
+	Own choices for {item}	Свой выбор для {item}
+	Pick a look	Выберите образ
+	Pick a look from your packs	Выберите образ из своих паков
+	Put on	Ставим
+	Put skins on {modification}	Ставить скины на {modification}
+	Search looks	Поиск образов
+	Skin incomplete	Скин неполный
+	Skins are being put on all items. Wait until it is done.	Скины надеваются на все предметы. Дождитесь окончания.
+	Skins for:	Скины для:
+	Skins with the same name in your packs are one look. Pick it once and it goes on every item that has it.	Скины с одинаковым названием в ваших паках — это один образ. Выберите его один раз, и он наденется на все предметы, где он есть.
+	Skipped	Пропущены
+	Skipped: {list}.	Пропущены: {list}.
+	Stop after this item	Остановить после этого
+	Stopped: {items} not changed.	Остановлено: {items} без изменений.
+	Stopping after this item…	Остановка после этого предмета…
+	The game was started ({names}), so the rest stopped: {items} not changed.	Игра запущена ({names}), поэтому остальное остановлено: {items} без изменений.
+	The file is in use.	Файл занят.
+	The skin has no {files}, so it is not put on	В скине нет {files}, поэтому он не надевается
+	This item has no {modification} in the game	У этого предмета нет {modification} в игре
+	This replaces the skins these items wear now	Это заменит скины, которые сейчас надеты на эти предметы
+	This skin is on it already	Этот скин уже надет
+	Undid “{look}”: {files} put back. Restart the game.	«{look}» отменён: возвращено {files}. Перезапустите игру.
+	Undo all	Отменить всё
+	Undo puts back what every item wore before. It is also in Packs → Backups as one entry.	«Отменить всё» вернёт то, что было надето раньше. Это же есть в Паки → Резервные копии одной записью.
+	Undo “{look}” on every item?	Отменить «{look}» на всех предметах?
+	Use the common choice	Вернуть общий выбор
+	Use the common choice for {modification}	Вернуть общий выбор для {modification}
+	What {modification} gets	Что получит {modification}
+	What {modification} of {item} gets	Что получит {modification} у {item}
+	Where	Куда
+	Will be skipped	Будут пропущены
+	Will change	Изменятся
+	XT, Legacy, Prime or any other name from your packs	XT, Legacy, Prime или любое другое название из паков
+	You see every change first and can undo it all in one click	Сначала видно каждое изменение, а отменить всё можно одной кнопкой
+	already on	уже надет
+	applied	надето
+	backup	бэкап
+	from {modification}	с {modification}
+	incomplete skin	неполный скин
+	no {modification} in the game	нет {modification} в игре
+	no {skin}	нет {skin}
+	not applied	не удалось
+	nothing skipped	ничего не пропущено
+	own pick	свой выбор
+	replacing {modification}…	заменяем {modification}…
+	saved before replacing	сохраняется до замены
+	see the list	см. список
+	skipped	пропущено
+	the item is no longer in the cache	предмета больше нет в кэше
+	the pack no longer has this skin	в паке больше нет этого скина
+	the pack “{name}” is no longer in the library	пака «{name}» больше нет в библиотеке
+	the skin has no {files}	в скине нет {files}
+	waiting	в очереди
+	{done} of {total} items	{done} из {total} предметов
+	{have} of {total} items have it	есть у {have} из {total}
+	{items} get back what they wore before, {files} in all. A skin put on one of them later is undone too.	{items} получат то, что было надето раньше, всего {files}. Скин, надетый на один из них позже, тоже будет отменён.
+	{items} will change · {skipped}	Изменятся {items} · {skipped}
+	{item} · {modification}: {reason}. Nothing changed for this item.	{item} · {modification}: {reason}. У этого предмета ничего не изменилось.
+	{list} and {last}	{list} и {last}
+	{list} and {n} more	{list} и ещё {n}
+	{looks} found {packs}	Найдено {looks} {packs}
+	{look} is on {items}	{look} надет на {items}
+	{look} · from {modification}	{look} · с {modification}
+	{look} · own {modification}	{look} · свой {modification}
+	{look} · {modification}	{look} · {modification}
+	{modifications} are not touched	{modifications} не трогаем
+	{modifications} get their own {look}	{modifications} — свой {look}
+	{modifications} get {look} from {source}	{modifications} получат {look} с {source}
+	{modifications} gets its own {look}	{modifications} получит свой {look}
+	{modifications} gets {look} from {source}	{modifications} получит {look} с {source}
+	{modifications} is not touched	{modifications} не трогаем
+	{modification} stays as it is	{modification} останется как есть
+	{modification} ← {skin} (own pick)	{modification} ← {skin} (свой выбор)
+	{reason}; its earlier modifications could not be put back ({error})	{reason}; прежние модификации вернуть не удалось ({error})
+	{skins} replaced · backup saved	Заменено {skins} · бэкап сохранён
+	{skins} {items} will be replaced	Будет заменено {skins} {items}
+	{skin} · own pick	{skin} · свой выбор
+@plural	Apply to {n} item|Apply to {n} items	Надеть на {n} предмет|Надеть на {n} предмета|Надеть на {n} предметов
+@plural	in {n} pack|in {n} packs	в {n} паке|в {n} паках|в {n} паках
+@plural	item changes|items change	предмет изменится|предмета изменятся|предметов изменятся
+@plural	item skipped|items skipped	пропущен|пропущены|пропущено
+@plural	on {n} item|on {n} items	у {n} предмета|у {n} предметов|у {n} предметов
+@plural	{n} hull|{n} hulls	корпусов: {n}|корпусов: {n}|корпусов: {n}
+@plural	{n} look|{n} looks	{n} образ|{n} образа|{n} образов
+@plural	{n} skin|{n} skins	{n} скин|{n} скина|{n} скинов
+@plural	{n} skipped|{n} skipped	{n} пропущен|{n} пропущены|{n} пропущено
+@plural	{n} turret|{n} turrets	пушек: {n}|пушек: {n}|пушек: {n}
