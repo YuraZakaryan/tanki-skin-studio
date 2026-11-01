@@ -118,6 +118,8 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Undo all and the batch's one entry in the backups put every file back (a later replacement on top of it too); Restore original files still undoes everything | unit `apply`, unit `model`, it `bulk`, ui `gui-bulk` |
 | Two replacements in the same clock tick never share a backup folder | unit `apply` |
 | Russian fits every step, down to the smallest window; toasts stay above the wizard's buttons | it `bulk`, ui `bulk-*` |
+| Every screen on the design's own sample at 1440 × 900, English and Russian, dark and light, compared 1:1 with `design.pen`'s frames; the sample gives the frames' numbers | ui `design-*` (visual check against `target/design-preview/full/`), it `bulk` |
+| Items in the game's order (resource id), "Already on" is no reason to list, an item is skipped when nothing of it changes | unit `bulk`, it `bulk` |
 
 ## Recognition and labelling
 

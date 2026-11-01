@@ -29,8 +29,10 @@ pub struct WizardSpec<'a> {
     pub hint: Option<(char, &'a str)>,
 }
 
-/// The header's height.
-pub const WIZARD_HEADER: f32 = 78.0;
+/// The header's height with a subtitle (the title and subtitle, 18 above and below), and with
+/// the title alone.
+pub const WIZARD_HEADER: f32 = 80.0;
+pub const WIZARD_HEADER_PLAIN: f32 = 74.0;
 /// The footer's height.
 pub const WIZARD_FOOTER: f32 = 72.0;
 
@@ -176,7 +178,12 @@ pub fn wizard(
                 event = ModalEvent::Dismissed;
             }
             // Header: the title and subtitle, the steps, the × button.
-            let header = Rect::from_min_size(rect.min, Vec2::new(rect.width(), WIZARD_HEADER));
+            let header_height = if spec.subtitle.is_some() {
+                WIZARD_HEADER
+            } else {
+                WIZARD_HEADER_PLAIN
+            };
+            let header = Rect::from_min_size(rect.min, Vec2::new(rect.width(), header_height));
             draw::hrule(
                 ui.painter(),
                 rect.min.x + 1.0,
@@ -223,7 +230,7 @@ pub fn wizard(
                     fonts::draw_left(
                         ui.painter(),
                         left,
-                        header.center().y - 10.0,
+                        header.min.y + 18.0 + 13.0,
                         &title,
                         title_style,
                     );
@@ -232,7 +239,7 @@ pub fn wizard(
                     fonts::draw_left(
                         ui.painter(),
                         left,
-                        header.center().y + 13.0,
+                        header.min.y + 18.0 + 26.0 + 3.0 + 8.0,
                         &subtitle,
                         style,
                     );
@@ -277,11 +284,12 @@ pub fn wizard(
                 )
                 .inner;
             if let Some((icon, hint)) = spec.hint {
-                let room = buttons.width() - used - 24.0 - 24.0;
+                // The icon, 8 to the text, and 12 to the buttons.
+                let room = buttons.width() - used - 12.0 - 15.0 - 8.0;
                 let y = footer_top + WIZARD_FOOTER / 2.0;
                 fonts::icon(
                     ui.painter(),
-                    Pos2::new(buttons.min.x + 8.0, y),
+                    Pos2::new(buttons.min.x + 7.5, y),
                     icon,
                     15.0,
                     tokens.text_3,
@@ -291,7 +299,7 @@ pub fn wizard(
                     fonts::paragraph(ui.painter(), hint, style, room.max(40.0), Some(17.0));
                 let top = y - galley.size().y / 2.0;
                 ui.painter()
-                    .galley(Pos2::new(buttons.min.x + 24.0, top), galley, tokens.text_2);
+                    .galley(Pos2::new(buttons.min.x + 23.0, top), galley, tokens.text_2);
             }
         });
     // Taken, so a dialog that closing opens (a question) does not see the same Esc and close too.

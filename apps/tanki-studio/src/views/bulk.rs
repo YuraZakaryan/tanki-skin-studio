@@ -6,7 +6,7 @@
 //! offers to add a pack.
 
 use eframe::egui::{self, Context, CornerRadius, Pos2, Rect, Role, Sense, Ui, Vec2};
-use tanki_i18n::{fmt, tl, tn};
+use tanki_i18n::{fmt, tl, tl_ctx, tn};
 use tanki_ui::{
     draw, fonts,
     fonts::Text,
@@ -42,6 +42,7 @@ enum Act {
     Kind(&'static str, bool),
     Filter(RowFilter),
     Toggle(String, String),
+    Edit(u8),
     Stop,
     Undo,
     AddPack,
@@ -53,6 +54,15 @@ fn steps() -> [&'static str; 3] {
 
 fn title() -> &'static str {
     tl!("Apply a look to all items")
+}
+
+/// A reason in the middle of a sentence: "The file is in use" is "the file is in use" there.
+fn lower_first(text: &str) -> String {
+    let mut chars = text.chars();
+    chars
+        .next()
+        .map(|first| first.to_lowercase().chain(chars).collect())
+        .unwrap_or_default()
 }
 
 /// "M0".."M3".
@@ -110,6 +120,7 @@ pub fn draw(app: &mut Studio, ctx: &Context) {
             Act::Kind(kind, on) => app.bulk_set_kind(kind, on),
             Act::Filter(filter) => app.bulk_set_filter(filter),
             Act::Toggle(kind, id) => app.bulk_toggle_row(&kind, &id),
+            Act::Edit(modification) => app.bulk_edit_modification(modification),
             Act::Stop => app.bulk_stop(),
             Act::Undo => app.bulk_undo(),
             Act::AddPack => app.bulk_add_pack(),
@@ -156,6 +167,7 @@ fn text_height(ui: &Ui, text: &str, style: Text, width: f32, line: f32) -> f32 {
     fonts::paragraph(ui.painter(), text, style, width.max(20.0), Some(line))
         .size()
         .y
+        .max(line)
 }
 
 /// A label that screen readers and tests can find, over a painted rectangle.
@@ -184,7 +196,7 @@ fn empty_state(ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
             );
             let body_style = Text::body(14.0, 400, tokens.text_2);
             let total =
-                64.0 + 14.0 + 26.0 + 14.0 + text_height(ui, body, body_style, inner.width(), 20.0);
+                64.0 + 14.0 + 26.0 + 14.0 + text_height(ui, body, body_style, inner.width(), 17.0);
             let top = inner.center().y - total / 2.0;
             let icon =
                 Rect::from_min_size(Pos2::new(inner.center().x - 32.0, top), Vec2::splat(64.0));
@@ -218,7 +230,7 @@ fn empty_state(ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                 body,
                 body_style,
                 inner.width(),
-                Some(20.0),
+                Some(17.0),
             );
             ui.painter().galley(
                 Pos2::new(inner.center().x, heading_rect.max.y + 14.0),
@@ -531,10 +543,11 @@ fn look_card(
                 );
             }
             None => {
-                let icon = match item.map(|i| i.kind.as_str()) {
-                    Some("turret") => icons::CROSSHAIR,
-                    Some(_) => icons::CAR_FRONT,
-                    None => icons::LAYERS,
+                // No picture: a hull, a turret and a hull stand for the look.
+                let icon = if slot == 1 {
+                    icons::CROSSHAIR
+                } else {
+                    icons::CAR_FRONT
                 };
                 fonts::icon(ui.painter(), pic.center(), icon, 22.0, tokens.text_3);
             }
@@ -626,7 +639,8 @@ fn how_it_works(ui: &Ui, rect: Rect) {
         ),
         (
             icons::SHIELD_CHECK,
-            tl!("Check and apply"),
+            // An instruction here ("Проверьте и наденьте"), not the button's label.
+            tl_ctx!("step", "Check and apply"),
             tl!("You see every change first and can undo it all in one click"),
         ),
     ];
@@ -832,7 +846,6 @@ fn grade_badge(ui: &Ui, rect: Rect, modification: u8, on: bool) {
 
 const TILE_HEIGHT: f32 = 160.0;
 const ROW_HEIGHT: f32 = 49.0;
-const PICK_LINE: f32 = 46.0;
 const NAME_COLUMN: f32 = 210.0;
 
 fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
@@ -848,6 +861,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
     };
     let filter = wizard.filter;
     let expanded = wizard.expanded.clone();
+    let editing = wizard.editing;
     let subtitle = fmt(
         tl!("Look: {look} · {items} {packs}"),
         &[
@@ -897,8 +911,8 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
             );
             let intro_style = Text::body(14.0, 400, tokens.text_2);
             let width = rect.width() - 48.0;
-            let intro_height = text_height(ui, intro, intro_style, width, 19.0);
-            let fixed = 18.0 + intro_height + 14.0 + TILE_HEIGHT + 14.0 + 34.0 + 14.0 + 18.0;
+            let intro_height = text_height(ui, intro, intro_style, width, 17.0);
+            let fixed = 18.0 + intro_height + 14.0 + TILE_HEIGHT + 14.0 + 32.0 + 14.0 + 18.0;
             scroll_page(ui, rect, fixed + 200.0, |ui, content| {
                 let inner = content.shrink2(Vec2::new(24.0, 18.0));
                 let mut y = inner.min.y;
@@ -908,7 +922,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
                     intro,
                     intro_style,
                     width,
-                    19.0,
+                    17.0,
                 );
                 y += intro_height + 14.0;
                 let tiles = Rect::from_min_size(
@@ -918,9 +932,9 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
                 modification_tiles(ui, tiles, &look, &settings, &plan, acts);
                 y += TILE_HEIGHT + 14.0;
                 let filters =
-                    Rect::from_min_size(Pos2::new(inner.min.x, y), Vec2::new(inner.width(), 34.0));
+                    Rect::from_min_size(Pos2::new(inner.min.x, y), Vec2::new(inner.width(), 32.0));
                 filter_row(ui, filters, &plan, filter, &settings, acts);
-                y += 34.0 + 14.0;
+                y += 32.0 + 14.0;
                 let table = Rect::from_min_max(Pos2::new(inner.min.x, y), inner.max);
                 plan_table(
                     ui,
@@ -930,6 +944,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
                     &plan,
                     filter,
                     expanded.as_ref(),
+                    editing,
                     acts,
                 );
             });
@@ -1024,7 +1039,7 @@ fn modification_tiles(
         fonts::draw(
             ui.painter(),
             Pos2::new(inner.min.x, inner.min.y + 26.0 + 10.0),
-            &caption.to_uppercase(),
+            caption,
             Text::display(11.0, 700, tokens.text_3).spaced(1.0),
         );
         let options_sources = bulk::source_options(look, k);
@@ -1046,14 +1061,17 @@ fn modification_tiles(
             tl!("What {modification} gets"),
             &[("modification", &grade(k))],
         );
-        if let Some(index) = widgets::select(ui, select, &select_label, &shown_text, &options, true)
+        if let Some(index) =
+            widgets::select(ui, select, &select_label, &shown_text, &options, true, !on)
         {
             match options_sources.get(index) {
                 Some(source) => acts.push(Act::SetSource(k, *source)),
                 None => acts.push(Act::SetOn(k, false)),
             }
         }
-        let note_y = select.max.y + 10.0 + 8.0;
+        // The bar sits on the tile's bottom padding, the note 10 above it.
+        let bar_top = tile.max.y - 14.0 - 5.0;
+        let note_y = bar_top - 10.0 - 7.5;
         if on {
             let (have, total) = bulk::coverage(look, settings, k);
             let text = fmt(
@@ -1068,7 +1086,7 @@ fn modification_tiles(
                 Text::body(12.0, 400, tokens.text_2),
             );
             let bar = Rect::from_min_size(
-                Pos2::new(inner.min.x, note_y + 14.0),
+                Pos2::new(inner.min.x, bar_top),
                 Vec2::new(inner.width(), 5.0),
             );
             let fraction = if total == 0 {
@@ -1212,6 +1230,7 @@ fn plan_table(
     plan: &Plan,
     filter: RowFilter,
     expanded: Option<&(String, String)>,
+    editing: Option<u8>,
     acts: &mut Vec<Act>,
 ) {
     let tokens = Tokens::get(ui.ctx());
@@ -1224,7 +1243,7 @@ fn plan_table(
     );
     let head = Rect::from_min_size(
         rect.min + Vec2::splat(1.0),
-        Vec2::new(rect.width() - 2.0, 35.0),
+        Vec2::new(rect.width() - 2.0, 29.0),
     );
     draw::rounded(
         ui.painter(),
@@ -1292,17 +1311,11 @@ fn plan_table(
         );
         return;
     }
-    let lines = |row: &bulk::Row| -> usize {
-        row.cells
-            .iter()
-            .filter(|c| matches!(c, Some(cell) if *cell != Cell::NotInGame))
-            .count()
-    };
     let height_of = |row: &bulk::Row| {
         let open = expanded.is_some_and(|(kind, id)| *kind == row.kind && *id == row.id);
         ROW_HEIGHT
             + if open {
-                lines(row) as f32 * PICK_LINE + 12.0
+                picks_height(pick_lines(row, settings, editing).len())
             } else {
                 0.0
             }
@@ -1331,9 +1344,12 @@ fn plan_table(
                     if open {
                         let panel = Rect::from_min_size(
                             Pos2::new(body.min.x, y),
-                            Vec2::new(body.width(), lines(row) as f32 * PICK_LINE + 12.0),
+                            Vec2::new(
+                                body.width(),
+                                picks_height(pick_lines(row, settings, editing).len()),
+                            ),
                         );
-                        own_picks(ui, panel, look, settings, row, acts);
+                        own_picks(ui, panel, look, settings, row, editing, acts);
                         y += panel.height();
                     }
                 }
@@ -1450,12 +1466,49 @@ fn item_row(
 }
 
 /// An item's own choices, one line per modification it has in the game.
+/// The modifications an open row has a line for: those with the item's own pick, and the one
+/// being chosen (the first in the game at first).
+fn pick_lines(row: &bulk::Row, settings: &bulk::Settings, editing: Option<u8>) -> Vec<u8> {
+    let in_game: Vec<u8> = row
+        .cells
+        .iter()
+        .enumerate()
+        .filter(|(_, cell)| matches!(cell, Some(cell) if *cell != Cell::NotInGame))
+        .map(|(k, _)| k as u8)
+        .collect();
+    let mut lines: Vec<u8> = in_game
+        .iter()
+        .copied()
+        .filter(|k| settings.pick(&row.kind, &row.id, *k).is_some())
+        .collect();
+    let current = editing
+        .filter(|k| in_game.contains(k))
+        .or_else(|| lines.first().copied())
+        .or_else(|| in_game.first().copied());
+    if let Some(k) = current
+        && !lines.contains(&k)
+    {
+        lines.push(k);
+    }
+    lines.sort_unstable();
+    lines
+}
+
+/// The height of an open row's own choices: 10 above, 34 a line, 10 between, 12 below.
+fn picks_height(lines: usize) -> f32 {
+    if lines == 0 {
+        return 0.0;
+    }
+    10.0 + 34.0 * lines as f32 + 10.0 * (lines - 1) as f32 + 12.0
+}
+
 fn own_picks(
     ui: &mut Ui,
     panel: Rect,
     look: &Look,
     settings: &bulk::Settings,
     row: &bulk::Row,
+    editing: Option<u8>,
     acts: &mut Vec<Act>,
 ) {
     let tokens = Tokens::get(ui.ctx());
@@ -1480,17 +1533,19 @@ fn own_picks(
     let label = fmt(tl!("Only for {item}:"), &[("item", &name)]);
     let label_style = Text::body(13.0, 600, tokens.text_2);
     let label_width = fonts::width(ui.painter(), &label, label_style);
-    let mut y = panel.min.y + 6.0;
+    let in_game: Vec<u8> = row
+        .cells
+        .iter()
+        .enumerate()
+        .filter(|(_, cell)| matches!(cell, Some(cell) if *cell != Cell::NotInGame))
+        .map(|(k, _)| k as u8)
+        .collect();
+    let mut y = panel.min.y + 10.0;
     let mut first = true;
-    for (k, cell) in row.cells.iter().enumerate() {
-        let modification = k as u8;
-        if !matches!(cell, Some(cell) if *cell != Cell::NotInGame) {
-            continue;
-        }
-        let line = Rect::from_min_size(
-            Pos2::new(panel.min.x, y),
-            Vec2::new(panel.width(), PICK_LINE),
-        );
+    for modification in pick_lines(row, settings, editing) {
+        let k = usize::from(modification);
+        let cell = row.cells.get(k).cloned().flatten();
+        let line = Rect::from_min_size(Pos2::new(panel.min.x, y), Vec2::new(panel.width(), 34.0));
         let cy = line.center().y;
         let mut x = line.min.x + 58.0;
         if first {
@@ -1502,6 +1557,27 @@ fn own_picks(
         let pick = settings.pick(&row.kind, &row.id, modification);
         let changes = cell.as_ref().is_some_and(Cell::changes);
         grade_badge(ui, badge, modification, changes);
+        // The badge picks which modification the line is for.
+        let badge_label = fmt(tl!("Modification of {item}"), &[("item", &name)]);
+        let response = ui.interact(
+            badge,
+            ui.scope_id().with(("pick-modification", &row.id, k)),
+            Sense::click(),
+        );
+        let value = grade(modification);
+        let badge_name = badge_label.clone();
+        response.widget_info(move || {
+            let mut info = egui::WidgetInfo::labeled(Role::ComboBox, true, badge_name.clone());
+            info.current_text_value = Some(value.clone());
+            info
+        });
+        let names: Vec<String> = in_game.iter().map(|m| grade(*m)).collect();
+        let response = response.on_hover_cursor(egui::CursorIcon::PointingHand);
+        if let Some(index) = widgets::menu(ui, &response, 120.0, &names, &grade(modification))
+            && let Some(chosen) = in_game.get(index)
+        {
+            acts.push(Act::Edit(*chosen));
+        }
         x += 40.0 + 10.0;
         fonts::icon(
             ui.painter(),
@@ -1529,7 +1605,9 @@ fn own_picks(
             tl!("What {modification} of {item} gets"),
             &[("modification", &grade(modification)), ("item", &name)],
         );
-        if let Some(index) = widgets::select(ui, select, &select_label, &shown, &options, true) {
+        if let Some(index) =
+            widgets::select(ui, select, &select_label, &shown, &options, true, false)
+        {
             let chosen = match sources.get(index) {
                 Some(source) => Pick::Skin(*source),
                 None => Pick::Off,
@@ -1601,7 +1679,7 @@ fn own_picks(
                 ));
             }
         }
-        y += PICK_LINE;
+        y += 34.0 + 10.0;
     }
 }
 
@@ -1810,10 +1888,11 @@ fn check_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
             );
             let warn_style = Text::body(13.0, 400, tokens.text_2);
             let warn_room = width - 16.0 - 20.0 - 14.0 - 16.0;
+            // 16 around, the title's line of 18, 4 between, the detail in lines of 16.
             let warn_height = 16.0
-                + 20.0
+                + 18.0
                 + 4.0
-                + text_height(ui, warn_detail, warn_style, warn_room, 18.0)
+                + text_height(ui, warn_detail, warn_style, warn_room, 16.0)
                 + 16.0;
             let fixed = 20.0
                 + 30.0
@@ -1905,19 +1984,20 @@ fn check_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
                     Text::body(15.0, 700, tokens.accent),
                     warn_room,
                 );
-                fonts::draw(
+                fonts::draw_left(
                     ui.painter(),
-                    Pos2::new(text_x, warn.min.y + 16.0),
+                    text_x,
+                    warn.min.y + 16.0 + 9.0,
                     &shown,
                     Text::body(15.0, 700, tokens.accent),
                 );
                 text_at(
                     ui,
-                    Pos2::new(text_x, warn.min.y + 16.0 + 24.0),
+                    Pos2::new(text_x, warn.min.y + 16.0 + 18.0 + 4.0),
                     warn_detail,
                     warn_style,
                     warn_room,
-                    18.0,
+                    16.0,
                 );
                 y += warn_height + 16.0;
                 // The backup: always on.
@@ -1980,7 +2060,7 @@ fn stat_card(ui: &mut Ui, card: Rect, icon: char, value: &str, label: &str, sub:
     fonts::draw_left(
         ui.painter(),
         used.max.x + 6.0,
-        card.center().y - 6.0,
+        card.center().y - 4.0,
         &shown,
         label_style,
     );
@@ -2260,7 +2340,7 @@ fn running_step(app: &mut Studio, ctx: &Context, acts: &mut Vec<Act>) {
                 Text::mono(12.0, 400, tokens.primary),
             );
             let bar = Rect::from_min_size(
-                Pos2::new(inner.min.x, inner.min.y + 22.0),
+                Pos2::new(inner.min.x, inner.min.y + 23.0),
                 Vec2::new(inner.width(), 6.0),
             );
             widgets::progress_bar(ui, bar, fraction);
@@ -2275,11 +2355,11 @@ fn running_step(app: &mut Studio, ctx: &Context, acts: &mut Vec<Act>) {
             fonts::draw_left(
                 ui.painter(),
                 inner.min.x,
-                inner.min.y + 46.0,
+                inner.min.y + 53.0,
                 &current,
                 Text::mono(12.0, 400, tokens.text_2),
             );
-            let list = Rect::from_min_max(Pos2::new(inner.min.x, inner.min.y + 66.0), inner.max);
+            let list = Rect::from_min_max(Pos2::new(inner.min.x, inner.min.y + 77.0), inner.max);
             item_states(ui, list, &names, true);
         },
         |ui| {
@@ -2332,7 +2412,7 @@ fn item_states(ui: &mut Ui, rect: Rect, items: &[(String, ItemState)], follow: b
                 ui.spacing_mut().item_spacing.y = 6.0;
                 for (index, (name, state)) in items.iter().enumerate() {
                     let (line, _) =
-                        ui.allocate_exact_size(Vec2::new(rect.width(), 36.0), Sense::hover());
+                        ui.allocate_exact_size(Vec2::new(rect.width(), 35.0), Sense::hover());
                     let now = matches!(state, ItemState::Writing(_));
                     let waiting = matches!(state, ItemState::Waiting | ItemState::NotRun);
                     let fill = if now {
@@ -2423,7 +2503,7 @@ fn item_states(ui: &mut Ui, rect: Rect, items: &[(String, ItemState)], follow: b
                     fonts::draw_left(ui.painter(), x, line.center().y, &shown, name_style);
                     label_node(ui, line, ("item", index), &format!("{name}: {detail}"));
                     if follow && now {
-                        ui.scroll_to_rect(line, Some(egui::Align::Center));
+                        ui.scroll_to_rect(line, None);
                     }
                 }
             });
@@ -2466,13 +2546,20 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
         .filter_map(|(task, state)| match state {
             ItemState::Failed {
                 modification,
-                reason,
+                failure,
+                kept,
             } => Some(fmt(
                 tl!("{item} · {modification}: {reason}. Nothing changed for this item."),
                 &[
                     ("item", &task.name()),
                     ("modification", &grade(*modification)),
-                    ("reason", reason.trim_end_matches('.')),
+                    (
+                        "reason",
+                        &lower_first(
+                            crate::actions::failure_text(failure, kept.as_deref())
+                                .trim_end_matches('.'),
+                        ),
+                    ),
                 ],
             )),
             _ => None,
@@ -2549,10 +2636,10 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
             let box_room = width - 12.0 - 16.0 - 10.0 - 12.0;
             let problem_heights: Vec<f32> = problems
                 .iter()
-                .map(|p| text_height(ui, p, style, box_room, 18.0) + 24.0)
+                .map(|p| text_height(ui, p, style, box_room, 16.0) + 24.0)
                 .collect();
             let skipped_height = skipped_text.as_ref().map_or(0.0, |t| {
-                text_height(ui, t, style, box_room, 18.0) + 24.0 + 10.0
+                text_height(ui, t, style, box_room, 16.0) + 24.0 + 14.0
             });
             let undo_note = tl!(
                 "Undo puts back what every item wore before. It is also in Packs → Backups as one entry."
@@ -2560,9 +2647,9 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
             let note_style = Text::body(12.0, 400, tokens.text_3);
             let note_height = text_height(ui, undo_note, note_style, width - 26.0, 16.0);
             let fixed = 24.0
-                + 76.0
+                + 78.0
                 + 14.0
-                + problem_heights.iter().map(|h| h + 10.0).sum::<f32>()
+                + problem_heights.iter().map(|h| h + 14.0).sum::<f32>()
                 + skipped_height
                 + note_height
                 + 24.0;
@@ -2574,7 +2661,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                 for (index, (icon, value, label, tone)) in stats.iter().enumerate() {
                     let card = Rect::from_min_size(
                         Pos2::new(inner.min.x + index as f32 * (card_width + gap), y),
-                        Vec2::new(card_width, 76.0),
+                        Vec2::new(card_width, 78.0),
                     );
                     draw::rounded(
                         ui.painter(),
@@ -2590,7 +2677,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                     };
                     fonts::icon(
                         ui.painter(),
-                        Pos2::new(card.min.x + 14.0 + 8.0, card.min.y + 14.0 + 13.0),
+                        Pos2::new(card.min.x + 14.0 + 8.0, card.min.y + 28.0),
                         *icon,
                         16.0,
                         ink,
@@ -2598,20 +2685,20 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                     fonts::draw_left(
                         ui.painter(),
                         card.min.x + 14.0 + 16.0 + 8.0,
-                        card.min.y + 14.0 + 13.0,
+                        card.min.y + 28.0,
                         &value.to_string(),
                         Text::display(22.0, 700, tokens.text),
                     );
                     fonts::draw_left(
                         ui.painter(),
                         card.min.x + 14.0,
-                        card.min.y + 14.0 + 26.0 + 6.0 + 8.0,
+                        card.min.y + 56.0,
                         label,
                         Text::body(12.0, 400, tokens.text_2),
                     );
                     label_node(ui, card, ("result", index), &format!("{value} {label}"));
                 }
-                y += 76.0 + 14.0;
+                y += 78.0 + 14.0;
                 for (problem, height) in problems.iter().zip(&problem_heights) {
                     let boxed = Rect::from_min_size(
                         Pos2::new(inner.min.x, y),
@@ -2626,7 +2713,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                     );
                     fonts::icon(
                         ui.painter(),
-                        Pos2::new(boxed.min.x + 12.0 + 8.0, boxed.min.y + 12.0 + 9.0),
+                        Pos2::new(boxed.min.x + 12.0 + 8.0, boxed.min.y + 12.0 + 8.0),
                         icons::TRIANGLE_ALERT,
                         16.0,
                         tokens.danger,
@@ -2637,13 +2724,13 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                         problem,
                         style,
                         box_room,
-                        18.0,
+                        16.0,
                     );
                     label_node(ui, boxed, ("problem", problem), problem);
-                    y += height + 10.0;
+                    y += height + 14.0;
                 }
                 if let Some(text) = &skipped_text {
-                    let height = skipped_height - 10.0;
+                    let height = skipped_height - 14.0;
                     let boxed = Rect::from_min_size(
                         Pos2::new(inner.min.x, y),
                         Vec2::new(inner.width(), height),
@@ -2657,7 +2744,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                     );
                     fonts::icon(
                         ui.painter(),
-                        Pos2::new(boxed.min.x + 12.0 + 8.0, boxed.min.y + 12.0 + 9.0),
+                        Pos2::new(boxed.min.x + 12.0 + 8.0, boxed.min.y + 12.0 + 8.0),
                         icons::CIRCLE_MINUS,
                         16.0,
                         tokens.text_3,
@@ -2668,7 +2755,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                         text,
                         Text::body(13.0, 400, tokens.text_2),
                         box_room,
-                        18.0,
+                        16.0,
                     );
                     label_node(ui, boxed, "skipped-summary", text);
                     y += skipped_height;

@@ -370,6 +370,9 @@ struct Scene {
     looks: bool,
     /// Run with no pack in the library.
     no_packs: bool,
+    /// Run on the design's own sample (`tanki_testkit::build_design_sample`): 1 with the skins
+    /// its items wear already, 2 with the backups of the Packs frame.
+    design: u8,
     checks: &'static [Share],
 }
 
@@ -390,6 +393,7 @@ const SCENE: Scene = Scene {
     incomplete_skin: false,
     looks: false,
     no_packs: false,
+    design: 0,
     checks: &[],
 };
 
@@ -667,6 +671,333 @@ const SCENES: &[Scene] = &[
         page: "packs",
         checks: &[has("the pack card", DARK_SURFACE_2, 2, 5_000)],
         ..LOOKS
+    },
+    // The design's own frames, 1:1: every screen of "Apply to all items" on the design's sample
+    // data, at the size the frames are drawn at, in English and Russian, dark and light. Compare
+    // each with `target/design-preview/full/<name>.png`.
+    Scene {
+        name: "design-0-garage-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-0-garage-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-0-garage-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-0-garage-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-1-look-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-1-look-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-1-look-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-1-look-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-2-where-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-2-where-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-2-where-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-2-where-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-3-check-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-3-check-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-3-check-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-3-check-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-4-applying-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aanwwaaaaaww",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-4-applying-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aanwwaaaaaww",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-4-applying-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aanwwaaaaaww",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-4-applying-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aanwwaaaaaww",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-5-done-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-5-done-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-5-done-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-5-done-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-6-empty-en-dark",
+        page: "garage",
+        actions: "bulk",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 0,
+        no_packs: true,
+        ..SCENE
+    },
+    Scene {
+        name: "design-6-empty-en-light",
+        page: "garage",
+        actions: "bulk",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 0,
+        no_packs: true,
+        ..SCENE
+    },
+    Scene {
+        name: "design-6-empty-ru-dark",
+        page: "garage",
+        actions: "bulk",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 0,
+        no_packs: true,
+        ..SCENE
+    },
+    Scene {
+        name: "design-6-empty-ru-light",
+        page: "garage",
+        actions: "bulk",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 0,
+        no_packs: true,
+        ..SCENE
+    },
+    Scene {
+        name: "design-7-backups-en-dark",
+        page: "packs",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-7-backups-en-light",
+        page: "packs",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-7-backups-ru-dark",
+        page: "packs",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-7-backups-ru-light",
+        page: "packs",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
     },
     // Restore asks first and lists what goes back: two replacements, then the Restore button.
     // Last on purpose: the scenes share one data folder and cache, and this one writes to them.
@@ -1283,6 +1614,108 @@ fn gui_journeys(exe: &Path, shots: &Path, only: Option<&String>) -> Vec<String> 
     failures
 }
 
+/// The design's sample in a data folder: its labels, its three packs ("Desert Camo" imported last,
+/// so active and first) and, with `worn`, the skins its items wear already.
+fn design_data(work: &Path, worn: bool) -> Result<(tanki_testkit::LooksFixture, PathBuf)> {
+    let sample = tanki_testkit::build_design_sample(work)?;
+    let data = work.join("data");
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    for (marker, kind, id, grade) in &sample.labels {
+        store.save_user_target("air-cache", marker, kind, id, grade)?;
+    }
+    let mut installed = Vec::new();
+    for pack in sample.packs.iter().rev() {
+        let pack = import_pack(pack, &data.join("packs"))?;
+        store.save_pack(&pack)?;
+        installed.push(pack);
+    }
+    if worn {
+        let scan = tanki_core::cache::scan_cache(&sample.cache, Some("air-cache"))?;
+        for (pack_id, item, grade, modification) in tanki_testkit::design_sample_worn() {
+            let pack = installed
+                .iter()
+                .find(|p| p.manifest.id == pack_id)
+                .context("a sample pack")?;
+            let variant = pack
+                .manifest
+                .items
+                .iter()
+                .find(|i| i.target.id == item && i.target.grade == grade)
+                .and_then(|i| i.variants.first())
+                .context("a sample skin")?;
+            let target = tanki_core::pack::PackTarget {
+                kind: pack
+                    .manifest
+                    .items
+                    .iter()
+                    .find(|i| i.target.id == item)
+                    .map(|i| i.target.kind.clone())
+                    .unwrap_or_default(),
+                id: item.to_owned(),
+                grade: format!("m{modification}"),
+            };
+            let note = tanki_core::apply::ApplyNote {
+                batch: None,
+                skin_grade: Some(grade.to_owned()),
+            };
+            tanki_core::apply::apply_variant_in(
+                &scan,
+                pack,
+                &target,
+                variant,
+                &data.join("backups"),
+                &note,
+            )?;
+        }
+    }
+    Ok((sample, data))
+}
+
+/// The design sample for the Packs frame's backups: a "Desert Camo" skin put on the Railgun M3
+/// yesterday and on the Wasp M3 a few minutes ago, then undone; the scene adds the batch.
+fn design_backups(work: &Path) -> Result<(tanki_testkit::LooksFixture, PathBuf)> {
+    let (sample, data) = design_data(work, false)?;
+    let backups = data.join("backups");
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    let pack = store.active_pack()?.context("the active sample pack")?;
+    let scan = tanki_core::cache::scan_cache(&sample.cache, Some("air-cache"))?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_nanos();
+    for (kind, item, ago) in [
+        ("turret", "railgun", 86_400_u128),
+        ("hull", "wasp", 12 * 60),
+    ] {
+        let mut variant = pack
+            .manifest
+            .items
+            .iter()
+            .find(|i| i.target.id == item && i.target.grade == "xt-m3")
+            .and_then(|i| i.variants.first())
+            .context("a sample skin")?
+            .clone();
+        variant.name = "Desert Camo".into();
+        let target = tanki_core::pack::PackTarget {
+            kind: kind.into(),
+            id: item.into(),
+            grade: "m3".into(),
+        };
+        let mut tx = tanki_core::apply::apply_variant(&scan, &pack, &target, &variant, &backups)?;
+        // Dated as the frame shows it.
+        let id = (now - ago * 1_000_000_000).to_string();
+        std::fs::rename(backups.join(&tx.id), backups.join(&id))?;
+        tx.id = id.clone();
+        std::fs::write(
+            backups.join(&id).join("transaction.json"),
+            serde_json::to_vec_pretty(&tx)?,
+        )?;
+        if item == "wasp" {
+            tanki_core::apply::restore_transaction(&backups.join(&id), &tx)?;
+        }
+    }
+    Ok((sample, data))
+}
+
 /// The looks fixture with its two packs in a data folder ("Looks B" active, imported last) and
 /// the labels that make its items known.
 fn looks_data(work: &Path) -> Result<(tanki_testkit::LooksFixture, PathBuf)> {
@@ -1320,22 +1753,40 @@ fn e2e_ui(args: &[String]) -> Result<()> {
     let missing = work.join("no-such-cache");
     let (looks, looks_data) = looks_data(&work.join("looks"))?;
     let no_packs_data = work.join("data-no-packs");
+    let (sample, sample_data) = design_data(&work.join("design"), true)?;
+    let (sample_backups, sample_backups_data) = design_backups(&work.join("design-backups"))?;
 
     let shots = root().join("target/e2e-ui");
     std::fs::create_dir_all(&shots)?;
     let only = args.first();
     let mut failures = Vec::new();
-    for scene in SCENES.iter().filter(|s| only.is_none_or(|n| n == s.name)) {
+    // `name*` runs every scene whose name starts with `name`.
+    let wanted = |name: &str| {
+        only.is_none_or(|n| {
+            n == name
+                || n.strip_suffix('*')
+                    .is_some_and(|prefix| name.starts_with(prefix))
+        })
+    };
+    for scene in SCENES.iter().filter(|s| wanted(s.name)) {
         let out = shots.join(format!("{}.png", scene.name));
         let _ = std::fs::remove_file(&out);
         let cache_dir = if scene.no_cache {
             &missing
+        } else if scene.design == 1 {
+            &sample.cache
+        } else if scene.design == 2 {
+            &sample_backups.cache
         } else if scene.looks {
             &looks.cache
         } else {
             &cache.root
         };
-        let data_dir = if scene.looks {
+        let data_dir = if scene.design == 1 {
+            &sample_data
+        } else if scene.design == 2 {
+            &sample_backups_data
+        } else if scene.looks {
             &looks_data
         } else if scene.no_packs {
             &no_packs_data

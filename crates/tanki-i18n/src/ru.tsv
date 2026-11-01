@@ -227,6 +227,7 @@
 
 # Contexts: one English word with different meanings.
 action	Apply	Применить
+step	Check and apply	Проверьте и наденьте
 
 # Plural forms: one (1) | few (2-4) | many (0, 5+).
 @plural	{n} backup|{n} backups	{n} копия|{n} копии|{n} копий
@@ -376,6 +377,7 @@ action	Apply	Применить
 	On	Вкл
 	One look on every hull and turret at once	Один образ сразу на все корпуса и пушки
 	Only for {item}:	Только для {item}:
+	Modification of {item}	Модификация {item}
 	Own choices for {item}	Свой выбор для {item}
 	Pick a look	Выберите образ
 	Pick a look from your packs	Выберите образ из своих паков
@@ -392,6 +394,7 @@ action	Apply	Применить
 	Stopped: {items} not changed.	Остановлено: {items} без изменений.
 	Stopping after this item…	Остановка после этого предмета…
 	The game was started ({names}), so the rest stopped: {items} not changed.	Игра запущена ({names}), поэтому остальное остановлено: {items} без изменений.
+	The file is in use.	Файл занят.
 	The skin has no {files}, so it is not put on	В скине нет {files}, поэтому он не надевается
 	This item has no {modification} in the game	У этого предмета нет {modification} в игре
 	This replaces the skins these items wear now	Это заменит скины, которые сейчас надеты на эти предметы

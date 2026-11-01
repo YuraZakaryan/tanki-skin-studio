@@ -1038,6 +1038,7 @@ impl Studio {
             plan: None,
             filter: RowFilter::All,
             expanded: None,
+            editing: None,
             cache_files,
             run: None,
         });
@@ -1182,6 +1183,16 @@ impl Studio {
             } else {
                 Some(key)
             };
+            wizard.editing = None;
+        }
+    }
+
+    /// Which modification of the open item its own choice is made for.
+    pub fn bulk_edit_modification(&mut self, modification: u8) {
+        if let Some(wizard) = self.bulk.as_mut()
+            && modification < 4
+        {
+            wizard.editing = Some(modification);
         }
     }
 
@@ -1366,7 +1377,8 @@ impl Studio {
                             kept,
                         } => ItemState::Failed {
                             modification,
-                            reason: failure_text(&failure, kept.as_deref()),
+                            failure,
+                            kept,
                         },
                     };
                     if let Some(slot) = run.states.get_mut(index) {
@@ -1551,7 +1563,7 @@ impl Studio {
 }
 
 /// Why an item of the run was not applied, in the interface's language.
-fn failure_text(failure: &bulk::Failure, kept: Option<&str>) -> String {
+pub(crate) fn failure_text(failure: &bulk::Failure, kept: Option<&str>) -> String {
     let text = match failure {
         bulk::Failure::PackGone(name) => fmt(
             tl!("the pack “{name}” is no longer in the library"),

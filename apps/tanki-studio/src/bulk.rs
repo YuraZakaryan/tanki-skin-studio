@@ -29,7 +29,7 @@ use tanki_core::{
     pack::{InstalledPack, PackTarget},
 };
 
-use crate::model::{BaseItem, natural_cmp, target_title};
+use crate::model::{BaseItem, marker_id, natural_cmp, target_title};
 
 /// The kinds of item a look is put on: what the apply code replaces (not paints).
 pub const KINDS: [&str; 2] = ["hull", "turret"];
@@ -256,10 +256,20 @@ pub fn gather_looks(packs: &[&InstalledPack], items: &[BaseItem]) -> Vec<Look> {
         }
     }
     for look in &mut looks {
+        // The game's own order: by the item's first resource id in the cache, as the Garage's
+        // client lists them; items without one (tests) by kind, then name.
+        let place = |item: &LookItem| {
+            items
+                .iter()
+                .find(|i| i.kind == item.kind && i.id == item.id)
+                .and_then(|i| i.markers.iter().flatten().map(|m| marker_id(m)).min())
+                .unwrap_or(u64::MAX)
+        };
         look.items.sort_by(|a, b| {
             let kind = |k: &str| KINDS.iter().position(|x| *x == k);
-            kind(&a.kind)
-                .cmp(&kind(&b.kind))
+            place(a)
+                .cmp(&place(b))
+                .then_with(|| kind(&a.kind).cmp(&kind(&b.kind)))
                 .then_with(|| natural_cmp(&a.id, &b.id))
         });
         look.items
@@ -401,9 +411,13 @@ impl Cell {
         matches!(self, Cell::Change { .. })
     }
 
-    /// Skipped for a reason (not turned off on purpose).
+    /// Skipped for a reason the user should see: no such skin, no such modification, an
+    /// incomplete skin. Turned off on purpose and already on are not.
     pub fn skipped(&self) -> bool {
-        !matches!(self, Cell::Change { .. } | Cell::Off)
+        matches!(
+            self,
+            Cell::Missing { .. } | Cell::NotInGame | Cell::Incomplete { .. }
+        )
     }
 }
 
@@ -424,8 +438,9 @@ impl Row {
         self.cells.iter().flatten().any(Cell::changes)
     }
 
+    /// Nothing of the item changes: it is skipped as a whole.
     pub fn skipped(&self) -> bool {
-        self.cells.iter().flatten().any(Cell::skipped)
+        !self.changes()
     }
 
     pub fn change_count(&self) -> usize {
@@ -1185,7 +1200,31 @@ mod tests {
         assert_eq!(coverage(xt, &settings, 3), (3, 3));
         // Counting: items that change, items with something skipped.
         assert_eq!(own.changing_items(), 3);
-        assert_eq!(own.skipped_items(), 3);
+        assert_eq!(own.skipped_items(), 0, "every item changes something");
+        assert!(
+            !Cell::Already.skipped(),
+            "nothing to do is no reason to list"
+        );
+        assert!(Cell::NotInGame.skipped());
+    }
+
+    #[test]
+    fn items_come_in_the_games_order_hulls_and_turrets_mixed() {
+        let (packs, mut items) = looks_fixture();
+        // The cache numbers the Smoky first, then the Viking, then the Hunter.
+        for (id, marker) in [
+            ("smoky", "/0/0/1/0/"),
+            ("viking", "/0/0/2/0/"),
+            ("hunter", "/0/0/3/2/"),
+        ] {
+            if let Some(item) = items.iter_mut().find(|i| i.id == id) {
+                item.markers[1] = Some(marker.to_owned());
+            }
+        }
+        let refs: Vec<&InstalledPack> = packs.iter().collect();
+        let looks = gather_looks(&refs, &items);
+        let ids: Vec<&str> = looks[0].items.iter().map(|i| i.id.as_str()).collect();
+        assert_eq!(ids, ["smoky", "viking", "hunter"]);
     }
 
     fn plan_of(

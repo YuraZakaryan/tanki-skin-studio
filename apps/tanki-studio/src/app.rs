@@ -201,10 +201,13 @@ pub enum ItemState {
     Applied {
         skins: usize,
     },
-    /// Not applied; nothing changed for the item. `reason` is said in the interface's language.
+    /// Not applied; nothing changed for the item. Said in the interface's language when it is
+    /// shown (see `actions::failure_text`), so a change of language reaches it too.
     Failed {
         modification: u8,
-        reason: String,
+        failure: crate::bulk::Failure,
+        /// Putting its earlier modifications back failed too: the core's words.
+        kept: Option<String>,
     },
     /// The run stopped before it.
     NotRun,
@@ -272,6 +275,9 @@ pub struct BulkWizard {
     pub filter: RowFilter,
     /// The item whose own choices are open in the table: (kind, id).
     pub expanded: Option<(String, String)>,
+    /// The modification the open item's own choice is being made for (its first in the game
+    /// until another is picked).
+    pub editing: Option<u8>,
     /// The model and texture files each item's modification has in the cache, and their size.
     pub cache_files:
         std::collections::BTreeMap<(String, String, u8), (std::collections::BTreeSet<String>, u64)>,

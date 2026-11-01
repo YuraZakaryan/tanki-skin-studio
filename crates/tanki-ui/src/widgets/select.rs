@@ -8,7 +8,8 @@ use super::{alloc, describe, dim, interact};
 use crate::{draw, fonts, fonts::Text, icons, theme::Tokens};
 
 /// A 34-high select box in `rect` showing `shown`; a click opens `options` below it. Returns the
-/// index of the option picked this frame. `label` is its accessible name.
+/// index of the option picked this frame. `label` is its accessible name. A `muted` box (a choice
+/// that is off) is drawn faded but still opens.
 pub fn select(
     ui: &mut Ui,
     rect: Rect,
@@ -16,6 +17,7 @@ pub fn select(
     shown: &str,
     options: &[String],
     enabled: bool,
+    muted: bool,
 ) -> Option<usize> {
     let tokens = Tokens::get(ui.ctx());
     let sense = if enabled {
@@ -36,14 +38,19 @@ pub fn select(
     } else {
         tokens.surface_3
     };
+    let alpha = if muted { 0.5 } else { 1.0 };
     draw::rounded(
         ui.painter(),
         rect,
         CornerRadius::same(8),
-        dim(fill, enabled),
-        Some((1.0, dim(tokens.border_strong, enabled))),
+        draw::fade(dim(fill, enabled), alpha),
+        Some((1.0, draw::fade(dim(tokens.border_strong, enabled), alpha))),
     );
-    let ink = if enabled { tokens.text } else { tokens.text_3 };
+    let ink = if enabled && !muted {
+        tokens.text
+    } else {
+        draw::fade(tokens.text_3, alpha)
+    };
     let style = Text::body(13.0, 600, ink);
     let text = fonts::ellipsize(ui.painter(), shown, style, rect.width() - 20.0 - 22.0);
     fonts::draw_left(
@@ -58,15 +65,30 @@ pub fn select(
         Pos2::new(rect.max.x - 10.0 - 7.0, rect.center().y),
         icons::CHEVRON_DOWN,
         14.0,
-        tokens.text_3,
+        draw::fade(tokens.text_3, alpha),
     );
     if !enabled {
         return None;
     }
     let response = response.on_hover_cursor(egui::CursorIcon::PointingHand);
-    let popup_id = egui::Popup::default_response_id(&response);
+    menu(ui, &response, rect.width(), options, shown)
+}
+
+/// The list a click on `response` opens below it: `options`, the one equal to `current` marked.
+/// Returns the index of the option picked this frame.
+pub fn menu(
+    ui: &mut Ui,
+    response: &Response,
+    width: f32,
+    options: &[String],
+    current: &str,
+) -> Option<usize> {
+    let tokens = Tokens::get(ui.ctx());
+    let shown = current;
+    let rect = response.rect.with_max_x(response.rect.min.x + width);
+    let popup_id = egui::Popup::default_response_id(response);
     let mut picked = None;
-    egui::Popup::from_toggle_button_response(&response)
+    egui::Popup::from_toggle_button_response(response)
         .width(rect.width())
         .gap(4.0)
         .frame(

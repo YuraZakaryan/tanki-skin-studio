@@ -23,7 +23,10 @@
 //!   `bulk-off:<0-3>`, `bulk-source:<0-3>:<own|0-3>`, `bulk-row:<kind>:<id>` (opens an item's own
 //!   choices), `bulk-pick:<kind>:<id>:<0-3>:<0-3|edition|off|common>`, `bulk-kind:<kind>:<on|off>`,
 //!   `bulk-apply` (writes at once, without the thread), `bulk-running:<done>` (the run frozen with
-//!   that many items done, for the screenshot), `bulk-undo` (the result's Undo all) and
+//!   that many items done, for the screenshot), `bulk-frozen:<pattern>` (the run of the plan frozen
+//!   item by item: `a` applied, `n` being written, `w` waiting, `f` failed because a file is in
+//!   use, `x` not run; items past the pattern are left out; with no `n` or `w` it is over and the
+//!   result shows), `bulk-undo` (the result's Undo all), `bulk-close` and
 //!   `restore-batch` (the newest batch's entry in the backups, confirmed).
 //!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
 //!   switches and shortcuts, so the choice is stored like a real one.
@@ -618,7 +621,9 @@ fn bulk_verb(app: &mut Studio, verb: &str, arg: &str) {
             app.background_bulk = background;
         }
         ("bulk-running", [done]) => bulk_running(app, done.parse().unwrap_or(0)),
+        ("bulk-frozen", [pattern]) => bulk_frozen(app, pattern),
         ("bulk-undo", _) => app.bulk_undo(),
+        ("bulk-close", _) => app.bulk = None,
         ("restore-batch", _) => {
             let newest = app
                 .backups
@@ -675,6 +680,84 @@ fn bulk_running(app: &mut Studio, done: usize) {
         finished: None,
     });
     wizard.step = BulkStep::Running;
+}
+
+/// `bulk-frozen:<pattern>`: the run of the plan at the last step frozen as the pattern says, one
+/// letter per item, for the screenshots compared with the design. Nothing is written.
+fn bulk_frozen(app: &mut Studio, pattern: &str) {
+    use crate::app::{BulkRun, BulkStep, ItemState};
+    let Some(wizard) = app.bulk.as_mut() else {
+        return;
+    };
+    let (Some(look), Some(plan)) = (wizard.chosen(), wizard.plan.as_ref()) else {
+        return;
+    };
+    let mut tasks = crate::bulk::tasks(plan);
+    tasks.truncate(pattern.chars().count());
+    let in_use = crate::bulk::Failure::Error(
+        "The process cannot access the file because it is being used by another process. (os error 32)".into(),
+    );
+    let states: Vec<ItemState> = tasks
+        .iter()
+        .zip(pattern.chars())
+        .map(|(task, letter)| {
+            let first = task.writes.first().map_or(0, |w| w.modification);
+            match letter {
+                'a' => ItemState::Applied {
+                    skins: task.writes.len(),
+                },
+                'n' => ItemState::Writing(first),
+                'f' => ItemState::Failed {
+                    modification: task.writes.get(1).map_or(first, |w| w.modification),
+                    failure: in_use.clone(),
+                    kept: None,
+                },
+                'x' => ItemState::NotRun,
+                _ => ItemState::Waiting,
+            }
+        })
+        .collect();
+    let running = states
+        .iter()
+        .any(|s| matches!(s, ItemState::Waiting | ItemState::Writing(_)));
+    let skipped = plan
+        .rows
+        .iter()
+        .flat_map(|row| {
+            row.cells
+                .iter()
+                .enumerate()
+                .filter_map(|(k, cell)| match cell {
+                    Some(cell) if cell.skipped() => Some((row.name(), k as u8, cell.clone())),
+                    _ => None,
+                })
+        })
+        .collect();
+    let receiver = running.then(|| {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        // The answer never comes: the run stays where it is for the screenshot.
+        std::mem::forget(sender);
+        receiver
+    });
+    wizard.run = Some(BulkRun {
+        look: look.name.clone(),
+        batch: tanki_core::apply::Batch {
+            id: "0".into(),
+            name: look.name.clone(),
+        },
+        tasks,
+        states,
+        skipped,
+        skipped_items: plan.skipped_items(),
+        stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        finished: (!running).then(|| (false, Vec::new())),
+        receiver,
+    });
+    wizard.step = if running {
+        BulkStep::Running
+    } else {
+        BulkStep::Done
+    };
 }
 
 /// `importing:<name>:<percent>`: the card of an import frozen while copying, for the screenshot.

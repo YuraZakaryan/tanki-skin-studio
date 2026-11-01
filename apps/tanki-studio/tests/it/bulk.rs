@@ -13,7 +13,7 @@ use egui_kittest::{
 use tanki_core::{pack::import_pack, state::StateStore};
 use tanki_studio::{
     app::{BulkStep, BulkWizard, Dialog, ItemState, Page, RowFilter, Selection, Studio},
-    bulk::{Cell, Choice, Pick, Source},
+    bulk::{Cell, Choice, Failure, Pick, Source},
 };
 use tanki_testkit::{LooksFixture, build_looks, looks_model, scratch};
 
@@ -178,7 +178,8 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
     assert_eq!(plan.columns, [true; 4]);
     assert_eq!(
         (plan.changing_items(), plan.skipped_items(), plan.changes()),
-        (4, 3, 12)
+        (4, 0, 12),
+        "every item changes something, so none is skipped as a whole"
     );
     assert!(matches!(
         cell(&h, "dictator", 2),
@@ -228,6 +229,15 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
         wizard(&h).expanded,
         Some(("hull".to_owned(), "viking".to_owned()))
     );
+    assert!(
+        h.query_by_label("What M0 of Viking gets").is_some(),
+        "one line, for its first modification"
+    );
+    h.get_by_label("Modification of Viking").click();
+    h.run_steps(3);
+    h.get_by_label("M2").click();
+    h.run_steps(3);
+    assert_eq!(wizard(&h).editing, Some(2));
     h.get_by_label("What M2 of Viking gets").click();
     h.run_steps(3);
     h.get_by_label("XT · M0").click();
@@ -266,11 +276,14 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
     h.get_by_label("Skipped").click();
     h.run_steps(3);
     assert_eq!(wizard(&h).filter, RowFilter::Skipped);
-    assert!(h.query_by_label("Own choices for Dictator").is_some());
     assert!(
         h.query_by_label("Own choices for Viking").is_none(),
-        "nothing of the Viking is skipped"
+        "every item changes something: none is skipped as a whole"
     );
+    h.get_by_label("Will change").click();
+    h.run_steps(3);
+    assert_eq!(wizard(&h).filter, RowFilter::Change);
+    assert!(h.query_by_label("Own choices for Dictator").is_some());
     assert_eq!(
         wizard(&h).plan.as_ref(),
         Some(&plan),
@@ -333,7 +346,7 @@ fn a_running_game_stops_it_then_every_item_gets_its_skin_in_one_batch() {
     assert_eq!(batch.name, "XT");
     assert!(backups.iter().all(|b| b.tx.batch.as_ref() == Some(&batch)));
     assert!(h.query_by_label("4 applied").is_some());
-    assert!(h.query_by_label("3 skipped").is_some());
+    assert!(h.query_by_label("0 skipped").is_some());
 
     // The Garage shows what the items wear now.
     h.get_by_label("Done").click();
@@ -396,7 +409,7 @@ fn a_failing_item_is_left_as_it_was_and_the_others_are_applied() {
         .position(|t| t.id == "viking")
         .expect("the Viking");
     assert!(
-        matches!(&run.states[viking], ItemState::Failed { modification: 1, reason } if reason.contains("missing a file")),
+        matches!(&run.states[viking], ItemState::Failed { modification: 1, failure: Failure::Error(error), .. } if error.contains("required cache resource missing")),
         "{:?}",
         run.states[viking]
     );
@@ -413,6 +426,16 @@ fn a_failing_item_is_left_as_it_was_and_the_others_are_applied() {
             .next()
             .is_some(),
         "the reason is said for the item"
+    );
+    // Said in the language of the moment, not the one the run ended in.
+    h.state_mut()
+        .set_language(tanki_i18n::Lang::from_code("ru").expect("Russian"));
+    h.run_steps(3);
+    assert!(
+        h.query_all_by_label_contains("Viking · M1: в кэше нет файла")
+            .next()
+            .is_some(),
+        "the reason follows the language"
     );
 }
 
@@ -612,4 +635,106 @@ fn the_russian_steps_fit_their_dialog_even_in_the_smallest_window() {
         h.run_steps(3);
         fits(&h, &["Надеть на 4 предмета", "Назад"]);
     }
+}
+
+/// The design's own sample (the e2e `design-*` scenes) gives the numbers its frames show.
+#[test]
+fn the_design_sample_shows_the_designs_numbers() {
+    let work = scratch("bulk-design");
+    let sample = tanki_testkit::build_design_sample(&work.join("design")).expect("sample");
+    let data = work.join("data");
+    let store = StateStore::open(&data.join("state.sqlite")).expect("state store");
+    for (marker, kind, id, grade) in &sample.labels {
+        store
+            .save_user_target("air-cache", marker, kind, id, grade)
+            .expect("label");
+    }
+    let mut installed = Vec::new();
+    for pack in sample.packs.iter().rev() {
+        let pack = import_pack(pack, &data.join("packs")).expect("import");
+        store.save_pack(&pack).expect("save pack");
+        installed.push(pack);
+    }
+    let scan = tanki_core::cache::scan_cache(&sample.cache, Some("air-cache")).expect("scan");
+    for (pack_id, item, grade, k) in tanki_testkit::design_sample_worn() {
+        let pack = installed
+            .iter()
+            .find(|p| p.manifest.id == pack_id)
+            .expect("pack");
+        let pack_item = pack
+            .manifest
+            .items
+            .iter()
+            .find(|i| i.target.id == item && i.target.grade == grade)
+            .expect("skin");
+        let target = tanki_core::pack::PackTarget {
+            kind: pack_item.target.kind.clone(),
+            id: item.into(),
+            grade: format!("m{k}"),
+        };
+        let note = tanki_core::apply::ApplyNote {
+            batch: None,
+            skin_grade: Some(grade.into()),
+        };
+        tanki_core::apply::apply_variant_in(
+            &scan,
+            pack,
+            &target,
+            &pack_item.variants[0],
+            &data.join("backups"),
+            &note,
+        )
+        .expect("worn");
+    }
+    drop(store);
+    let mut h = harness_in(data, vec![sample.cache.clone()]);
+    h.state_mut().open_bulk();
+    h.run_steps(2);
+    let looks: Vec<(String, usize, usize, usize)> = wizard(&h)
+        .looks
+        .iter()
+        .map(|l| {
+            (
+                l.name.clone(),
+                l.items.len(),
+                l.count("hull"),
+                l.packs.len(),
+            )
+        })
+        .collect();
+    let expected = [
+        ("XT", 14, 8, 2),
+        ("Legacy", 12, 7, 1),
+        ("Prime", 9, 5, 1),
+        ("Neon", 6, 4, 1),
+        ("Old", 5, 5, 1),
+        ("Winter", 3, 2, 2),
+    ];
+    assert_eq!(looks.len(), expected.len());
+    for ((name, items, hulls, packs), (n, i, hu, p)) in looks.iter().zip(expected) {
+        assert_eq!((name.as_str(), *items, *hulls, *packs), (n, i, hu, p));
+    }
+    let app = h.state_mut();
+    app.bulk_next();
+    app.bulk_set_on(3, false);
+    app.bulk_set_source(0, Source::From(3));
+    app.bulk_set_pick("hull", "viking", 0, Some(Pick::Skin(Some(0))));
+    let plan = wizard(&h).plan.clone().expect("plan");
+    assert_eq!(
+        (
+            plan.rows.len(),
+            plan.changing_items(),
+            plan.skipped_items(),
+            plan.changes()
+        ),
+        (14, 12, 2, 24)
+    );
+    let first: Vec<String> = plan.rows.iter().take(5).map(|r| r.name()).collect();
+    assert_eq!(first, ["Wasp", "Hornet", "Viking", "Dictator", "Railgun"]);
+    assert_eq!(cell(&h, "viking", 1), &Some(Cell::Already));
+    assert_eq!(
+        cell(&h, "hornet", 0),
+        &Some(Cell::Missing { source: Some(3) })
+    );
+    assert_eq!(cell(&h, "dictator", 0), &Some(Cell::NotInGame));
 }
