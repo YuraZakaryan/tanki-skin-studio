@@ -875,10 +875,12 @@ const SCENES: &[Scene] = &[
         design: 1,
         ..SCENE
     },
+    // The result: 11 of the 12 items applied and Titan (two skins) failed, so 22 of the 24 skins
+    // are replaced, as the design says.
     Scene {
         name: "design-5-done-en-dark",
         page: "garage",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaaafaaaa",
         lang: "en",
         theme: "dark",
         size: "1440x900",
@@ -888,7 +890,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "design-5-done-en-light",
         page: "garage",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaaafaaaa",
         lang: "en",
         theme: "light",
         size: "1440x900",
@@ -898,7 +900,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "design-5-done-ru-dark",
         page: "garage",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaaafaaaa",
         lang: "ru",
         theme: "dark",
         size: "1440x900",
@@ -908,7 +910,7 @@ const SCENES: &[Scene] = &[
     Scene {
         name: "design-5-done-ru-light",
         page: "garage",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaafaaaa",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-frozen:aaaaaaafaaaa",
         lang: "ru",
         theme: "light",
         size: "1440x900",
