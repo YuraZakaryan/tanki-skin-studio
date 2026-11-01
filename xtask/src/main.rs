@@ -366,6 +366,10 @@ struct Scene {
     processes: &'static str,
     /// Run on a pack whose Wasp skin has no model, so it cannot be applied.
     incomplete_skin: bool,
+    /// Run on the looks fixture: items whose skins share names across modifications and packs.
+    looks: bool,
+    /// Run with no pack in the library.
+    no_packs: bool,
     checks: &'static [Share],
 }
 
@@ -384,8 +388,22 @@ const SCENE: Scene = Scene {
     no_cache: false,
     processes: "",
     incomplete_skin: false,
+    looks: false,
+    no_packs: false,
     checks: &[],
 };
+
+/// A scene of "Apply to all items" on the looks fixture, in Russian and the dark theme (the
+/// design's own frames) unless it says otherwise.
+const LOOKS: Scene = Scene {
+    page: "garage",
+    lang: "ru",
+    looks: true,
+    ..SCENE
+};
+
+/// The wizard's surface over the dimmed window, in the dark theme.
+const WIZARD: Share = has("the wizard's surface", DARK_SURFACE_2, 2, 150_000);
 
 const SCENES: &[Scene] = &[
     Scene {
@@ -538,6 +556,117 @@ const SCENES: &[Scene] = &[
             has("the download bar's lime fill", PRIMARY, 6, 300),
         ],
         ..SCENE
+    },
+    // "Apply to all items": the Garage's button, then each step of the wizard, in Russian dark
+    // and English light. The scenes that write come last.
+    // Tall enough for the Items panel, where the button is, on a 1024 x 768 screen.
+    Scene {
+        name: "bulk-garage",
+        size: "1000x720",
+        checks: &[has("the lime selected item card", PRIMARY, 6, 300)],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-garage-light",
+        size: "1000x720",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-empty",
+        actions: "bulk",
+        no_packs: true,
+        looks: false,
+        checks: &[has("the lime Add a pack button", PRIMARY, 6, 1_000)],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-empty-light",
+        actions: "bulk",
+        no_packs: true,
+        looks: false,
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-look",
+        actions: "bulk",
+        checks: &[
+            WIZARD,
+            has("the picked look's lime frame", PRIMARY, 6, 1_000),
+        ],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-look-light",
+        actions: "bulk",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-where",
+        actions: "bulk;bulk-next;bulk-off:3;bulk-row:hull:viking;bulk-pick:hull:viking:2:0",
+        checks: &[WIZARD, has("the lime tiles and cells", PRIMARY, 6, 2_000)],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-where-light",
+        actions: "bulk;bulk-next;bulk-off:3;bulk-row:hull:viking;bulk-pick:hull:viking:2:0",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-check",
+        actions: "bulk;bulk-next;bulk-off:3;bulk-next",
+        checks: &[
+            WIZARD,
+            has("the amber Apply button and warning", ACCENT, 6, 2_000),
+        ],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-check-light",
+        actions: "bulk;bulk-next;bulk-off:3;bulk-next",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-running",
+        actions: "bulk;bulk-next;bulk-next;bulk-running:2",
+        checks: &[has("the progress bar's lime fill", PRIMARY, 6, 300)],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-running-light",
+        actions: "bulk;bulk-next;bulk-next;bulk-running:2",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-done",
+        actions: "restore;dismiss;bulk;bulk-next;bulk-off:3;bulk-next;bulk-apply",
+        checks: &[has("the lime Done button", PRIMARY, 6, 1_000)],
+        ..LOOKS
+    },
+    Scene {
+        name: "bulk-done-light",
+        actions: "restore;dismiss;bulk;bulk-next;bulk-off:3;bulk-next;bulk-apply",
+        lang: "en",
+        theme: "light",
+        ..LOOKS
+    },
+    // The run is one entry of the backups, which undoes it.
+    Scene {
+        name: "bulk-backups",
+        page: "packs",
+        checks: &[has("the pack card", DARK_SURFACE_2, 2, 5_000)],
+        ..LOOKS
     },
     // Restore asks first and lists what goes back: two replacements, then the Restore button.
     // Last on purpose: the scenes share one data folder and cache, and this one writes to them.
@@ -1049,6 +1178,78 @@ fn gui_journeys(exe: &Path, shots: &Path, only: Option<&String>) -> Vec<String> 
         std::fs::remove_dir_all(work)?;
         Ok(())
     });
+    // "Apply to all items" in the real window: XT on every item that has it, checked byte for
+    // byte, then its one entry in the backups puts every file back.
+    check("gui-bulk", &|| {
+        use tanki_testkit::looks_model;
+        let work = scratch("gui-bulk");
+        let (looks, data) = looks_data(&work.join("looks"))?;
+        let all: Vec<PathBuf> = looks.items.iter().flat_map(|i| i.all_files()).collect();
+        let before = contents(&all);
+        let models = |id: &str, k: usize| -> Vec<Vec<u8>> {
+            looks.item(id).files[k]
+                .iter()
+                .filter_map(|p| std::fs::read(p).ok())
+                .filter(|b| b.ends_with(b":model"))
+                .collect()
+        };
+        let shot = shots.join("gui-bulk.png");
+        Run {
+            page: "garage",
+            actions: "bulk;bulk-next;bulk-next;bulk-apply",
+            ..Run::new(exe, &data, &looks.cache, &shot)
+        }
+        .launch()?;
+        // "Looks B" is active, so it comes first: its Viking XT M3 wins over "Looks A"'s.
+        for (id, k, pack, grade) in [
+            ("viking", 0, "looks-a", "xt-m0"),
+            ("viking", 3, "looks-b", "xt-m3"),
+            ("smoky", 0, "looks-b", "xt-m0"),
+            ("smoky", 3, "looks-a", "xt-m3"),
+            ("hunter", 1, "looks-a", "xt-m1"),
+        ] {
+            let found = models(id, k);
+            anyhow::ensure!(
+                found.len() == 2 && found.iter().all(|b| *b == looks_model(pack, id, grade)),
+                "{id} M{k} should wear {pack} {grade} in both revisions"
+            );
+        }
+        let originals: Vec<PathBuf> = [("smoky", 1), ("dictator", 2), ("thunder", 0)]
+            .iter()
+            .flat_map(|(id, k)| looks.item(id).files[*k].clone())
+            .collect();
+        let index = |path: &PathBuf| all.iter().position(|p| p == path);
+        for path in &originals {
+            let now = std::fs::read(path)?;
+            let was = index(path)
+                .and_then(|i| before.get(i))
+                .cloned()
+                .unwrap_or_default();
+            anyhow::ensure!(now == was, "{} must stay as it was", path.display());
+        }
+        let backups = tanki_core::apply::list_backups(&data.join("backups"))?;
+        let batches: std::collections::BTreeSet<String> = backups
+            .iter()
+            .filter_map(|b| b.tx.batch.as_ref().map(|t| t.id.clone()))
+            .collect();
+        anyhow::ensure!(
+            batches.len() == 1 && backups.iter().all(|b| b.tx.batch.is_some()),
+            "every replacement of the run belongs to one batch"
+        );
+        let undo = shots.join("gui-bulk-undo.png");
+        Run {
+            page: "packs",
+            actions: "restore-batch",
+            ..Run::new(exe, &data, &looks.cache, &undo)
+        }
+        .launch()?;
+        anyhow::ensure!(
+            contents(&all) == before,
+            "the batch's entry must put every file back"
+        );
+        std::fs::remove_dir_all(work)?;
+        Ok(())
+    });
     check("gui-language", &|| {
         let (work, cache, zip) = fresh("gui-language")?;
         let data = work.join("data");
@@ -1082,6 +1283,21 @@ fn gui_journeys(exe: &Path, shots: &Path, only: Option<&String>) -> Vec<String> 
     failures
 }
 
+/// The looks fixture with its two packs in a data folder ("Looks B" active, imported last) and
+/// the labels that make its items known.
+fn looks_data(work: &Path) -> Result<(tanki_testkit::LooksFixture, PathBuf)> {
+    let looks = tanki_testkit::build_looks(work)?;
+    let data = work.join("data");
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    for (marker, kind, id, grade) in &looks.labels {
+        store.save_user_target("air-cache", marker, kind, id, grade)?;
+    }
+    for pack in &looks.packs {
+        store.save_pack(&import_pack(pack, &data.join("packs"))?)?;
+    }
+    Ok((looks, data))
+}
+
 fn e2e_ui(args: &[String]) -> Result<()> {
     cargo(&["build", "--locked", "-p", "tanki-studio"])?;
     let exe = studio_exe();
@@ -1102,6 +1318,8 @@ fn e2e_ui(args: &[String]) -> Result<()> {
     let incomplete = import_pack(&incomplete, &incomplete_data.join("packs"))?;
     StateStore::open(&incomplete_data.join("state.sqlite"))?.save_pack(&incomplete)?;
     let missing = work.join("no-such-cache");
+    let (looks, looks_data) = looks_data(&work.join("looks"))?;
+    let no_packs_data = work.join("data-no-packs");
 
     let shots = root().join("target/e2e-ui");
     std::fs::create_dir_all(&shots)?;
@@ -1112,8 +1330,19 @@ fn e2e_ui(args: &[String]) -> Result<()> {
         let _ = std::fs::remove_file(&out);
         let cache_dir = if scene.no_cache {
             &missing
+        } else if scene.looks {
+            &looks.cache
         } else {
             &cache.root
+        };
+        let data_dir = if scene.looks {
+            &looks_data
+        } else if scene.no_packs {
+            &no_packs_data
+        } else if scene.incomplete_skin {
+            &incomplete_data
+        } else {
+            &data
         };
         let run = Run {
             page: scene.page,
@@ -1123,16 +1352,7 @@ fn e2e_ui(args: &[String]) -> Result<()> {
             splash: scene.splash,
             size: scene.size,
             processes: scene.processes,
-            ..Run::new(
-                &exe,
-                if scene.incomplete_skin {
-                    &incomplete_data
-                } else {
-                    &data
-                },
-                cache_dir,
-                &out,
-            )
+            ..Run::new(&exe, data_dir, cache_dir, &out)
         };
         if let Err(e) = run.launch() {
             failures.push(format!("{}: {e:#}", scene.name));

@@ -148,6 +148,18 @@ pub enum Dialog {
         version: String,
         name: String,
     },
+    /// "Apply to all items" found the game running: closing it and checking again starts the run.
+    BulkGameRunning(Vec<String>),
+    /// Leave "Apply to all items" at its last step, where everything is chosen: asked first.
+    CloseBulk,
+    /// Undo one run of "Apply to all items" (its entry in the backups): asked first.
+    RestoreBatch {
+        batch: String,
+        name: String,
+        /// The items that get back what they wore before the run.
+        items: Vec<String>,
+        files: usize,
+    },
     /// Which game cache the app works with: asked when several were found (see
     /// [`Studio::check_caches`]), or opened from the cache card to switch on purpose
     /// (`switching`, see [`Studio::open_cache_switcher`]).
@@ -156,6 +168,120 @@ pub enum Dialog {
         selected: usize,
         switching: bool,
     },
+}
+
+/// The steps of "Apply to all items".
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BulkStep {
+    /// Pick a look (or, with none, the empty state).
+    Look,
+    /// Choose what each modification gets.
+    Where,
+    /// See every change before it is made.
+    Check,
+    /// The run, item by item.
+    Running,
+    /// What was done, with Undo all.
+    Done,
+}
+
+/// Which items of the "Where" table are shown.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RowFilter {
+    All,
+    Change,
+    Skipped,
+}
+
+/// What happened, or is happening, to one item of the run.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ItemState {
+    Waiting,
+    Writing(u8),
+    Applied {
+        skins: usize,
+    },
+    /// Not applied; nothing changed for the item. `reason` is said in the interface's language.
+    Failed {
+        modification: u8,
+        reason: String,
+    },
+    /// The run stopped before it.
+    NotRun,
+}
+
+/// A run of "Apply to all items" (see [`crate::bulk::run`]).
+pub struct BulkRun {
+    pub look: String,
+    pub batch: tanki_core::apply::Batch,
+    pub tasks: Vec<crate::bulk::Task>,
+    pub states: Vec<ItemState>,
+    /// Skipped modifications of the plan, for the result: (item, modification, why).
+    pub skipped: Vec<(String, u8, crate::bulk::Cell)>,
+    pub skipped_items: usize,
+    pub stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    /// The run's reports; `None` once it is over.
+    pub receiver: Option<std::sync::mpsc::Receiver<crate::bulk::Event>>,
+    /// Over: stopped (by the user, or because the game was started, which `game` names).
+    pub finished: Option<(bool, Vec<String>)>,
+}
+
+impl BulkRun {
+    pub fn applied(&self) -> usize {
+        self.states
+            .iter()
+            .filter(|s| matches!(s, ItemState::Applied { .. }))
+            .count()
+    }
+
+    pub fn skins(&self) -> usize {
+        self.states
+            .iter()
+            .map(|s| match s {
+                ItemState::Applied { skins } => *skins,
+                _ => 0,
+            })
+            .sum()
+    }
+
+    /// Items done one way or another.
+    pub fn done(&self) -> usize {
+        self.states
+            .iter()
+            .filter(|s| !matches!(s, ItemState::Waiting | ItemState::Writing(_)))
+            .count()
+    }
+
+    pub fn not_applied(&self) -> usize {
+        self.states
+            .iter()
+            .filter(|s| matches!(s, ItemState::Failed { .. } | ItemState::NotRun))
+            .count()
+    }
+}
+
+/// "Apply to all items": one look on every hull and turret that has it.
+pub struct BulkWizard {
+    pub step: BulkStep,
+    /// The looks of the installed packs, gathered when the wizard opened.
+    pub looks: Vec<crate::bulk::Look>,
+    pub look: Option<usize>,
+    pub search: String,
+    pub settings: Option<crate::bulk::Settings>,
+    pub plan: Option<crate::bulk::Plan>,
+    pub filter: RowFilter,
+    /// The item whose own choices are open in the table: (kind, id).
+    pub expanded: Option<(String, String)>,
+    /// The model and texture files each item's modification has in the cache, and their size.
+    pub cache_files:
+        std::collections::BTreeMap<(String, String, u8), (std::collections::BTreeSet<String>, u64)>,
+    pub run: Option<BulkRun>,
+}
+
+impl BulkWizard {
+    pub fn chosen(&self) -> Option<&crate::bulk::Look> {
+        self.looks.get(self.look?)
+    }
 }
 
 /// A cache folder offered when the user chooses which cache to use.
@@ -265,6 +391,12 @@ pub struct Studio {
     pub splash_freeze: Option<f32>,
     /// New releases: the check, the update dialog and the update itself (see [`crate::updates`]).
     pub updates: crate::updates::Updates,
+    /// "Apply to all items", while it is open.
+    pub bulk: Option<BulkWizard>,
+    /// The run writes on its own thread; tests turn this off to get the result at once.
+    pub background_bulk: bool,
+    /// Tests: each item of the next run waits for a message here (see [`crate::bulk::Run::gate`]).
+    pub bulk_gate: Option<std::sync::mpsc::Receiver<()>>,
 }
 
 /// Everything the app needs from outside to start: where its data lives, the state it was left
@@ -388,6 +520,9 @@ impl Studio {
                 _ => None,
             },
             updates: crate::updates::Updates::new(check_at_start),
+            bulk: None,
+            background_bulk: true,
+            bulk_gate: None,
         };
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();

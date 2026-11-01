@@ -19,6 +19,12 @@
 //!   `update-manual:<version>` (the same offer to a portable copy), `updating:<version>:<percent>`
 //!   (the download at that point), `update-current` and `update-failed` (the outcomes of Check for
 //!   updates). The release is made up: nothing is downloaded.
+//!   "Apply to all items": `bulk` (opens it), `bulk-look:<n>`, `bulk-next`, `bulk-back`,
+//!   `bulk-off:<0-3>`, `bulk-source:<0-3>:<own|0-3>`, `bulk-row:<kind>:<id>` (opens an item's own
+//!   choices), `bulk-pick:<kind>:<id>:<0-3>:<0-3|edition|off|common>`, `bulk-kind:<kind>:<on|off>`,
+//!   `bulk-apply` (writes at once, without the thread), `bulk-running:<done>` (the run frozen with
+//!   that many items done, for the screenshot), `bulk-undo` (the result's Undo all) and
+//!   `restore-batch` (the newest batch's entry in the backups, confirmed).
 //!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
 //!   switches and shortcuts, so the choice is stored like a real one.
 //! - `TANKI_GAME_PROCESSES=<a,b>`: the processes "found" when checking whether the game runs
@@ -125,6 +131,9 @@ pub fn run_actions(app: &mut Studio) {
             "dismiss" => app.toasts.clear(),
             "close" => app.dialog = None,
             "importing" => importing(app, arg),
+            verb if verb.starts_with("bulk") || verb == "restore-batch" => {
+                bulk_verb(app, verb, arg)
+            }
             "update-offer" | "update-manual" | "updating" | "update-current" | "update-failed" => {
                 update_scene(app, verb, arg)
             }
@@ -560,7 +569,112 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::DeletePack { .. }) => "delete pack",
         Some(Dialog::RestoreAll { .. }) => "restore all",
         Some(Dialog::ChooseCache { .. }) => "choose cache",
+        Some(Dialog::BulkGameRunning(_)) => "game running (all items)",
+        Some(Dialog::CloseBulk) => "close apply to all",
+        Some(Dialog::RestoreBatch { .. }) => "restore batch",
     }
+}
+
+/// The verbs of "Apply to all items" (see the module's documentation).
+fn bulk_verb(app: &mut Studio, verb: &str, arg: &str) {
+    use crate::bulk::{Pick, Source};
+    let number = |text: &str| text.parse::<u8>().ok().filter(|n| *n < 4);
+    let parts: Vec<&str> = arg.split(':').collect();
+    match (verb, parts.as_slice()) {
+        ("bulk", _) => {
+            app.dialog = None;
+            app.open_bulk();
+        }
+        ("bulk-look", [n]) => app.bulk_select_look(n.parse().unwrap_or(0)),
+        ("bulk-next", _) => app.bulk_next(),
+        ("bulk-back", _) => app.bulk_back(),
+        ("bulk-off", [k]) => {
+            if let Some(k) = number(k) {
+                app.bulk_set_on(k, false);
+            }
+        }
+        ("bulk-source", [k, source]) => {
+            if let Some(k) = number(k) {
+                let source = number(source).map_or(Source::Own, Source::From);
+                app.bulk_set_source(k, source);
+            }
+        }
+        ("bulk-row", [kind, id]) => app.bulk_toggle_row(kind, id),
+        ("bulk-pick", [kind, id, k, pick]) => {
+            if let Some(k) = number(k) {
+                let pick = match *pick {
+                    "common" => None,
+                    "off" => Some(Pick::Off),
+                    "edition" => Some(Pick::Skin(None)),
+                    source => Some(Pick::Skin(number(source))),
+                };
+                app.bulk_set_pick(kind, id, k, pick);
+            }
+        }
+        ("bulk-kind", [kind, on]) => app.bulk_set_kind(kind, *on == "on"),
+        ("bulk-apply", _) => {
+            let background = std::mem::replace(&mut app.background_bulk, false);
+            app.bulk_apply();
+            app.background_bulk = background;
+        }
+        ("bulk-running", [done]) => bulk_running(app, done.parse().unwrap_or(0)),
+        ("bulk-undo", _) => app.bulk_undo(),
+        ("restore-batch", _) => {
+            let newest = app
+                .backups
+                .iter()
+                .find(|b| !b.restored)
+                .and_then(|b| b.tx.batch.clone());
+            if let Some(batch) = newest {
+                app.restore_batch_confirmed(&batch.id, &batch.name);
+            }
+        }
+        _ => app.toast(format!("unknown dev action: {verb}:{arg}"), None),
+    }
+}
+
+/// `bulk-running:<done>`: the run of the plan at the last step, frozen with `done` items applied
+/// and the next one being written, for the screenshot. Nothing is written.
+fn bulk_running(app: &mut Studio, done: usize) {
+    use crate::app::{BulkRun, BulkStep, ItemState};
+    let Some(wizard) = app.bulk.as_mut() else {
+        return;
+    };
+    let (Some(look), Some(plan)) = (wizard.chosen(), wizard.plan.as_ref()) else {
+        return;
+    };
+    let tasks = crate::bulk::tasks(plan);
+    let states = tasks
+        .iter()
+        .enumerate()
+        .map(|(index, task)| match index.cmp(&done) {
+            std::cmp::Ordering::Less => ItemState::Applied {
+                skins: task.writes.len(),
+            },
+            std::cmp::Ordering::Equal => {
+                ItemState::Writing(task.writes.first().map_or(0, |w| w.modification))
+            }
+            std::cmp::Ordering::Greater => ItemState::Waiting,
+        })
+        .collect();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    // The answer never comes: the run stays where it is for the screenshot.
+    std::mem::forget(sender);
+    wizard.run = Some(BulkRun {
+        look: look.name.clone(),
+        batch: tanki_core::apply::Batch {
+            id: "0".into(),
+            name: look.name.clone(),
+        },
+        tasks,
+        states,
+        skipped: Vec::new(),
+        skipped_items: plan.skipped_items(),
+        stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        receiver: Some(receiver),
+        finished: None,
+    });
+    wizard.step = BulkStep::Running;
 }
 
 /// `importing:<name>:<percent>`: the card of an import frozen while copying, for the screenshot.

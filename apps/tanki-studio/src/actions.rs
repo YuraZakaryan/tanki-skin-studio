@@ -4,15 +4,22 @@
 //! all call these methods, so there is one implementation of each action.
 
 use std::{
+    collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Instant,
 };
 
 use tanki_core::{
-    apply::{apply_variant, missing_files, pending_restores, planned_files, restore_all},
+    apply::{
+        ApplyNote, Batch, SKIN_FILES, apply_variant_in, missing_files, missing_from,
+        pending_restores, planned_files, restore_all, restore_batch,
+    },
     archive,
-    cache::{client_id, looks_like_cache, scan_cache},
+    cache::{client_id, known_target_group, looks_like_cache, scan_cache},
     pack::{ImportProgress, InstalledPack, PackRejected, PackTarget, import_pack_with},
     process::running_game_processes,
     recognize::recognise_by_content,
@@ -22,10 +29,11 @@ use tanki_ui::theme::ThemePreference;
 
 use crate::{
     app::{
-        CacheChoice, Dialog, ImportJob, Imported, Page, PendingApply, Selection, Studio,
-        ToastAction,
+        BulkRun, BulkStep, BulkWizard, CacheChoice, Dialog, ImportJob, Imported, ItemState, Page,
+        PendingApply, RowFilter, Selection, Studio, ToastAction,
     },
-    model::{caches_to_ask, grade_code, target_name},
+    bulk,
+    model::{caches_to_ask, grade_code, grade_index, target_name},
 };
 
 impl Studio {
@@ -94,6 +102,9 @@ impl Studio {
     }
 
     pub fn choose_cache(&mut self) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if !self.file_dialogs {
             return;
         }
@@ -107,6 +118,9 @@ impl Studio {
     /// cache entries is not taken for one: a model archive becomes a pack instead, and anything else
     /// is refused with an explanation, so the real cache stays connected.
     pub fn use_cache_folder(&mut self, path: &Path) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if !looks_like_cache(path) {
             if archive::is_model_archive(path) {
                 self.import_path(path);
@@ -133,6 +147,9 @@ impl Studio {
     }
 
     pub fn switch_cache(&mut self, index: usize) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if let Some((game, path)) = self.roots.get(index).cloned() {
             self.persist(true);
             self.open_cache(&game, &path);
@@ -169,6 +186,9 @@ impl Studio {
     pub fn open_cache_switcher(&mut self) {
         if self.dialog.is_some() {
             return;
+        }
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
         }
         self.reload_roots();
         let choices = self.cache_choices(&vec![false; self.roots.len()]);
@@ -255,6 +275,9 @@ impl Studio {
     }
 
     pub fn import(&mut self, folder: bool) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if !self.file_dialogs {
             return;
         }
@@ -281,6 +304,9 @@ impl Studio {
     /// runs on its own thread with a progress card, so a large pack never freezes the window;
     /// [`Studio::finish_import`] takes the answer. One import runs at a time.
     pub fn import_path(&mut self, path: &Path) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if self.import_job.is_some() {
             self.toast(
                 tl!("A pack is being imported. Wait until it is done."),
@@ -420,6 +446,9 @@ impl Studio {
     /// The library's Delete button: deleting removes the pack's files, so it is asked first. A
     /// double click on the bin then never reaches the card that moves into its place.
     pub fn ask_to_delete_pack(&mut self, id: &str, version: &str) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         let Some(pack) = self
             .packs
             .iter()
@@ -452,6 +481,9 @@ impl Studio {
 
     /// Start replacing the files of a variant: check the game is closed, then ask to confirm.
     pub fn begin_apply(&mut self, item: usize, variant: usize) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         let Some((pack_item, pack_variant)) = self.pack_variant(item, variant) else {
             return;
         };
@@ -558,15 +590,11 @@ impl Studio {
                 p.manifest.id == pending.pack_id && p.manifest.version == pending.pack_version
             })
             .cloned();
-        let Some((pack, variant)) = pack.and_then(|pack| {
-            let variant = pack
-                .manifest
-                .items
-                .get(pending.item)?
-                .variants
-                .get(pending.variant)?
-                .clone();
-            Some((pack, variant))
+        let Some((pack, variant, grade)) = pack.and_then(|pack| {
+            let item = pack.manifest.items.get(pending.item)?;
+            let variant = item.variants.get(pending.variant)?.clone();
+            let grade = item.target.grade.clone();
+            Some((pack, variant, grade))
         }) else {
             self.toast(
                 fmt(
@@ -577,12 +605,17 @@ impl Studio {
             );
             return;
         };
-        match apply_variant(
+        let note = ApplyNote {
+            batch: None,
+            skin_grade: Some(grade),
+        };
+        match apply_variant_in(
             &scan,
             &pack,
             &pending.cache_target,
             &variant,
             &self.data.join("backups"),
+            &note,
         ) {
             Ok(tx) => {
                 self.dialog = Some(Dialog::Done {
@@ -607,6 +640,9 @@ impl Studio {
 
     /// Every Restore button and ⌘Z: say what will be put back and ask first.
     pub fn ask_to_restore(&mut self) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if !self.running_game().is_empty() {
             self.toast(
                 tl!("Close the game before restoring the original files."),
@@ -642,6 +678,9 @@ impl Studio {
     /// dialog). Like applying, never while the game runs.
     pub fn restore_original(&mut self) {
         self.dialog = None;
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
         if !self.running_game().is_empty() {
             self.toast(
                 tl!("Close the game before restoring the original files."),
@@ -850,7 +889,7 @@ impl Studio {
     /// imported under a confirmation would change the active pack it was asked about.
     pub fn handle_dropped(&mut self, paths: Vec<PathBuf>) {
         // An open dialog goes first; during an update a new import would be cut off by the restart.
-        if self.dialog.is_some() || self.updates.view.is_some() {
+        if self.dialog.is_some() || self.updates.view.is_some() || self.bulk.is_some() {
             return;
         }
         if let Some(path) = paths.into_iter().next() {
@@ -928,4 +967,609 @@ fn last_change(path: &Path) -> Option<u64> {
         .take(4096)
         .filter_map(|e| e.metadata().ok().and_then(modified));
     own.into_iter().chain(entries).max()
+}
+
+/// What is said while "Apply to all items" writes and something else would touch the cache.
+pub(crate) fn bulk_busy() -> &'static str {
+    tl!("Skins are being put on all items. Wait until it is done.")
+}
+
+/// "Apply to all items" (see [`crate::bulk`]).
+impl Studio {
+    /// Whether a run of "Apply to all items" is writing now.
+    pub fn bulk_running(&self) -> bool {
+        self.bulk
+            .as_ref()
+            .and_then(|w| w.run.as_ref())
+            .is_some_and(|run| run.receiver.is_some())
+    }
+
+    /// The packs in the app's order: the active pack first, then the library's.
+    fn ordered_packs(&self) -> Vec<&InstalledPack> {
+        let active = self
+            .active_pack
+            .as_ref()
+            .map(|p| (p.manifest.id.as_str(), p.manifest.version.as_str()));
+        let is_active = |p: &InstalledPack| {
+            active == Some((p.manifest.id.as_str(), p.manifest.version.as_str()))
+        };
+        self.packs
+            .iter()
+            .filter(|p| is_active(p))
+            .chain(self.packs.iter().filter(|p| !is_active(p)))
+            .collect()
+    }
+
+    /// The Garage's "Apply to all items" and the palette command: the looks of every installed
+    /// pack, the first one picked.
+    pub fn open_bulk(&mut self) {
+        if self.bulk.is_some() || self.dialog.is_some() {
+            return;
+        }
+        self.palette = None;
+        let looks = bulk::gather_looks(&self.ordered_packs(), &self.items);
+        let mut cache_files: BTreeMap<(String, String, u8), (BTreeSet<String>, u64)> =
+            BTreeMap::new();
+        if let Some(scan) = &self.scan {
+            for resource in &scan.resources {
+                if !SKIN_FILES.contains(&resource.role.as_str()) {
+                    continue;
+                }
+                let Some((kind, id, grade)) = known_target_group(&scan.game, &resource.group)
+                else {
+                    continue;
+                };
+                let Some(modification) = grade_index(grade) else {
+                    continue;
+                };
+                let entry = cache_files
+                    .entry((kind.to_owned(), id.to_owned(), modification as u8))
+                    .or_default();
+                entry.0.insert(resource.role.clone());
+                entry.1 = entry.1.saturating_add(resource.size);
+            }
+        }
+        self.bulk = Some(BulkWizard {
+            step: BulkStep::Look,
+            look: (!looks.is_empty()).then_some(0),
+            looks,
+            search: String::new(),
+            settings: None,
+            plan: None,
+            filter: RowFilter::All,
+            expanded: None,
+            cache_files,
+            run: None,
+        });
+    }
+
+    /// Close the wizard (Cancel, ×, Esc, Done). Never while it writes; at the last step before
+    /// writing it asks first ([`Studio::confirm_close_bulk`]).
+    pub fn close_bulk(&mut self) {
+        let Some(wizard) = &self.bulk else {
+            return;
+        };
+        if self.bulk_running() {
+            return;
+        }
+        if wizard.step == BulkStep::Check {
+            self.dialog = Some(Dialog::CloseBulk);
+            return;
+        }
+        self.bulk = None;
+    }
+
+    /// The answer to "Close without applying?".
+    pub fn confirm_close_bulk(&mut self) {
+        self.dialog = None;
+        if !self.bulk_running() {
+            self.bulk = None;
+        }
+    }
+
+    pub fn bulk_select_look(&mut self, index: usize) {
+        if let Some(wizard) = self.bulk.as_mut()
+            && wizard.step == BulkStep::Look
+            && index < wizard.looks.len()
+        {
+            wizard.look = Some(index);
+        }
+    }
+
+    /// The step's primary button (and Enter): on to the next step, or start the run.
+    pub fn bulk_next(&mut self) {
+        let Some(wizard) = self.bulk.as_mut() else {
+            return;
+        };
+        match wizard.step {
+            BulkStep::Look => {
+                let Some(look) = wizard.chosen() else {
+                    return;
+                };
+                wizard.settings = Some(bulk::Settings::for_look(look));
+                wizard.filter = RowFilter::All;
+                wizard.expanded = None;
+                wizard.step = BulkStep::Where;
+                self.refresh_bulk_plan();
+            }
+            BulkStep::Where => {
+                if wizard.plan.as_ref().is_some_and(|p| p.changes() > 0) {
+                    wizard.step = BulkStep::Check;
+                }
+            }
+            BulkStep::Check => self.bulk_apply(),
+            BulkStep::Running => {}
+            BulkStep::Done => self.bulk = None,
+        }
+    }
+
+    pub fn bulk_back(&mut self) {
+        if let Some(wizard) = self.bulk.as_mut() {
+            wizard.step = match wizard.step {
+                BulkStep::Where => BulkStep::Look,
+                BulkStep::Check => BulkStep::Where,
+                other => other,
+            };
+        }
+    }
+
+    /// Change the settings of the "Where" step and work the plan out again.
+    fn bulk_settings(&mut self, change: impl FnOnce(&mut bulk::Settings)) {
+        if let Some(settings) = self.bulk.as_mut().and_then(|w| w.settings.as_mut()) {
+            change(settings);
+            self.refresh_bulk_plan();
+        }
+    }
+
+    /// A modification's switch.
+    pub fn bulk_set_on(&mut self, modification: u8, on: bool) {
+        self.bulk_settings(|s| {
+            if let Some(choice) = s.choices.get_mut(usize::from(modification)) {
+                choice.on = on;
+            }
+        });
+    }
+
+    /// A modification's "Put on" choice, for every item.
+    pub fn bulk_set_source(&mut self, modification: u8, source: bulk::Source) {
+        self.bulk_settings(|s| {
+            if let Some(choice) = s.choices.get_mut(usize::from(modification)) {
+                *choice = bulk::Choice { on: true, source };
+            }
+        });
+    }
+
+    /// One item's own choice for one modification; `None` goes back to the common choice.
+    pub fn bulk_set_pick(
+        &mut self,
+        kind: &str,
+        id: &str,
+        modification: u8,
+        pick: Option<bulk::Pick>,
+    ) {
+        let key = (kind.to_owned(), id.to_owned(), modification);
+        self.bulk_settings(|s| match pick {
+            Some(pick) => {
+                s.overrides.insert(key, pick);
+            }
+            None => {
+                s.overrides.remove(&key);
+            }
+        });
+    }
+
+    /// The Hulls and Turrets boxes: a kind left out is left out of the run.
+    pub fn bulk_set_kind(&mut self, kind: &str, on: bool) {
+        self.bulk_settings(|s| match kind {
+            "hull" => s.hulls = on,
+            "turret" => s.turrets = on,
+            _ => {}
+        });
+    }
+
+    pub fn bulk_set_filter(&mut self, filter: RowFilter) {
+        if let Some(wizard) = self.bulk.as_mut() {
+            wizard.filter = filter;
+        }
+    }
+
+    /// Open (or close) an item's own choices in the table.
+    pub fn bulk_toggle_row(&mut self, kind: &str, id: &str) {
+        if let Some(wizard) = self.bulk.as_mut() {
+            let key = (kind.to_owned(), id.to_owned());
+            wizard.expanded = if wizard.expanded.as_ref() == Some(&key) {
+                None
+            } else {
+                Some(key)
+            };
+        }
+    }
+
+    /// Work out what the look puts where with the current settings.
+    pub fn refresh_bulk_plan(&mut self) {
+        let Some(mut wizard) = self.bulk.take() else {
+            return;
+        };
+        if let (Some(look), Some(settings)) = (wizard.chosen(), wizard.settings.as_ref()) {
+            let packs = &self.packs;
+            let files = &wizard.cache_files;
+            let missing = |item: &bulk::LookItem, modification: u8, skin: &bulk::LookSkin| {
+                let Some(variant) = packs
+                    .iter()
+                    .find(|p| {
+                        p.manifest.id == skin.pack_id && p.manifest.version == skin.pack_version
+                    })
+                    .and_then(|p| p.manifest.items.get(skin.item))
+                    .and_then(|i| i.variants.get(skin.variant))
+                else {
+                    return Vec::new();
+                };
+                files
+                    .get(&(item.kind.clone(), item.id.clone(), modification))
+                    .map(|(files, _)| missing_from(files, variant))
+                    .unwrap_or_default()
+            };
+            let facts = bulk::CacheFacts {
+                items: &self.items,
+                applied: &self.applied,
+                missing: &missing,
+            };
+            wizard.plan = Some(bulk::plan(look, settings, &facts));
+        }
+        self.bulk = Some(wizard);
+    }
+
+    /// The last step's Apply: the game must be closed, as for a single replacement.
+    pub fn bulk_apply(&mut self) {
+        if self.bulk.as_ref().is_none_or(|w| w.step != BulkStep::Check) {
+            return;
+        }
+        let running = self.running_game();
+        if running.is_empty() {
+            self.start_bulk();
+        } else {
+            self.dialog = Some(Dialog::BulkGameRunning(running));
+        }
+    }
+
+    /// The game-is-running warning's Check again.
+    pub fn bulk_recheck(&mut self) {
+        self.dialog = None;
+        self.bulk_apply();
+    }
+
+    /// Start writing the plan, item by item, off the window's thread (see [`bulk::run`]).
+    fn start_bulk(&mut self) {
+        let Some(scan) = self.scan.clone() else {
+            return;
+        };
+        let Some(wizard) = self.bulk.as_mut() else {
+            return;
+        };
+        let (Some(look), Some(plan)) = (wizard.chosen(), wizard.plan.as_ref()) else {
+            return;
+        };
+        let tasks = bulk::tasks(plan);
+        if tasks.is_empty() {
+            return;
+        }
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_nanos());
+        let batch = Batch {
+            id: stamp.to_string(),
+            name: look.name.clone(),
+        };
+        let skipped = plan
+            .rows
+            .iter()
+            .flat_map(|row| {
+                row.cells
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(k, cell)| match cell {
+                        Some(cell) if cell.skipped() => Some((row.name(), k as u8, cell.clone())),
+                        _ => None,
+                    })
+            })
+            .collect();
+        let skipped_items = plan.skipped_items();
+        let running: Box<dyn Fn() -> Vec<String> + Send> =
+            match self.game_processes_override.clone() {
+                Some(list) => Box::new(move || list.clone()),
+                None => {
+                    let root = scan.root.clone();
+                    Box::new(move || running_game_processes(&root))
+                }
+            };
+        let stop = Arc::new(AtomicBool::new(false));
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let work = bulk::Run {
+            root: scan.root.clone(),
+            game: scan.game.clone(),
+            packs: self.packs.clone(),
+            backups: self.data.join("backups"),
+            batch: batch.clone(),
+            tasks: tasks.clone(),
+            running,
+            gate: self.bulk_gate.take(),
+        };
+        let flag = stop.clone();
+        let job = move || {
+            bulk::run(work, &flag, &|event| {
+                let _ = sender.send(event);
+            });
+        };
+        wizard.run = Some(BulkRun {
+            look: look.name.clone(),
+            batch,
+            states: vec![ItemState::Waiting; tasks.len()],
+            tasks,
+            skipped,
+            skipped_items,
+            stop,
+            receiver: Some(receiver),
+            finished: None,
+        });
+        wizard.step = BulkStep::Running;
+        if self.background_bulk {
+            let spawned = std::thread::Builder::new()
+                .name("tanki-bulk".into())
+                .spawn(job);
+            if let Err(error) = spawned {
+                if let Some(wizard) = self.bulk.as_mut() {
+                    wizard.run = None;
+                    wizard.step = BulkStep::Check;
+                }
+                self.toast(crate::errors::user_message(&error), None);
+            }
+        } else {
+            job();
+            self.finish_bulk();
+        }
+    }
+
+    /// "Stop after this item": the item being written is finished, then the run stops.
+    pub fn bulk_stop(&mut self) {
+        if let Some(run) = self.bulk.as_ref().and_then(|w| w.run.as_ref()) {
+            run.stop.store(true, Ordering::SeqCst);
+        }
+    }
+
+    /// Take what the run reported since the last frame. Returns whether it still runs.
+    pub fn finish_bulk(&mut self) -> bool {
+        let Some(run) = self.bulk.as_mut().and_then(|w| w.run.as_mut()) else {
+            return false;
+        };
+        let Some(receiver) = &run.receiver else {
+            return false;
+        };
+        let mut finished = None;
+        loop {
+            match receiver.try_recv() {
+                Ok(bulk::Event::Writing {
+                    index,
+                    modification,
+                }) => {
+                    if let Some(state) = run.states.get_mut(index) {
+                        *state = ItemState::Writing(modification);
+                    }
+                }
+                Ok(bulk::Event::Done { index, outcome }) => {
+                    let state = match outcome {
+                        bulk::Outcome::Applied { transactions } => ItemState::Applied {
+                            skins: transactions.len(),
+                        },
+                        bulk::Outcome::Failed {
+                            modification,
+                            failure,
+                            kept,
+                        } => ItemState::Failed {
+                            modification,
+                            reason: failure_text(&failure, kept.as_deref()),
+                        },
+                    };
+                    if let Some(slot) = run.states.get_mut(index) {
+                        *slot = state;
+                    }
+                }
+                Ok(bulk::Event::Finished { stopped, game }) => {
+                    finished = Some((stopped, game));
+                    break;
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    finished = Some((true, Vec::new()));
+                    break;
+                }
+            }
+        }
+        let Some(finished) = finished else {
+            return true;
+        };
+        run.receiver = None;
+        run.finished = Some(finished);
+        for state in &mut run.states {
+            if matches!(state, ItemState::Waiting | ItemState::Writing(_)) {
+                *state = ItemState::NotRun;
+            }
+        }
+        // The Garage shows what is on the items now: each applied skin is the item's pick.
+        let picks: Vec<(String, String)> = run
+            .tasks
+            .iter()
+            .zip(&run.states)
+            .filter(|(_, state)| matches!(state, ItemState::Applied { .. }))
+            .flat_map(|(task, _)| {
+                task.writes.iter().map(|write| {
+                    (
+                        format!(
+                            "{}/{}:{}:{}",
+                            write.skin.pack_id,
+                            task.kind,
+                            task.id,
+                            grade_code(usize::from(write.modification))
+                        ),
+                        format!("{}:{}", write.skin.grade, write.skin.variant_id),
+                    )
+                })
+            })
+            .collect();
+        if let Some(wizard) = self.bulk.as_mut() {
+            wizard.step = BulkStep::Done;
+        }
+        if let Some(root) = self
+            .scan
+            .as_ref()
+            .map(|s| s.root.to_string_lossy().into_owned())
+        {
+            let entry = self.session.cache_mut(&root);
+            for (key, value) in picks {
+                entry.variants.insert(key, value);
+            }
+        }
+        self.rescan_quietly();
+        self.reload_backups();
+        false
+    }
+
+    /// The result's Undo all: put back what every item of the run wore before it.
+    pub fn bulk_undo(&mut self) {
+        let Some(run) = self.bulk.as_ref().and_then(|w| w.run.as_ref()) else {
+            return;
+        };
+        if run.receiver.is_some() {
+            return;
+        }
+        let (batch, look) = (run.batch.id.clone(), run.look.clone());
+        if self.undo_batch(&batch, &look) {
+            self.bulk = None;
+        }
+    }
+
+    /// A batch's entry in the backups: what it puts back, asked first.
+    pub fn ask_to_restore_batch(&mut self, batch: &str) {
+        if self.bulk_running() {
+            return self.toast(bulk_busy(), None);
+        }
+        let entries: Vec<&tanki_core::apply::BackupEntry> = self
+            .backups
+            .iter()
+            .filter(|b| !b.restored && b.tx.batch.as_ref().is_some_and(|t| t.id == batch))
+            .collect();
+        let Some(first) = entries.first() else {
+            return;
+        };
+        let name = first
+            .tx
+            .batch
+            .as_ref()
+            .map(|b| b.name.clone())
+            .unwrap_or_default();
+        let mut items: Vec<String> = Vec::new();
+        for entry in &entries {
+            if let Some(target) = &entry.tx.target {
+                let item = crate::model::target_title(&target.id);
+                if !items.contains(&item) {
+                    items.push(item);
+                }
+            }
+        }
+        self.dialog = Some(Dialog::RestoreBatch {
+            batch: batch.to_owned(),
+            name,
+            items,
+            files: entries.iter().map(|e| e.tx.changes.len()).sum(),
+        });
+    }
+
+    /// The confirmed question of [`Studio::ask_to_restore_batch`].
+    pub fn restore_batch_confirmed(&mut self, batch: &str, name: &str) {
+        self.dialog = None;
+        self.undo_batch(batch, name);
+    }
+
+    /// Undo a batch, never while the game runs. Returns whether it was undone.
+    fn undo_batch(&mut self, batch: &str, name: &str) -> bool {
+        if !self.running_game().is_empty() {
+            self.toast(
+                tl!("Close the game before restoring the original files."),
+                None,
+            );
+            return false;
+        }
+        let backups = self.data.join("backups");
+        // The picks the batch made go with it.
+        let targets: Vec<String> = self
+            .backups
+            .iter()
+            .filter(|b| b.tx.batch.as_ref().is_some_and(|t| t.id == batch))
+            .filter_map(|b| b.tx.target.as_ref())
+            .map(|t| format!("/{}:{}:{}", t.kind, t.id, t.grade))
+            .collect();
+        match restore_batch(&backups, batch) {
+            Ok(summary) => {
+                let message = fmt(
+                    tl!("Undid “{look}”: {files} put back. Restart the game."),
+                    &[
+                        ("look", name),
+                        (
+                            "files",
+                            &tanki_i18n::tn(summary.files as u64, "{n} file", "{n} files"),
+                        ),
+                    ],
+                );
+                self.toast(message, None);
+                if let Some(root) = self
+                    .scan
+                    .as_ref()
+                    .map(|s| s.root.to_string_lossy().into_owned())
+                {
+                    self.session
+                        .cache_mut(&root)
+                        .variants
+                        .retain(|key, _| !targets.iter().any(|t| key.ends_with(t.as_str())));
+                }
+                self.rescan_quietly();
+                self.reload_backups();
+                true
+            }
+            Err(error) => {
+                self.toast(crate::errors::user_message(&error), None);
+                self.reload_backups();
+                false
+            }
+        }
+    }
+
+    /// The empty state's Add a pack: the wizard closes and the import opens.
+    pub fn bulk_add_pack(&mut self) {
+        self.bulk = None;
+        self.import(false);
+        self.go(Page::Packs);
+    }
+}
+
+/// Why an item of the run was not applied, in the interface's language.
+fn failure_text(failure: &bulk::Failure, kept: Option<&str>) -> String {
+    let text = match failure {
+        bulk::Failure::PackGone(name) => fmt(
+            tl!("the pack “{name}” is no longer in the library"),
+            &[("name", name)],
+        ),
+        bulk::Failure::SkinGone => tl!("the pack no longer has this skin").to_owned(),
+        bulk::Failure::Incomplete(files) => fmt(
+            tl!("the skin has no {files}"),
+            &[("files", &files.join(", "))],
+        ),
+        bulk::Failure::NotInCache => tl!("the item is no longer in the cache").to_owned(),
+        bulk::Failure::Error(error) => crate::errors::user_message(error),
+    };
+    match kept {
+        Some(error) => fmt(
+            tl!("{reason}; its earlier modifications could not be put back ({error})"),
+            &[("reason", text.trim_end_matches('.')), ("error", error)],
+        ),
+        None => text,
+    }
 }

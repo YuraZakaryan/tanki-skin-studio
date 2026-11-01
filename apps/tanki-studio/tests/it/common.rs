@@ -29,7 +29,11 @@ pub fn harness(env: &Env) -> Harness<'static, Studio> {
 
 /// The app opened on `env`'s data folder with these cache folders found on the machine.
 pub fn harness_with_caches(env: &Env, caches: Vec<PathBuf>) -> Harness<'static, Studio> {
-    let data = env.work.join("data");
+    harness_in(env.work.join("data"), caches)
+}
+
+/// The app opened on the data folder `data` with these cache folders found on the machine.
+pub fn harness_in(data: PathBuf, caches: Vec<PathBuf>) -> Harness<'static, Studio> {
     let roots: Vec<(String, PathBuf)> = caches
         .into_iter()
         .map(|root| ("air-cache".to_owned(), root))
@@ -56,6 +60,8 @@ pub fn harness_with_caches(env: &Env, caches: Vec<PathBuf>) -> Harness<'static, 
             app.background_recognition = false;
             // …and the imported pack at once, not after a thread is done.
             app.background_import = false;
+            // …and the result of "Apply to all items" too.
+            app.background_bulk = false;
             app
         });
     harness.run_steps(4);

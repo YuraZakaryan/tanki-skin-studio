@@ -17,11 +17,16 @@ pub fn draw(app: &mut Studio, ctx: &Context) {
     let mut run = None;
     let mut dismissed = None;
     // The card of a running import sits in the corner; the toasts stack above it.
-    let lift = if app.import_job.is_some() {
+    let mut lift = if app.import_job.is_some() {
         super::progress::HEIGHT + 8.0
     } else {
         0.0
     };
+    // Over "Apply to all items", above its buttons, which reach the corner in a small window.
+    if let Some(wizard) = super::bulk::rect(app, ctx) {
+        let footer = wizard.max.y - tanki_ui::widgets::WIZARD_FOOTER - 8.0;
+        lift = lift.max(screen.max.y - 24.0 - footer);
+    }
     for (index, toast) in app.toasts.iter().enumerate() {
         let from_bottom = (app.toasts.len() - 1 - index) as f32;
         let pos = Pos2::new(

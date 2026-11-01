@@ -280,6 +280,13 @@ impl Studio {
             });
             return;
         }
+        if self.bulk_running() {
+            self.updates.view = Some(UpdateView::Offer {
+                release,
+                error: Some(crate::actions::bulk_busy().to_owned()),
+            });
+            return;
+        }
         let progress = Arc::new(UpdateProgress::default());
         let installer = self.updates.installer.clone().unwrap_or_else(|| {
             let install = self.updates.install.clone();
