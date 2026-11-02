@@ -514,6 +514,37 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             }
         });
     });
+    // One look on every item at once, on the right of the tabs; the hint gives way first.
+    let tabs_width: f32 = TABS
+        .iter()
+        .map(|kind| widgets::tab_width(ui, tab_label(kind)) + 6.0)
+        .sum();
+    let button = Button::new(ButtonKind::Secondary, tl!("Apply to all items"))
+        .icon(icons::LAYERS)
+        .height(34.0);
+    let button_width = button.measure(ui);
+    let button_rect = Rect::from_min_size(
+        Pos2::new(tabs.max.x - button_width, tabs.min.y),
+        Vec2::new(button_width, 34.0),
+    );
+    if button_rect.min.x > tabs.min.x + tabs_width + 12.0 {
+        if in_rect(ui, button_rect, |ui| button.show(ui).clicked()) {
+            app.open_bulk();
+        }
+        let hint = tl!("One look on every hull and turret at once");
+        let style = Text::body(13.0, 400, tokens.text_2);
+        if button_rect.min.x - 12.0 - fonts::width(ui.painter(), hint, style)
+            > tabs.min.x + tabs_width + 12.0
+        {
+            fonts::draw_right(
+                ui.painter(),
+                button_rect.min.x - 12.0,
+                tabs.center().y,
+                hint,
+                style,
+            );
+        }
+    }
     let cards = Rect::from_min_max(Pos2::new(inner.min.x, tabs.max.y + 14.0), inner.max);
     if list.is_empty() {
         fonts::draw_centered(

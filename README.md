@@ -131,6 +131,12 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
   <sub>A skin missing its model: marked Incomplete, Apply disabled, the reason in plain words.</sub>
 </p>
 
+- **One look on every item at once.** **Apply to all items** in the Garage (or the command palette)
+  gathers the skins of the same name in all your packs into looks (XT, Legacy, Prime…). Pick one,
+  choose per modification what it gets (its own skin, another modification's, or nothing), even
+  per item, and check every change before it is made. Each item is backed up, replaced and
+  checked; one that fails is left exactly as it was. **Undo all** puts the whole run back, and it
+  is one entry in the backups.
 - **The confirmation lists exactly which cache files will change** before anything is written.
 - **Waits while the game is running.** The client keeps its files open, so you are asked to close it
   first. The client is recognised on your machine, never by a name in the code: the cache's folder
@@ -319,6 +325,8 @@ cargo run --release -p tanki-studio
 2. **Import a pack.** Drop a `.tankipack`, a ZIP or a skins folder on the window, or press <kbd>⌘I</kbd>.
 3. **Apply a skin.** Close the game, open **Garage**, pick a tank and a modification, choose a skin
    and press the yellow **Apply** button.
+   To put one look on every hull and turret at once, press **Apply to all items** under the
+   Garage's item tabs.
 4. **See it in the game.** Start the game again. To undo, use **Restore**.
 
 **Your own packages:** `packaging/macos/package.sh` builds the `.dmg` and

@@ -14,6 +14,7 @@ pub enum Command {
     Import,
     ImportFolder,
     RestoreLast,
+    ApplyToAll,
     Rescan,
     Recognise,
     ChooseCache,
@@ -75,6 +76,13 @@ pub const COMMANDS: &[CommandSpec] = &[
         "Put the original files back",
         icons::ROTATE_CCW,
         Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::Z)),
+    ),
+    spec(
+        Command::ApplyToAll,
+        "Apply to all items",
+        "One look on every hull and turret at once",
+        icons::LAYERS,
+        None,
     ),
     spec(
         Command::Rescan,
@@ -239,6 +247,7 @@ impl Studio {
     pub fn command_enabled(&self, command: Command) -> bool {
         match command {
             Command::RestoreLast => self.can_restore(),
+            Command::ApplyToAll => self.bulk.is_none() && self.scan.is_some(),
             Command::CheckUpdates => !self.updates.checking(),
             Command::UpdateCheckAtStart(on) => self.updates.check_at_start != on,
             _ => true,
@@ -250,6 +259,7 @@ impl Studio {
             Command::Import => self.import(false),
             Command::ImportFolder => self.import(true),
             Command::RestoreLast => self.ask_to_restore(),
+            Command::ApplyToAll => self.open_bulk(),
             Command::Rescan => self.rescan(),
             Command::Recognise => self.auto_recognise(true),
             Command::ChooseCache => self.choose_cache(),
@@ -271,7 +281,7 @@ impl Studio {
     /// Run the command whose shortcut was pressed this frame, if any. Shortcuts that would clash
     /// with text editing (undo) are left to the focused text field.
     pub fn handle_shortcuts(&mut self, ctx: &egui::Context) {
-        if self.dialog.is_some() || self.updates.view.is_some() {
+        if self.dialog.is_some() || self.updates.view.is_some() || self.bulk.is_some() {
             return;
         }
         // ⌘+ is ⌘⇧= on most keyboards: accept the plus key as well as equals.

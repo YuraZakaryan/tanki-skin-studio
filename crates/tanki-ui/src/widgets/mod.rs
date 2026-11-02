@@ -12,6 +12,8 @@ mod modal;
 mod nav;
 mod panel;
 mod rows;
+mod select;
+mod wizard;
 
 pub use buttons::*;
 pub use cards::*;
@@ -21,6 +23,8 @@ pub use modal::*;
 pub use nav::*;
 pub use panel::*;
 pub use rows::*;
+pub use select::*;
+pub use wizard::*;
 
 use egui::{Color32, Id, Rect, Response, Role, Sense, Ui, Vec2, WidgetInfo};
 

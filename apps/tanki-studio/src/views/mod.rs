@@ -3,6 +3,7 @@
 //! Screens. Each file draws one page or overlay from the design file into rectangles cut with
 //! `tanki_ui::layout`, using the widgets of `tanki_ui`.
 
+pub mod bulk;
 pub mod dialogs;
 pub mod empty;
 pub mod garage;
@@ -43,6 +44,7 @@ pub fn draw(app: &mut Studio, ui: &mut Ui) {
     shell::page(app, ui, main);
     progress::draw(app, &ctx);
     toast::draw(app, &ctx);
+    bulk::draw(app, &ctx);
     dialogs::draw(app, &ctx);
     update::draw(app, &ctx);
     palette::draw(app, &ctx);

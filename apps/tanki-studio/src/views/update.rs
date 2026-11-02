@@ -38,7 +38,7 @@ const NOTE_TEXT: f32 = WIDTH - 48.0 - (14.0 + 18.0 + 10.0) - 14.0;
 
 pub fn draw(app: &mut Studio, ctx: &Context) {
     // A dialog already open (a replacement being confirmed) goes first; the offer waits for it.
-    if app.dialog.is_some() || !app.splash_done {
+    if app.dialog.is_some() || app.bulk.is_some() || !app.splash_done {
         return;
     }
     let Some(view) = app.updates.view.clone() else {

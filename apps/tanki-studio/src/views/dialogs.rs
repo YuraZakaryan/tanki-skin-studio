@@ -36,7 +36,15 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
     };
     match dialog {
         Dialog::Confirm(pending) => confirm(app, ctx, pending),
-        Dialog::GameRunning(pending, processes) => running(app, ctx, pending, &processes),
+        Dialog::GameRunning(pending, processes) => running(app, ctx, Some(pending), &processes),
+        Dialog::BulkGameRunning(processes) => running(app, ctx, None, &processes),
+        Dialog::CloseBulk => close_bulk(app, ctx),
+        Dialog::RestoreBatch {
+            batch,
+            name,
+            items,
+            files,
+        } => restore_batch(app, ctx, &batch, &name, &items, files),
         Dialog::Done { target, files } => done(app, ctx, &target, files),
         Dialog::ImportError {
             name,
@@ -223,10 +231,12 @@ fn confirm(app: &mut Studio, ctx: &eframe::egui::Context, pending: PendingApply)
     }
 }
 
+/// The game is running: no replacement until it is closed. `pending` is the single replacement
+/// asked for; `None` is "Apply to all items".
 fn running(
     app: &mut Studio,
     ctx: &eframe::egui::Context,
-    pending: PendingApply,
+    pending: Option<PendingApply>,
     processes: &[String],
 ) {
     let tokens = Tokens::get(ctx);
@@ -302,7 +312,108 @@ fn running(
     );
     if recheck {
         app.dialog = None;
-        app.ask_to_confirm(pending);
+        match pending {
+            Some(pending) => app.ask_to_confirm(pending),
+            None => app.bulk_recheck(),
+        }
+    } else if cancel || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+/// "Apply to all items" is closed at its last step: everything chosen is dropped, so it asks.
+fn close_bulk(app: &mut Studio, ctx: &eframe::egui::Context) {
+    let tokens = Tokens::get(ctx);
+    let text = tl!("Nothing has been replaced yet. The choices made for this look are not kept.");
+    let spec = ModalSpec {
+        id: "close-bulk",
+        title: tl!("Close without applying?"),
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: text_height(ctx, text, 14.0, 21.0, BODY_WIDTH) + 20.0,
+    };
+    let mut leave = false;
+    let mut stay = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(ui, text, tokens.text_2, 14.0, 21.0);
+        },
+        |ui| {
+            stay = Button::new(ButtonKind::Primary, tl!("Keep choosing"))
+                .show(ui)
+                .clicked();
+            leave = Button::new(ButtonKind::Ghost, tl!("Close without applying"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if leave {
+        app.confirm_close_bulk();
+    } else if stay || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+/// Undo one run of "Apply to all items" from its entry in the backups.
+fn restore_batch(
+    app: &mut Studio,
+    ctx: &eframe::egui::Context,
+    batch: &str,
+    name: &str,
+    items: &[String],
+    files: usize,
+) {
+    let tokens = Tokens::get(ctx);
+    let title = fmt(tl!("Undo “{look}” on every item?"), &[("look", name)]);
+    let intro = fmt(
+        tl!(
+            "{items} get back what they wore before, {files} in all. A skin put on one of them later is undone too."
+        ),
+        &[
+            ("items", &tn(items.len() as u64, "{n} item", "{n} items")),
+            ("files", &tn(files as u64, "{n} file", "{n} files")),
+        ],
+    );
+    let list = items.join(", ");
+    let note = tl!("Close the game before restoring.");
+    let spec = ModalSpec {
+        id: "restore-batch",
+        title: &title,
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: text_height(ctx, &intro, 14.0, 21.0, BODY_WIDTH)
+            + 10.0
+            + text_height(ctx, &list, 13.0, 19.0, BODY_WIDTH)
+            + 14.0
+            + warning_height(ctx, note, BODY_WIDTH)
+            + 20.0,
+    };
+    let mut restore = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(ui, &intro, tokens.text_2, 14.0, 21.0);
+            ui.add_space(10.0);
+            paragraph(ui, &list, tokens.text, 13.0, 19.0);
+            ui.add_space(14.0);
+            warning(ui, note);
+        },
+        |ui| {
+            restore = Button::new(ButtonKind::Danger, tl!("Undo all"))
+                .icon(icons::UNDO_2)
+                .show(ui)
+                .clicked();
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if restore {
+        app.restore_batch_confirmed(batch, name);
     } else if cancel || event == ModalEvent::Dismissed {
         app.dialog = None;
     }

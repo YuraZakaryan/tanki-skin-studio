@@ -101,6 +101,26 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Preview: the skin's own, none in the pack (said so), the cache picture with its alpha | it, ui `garage` |
 | The chosen variant is scrolled into view | visual check (RU screenshots) |
 
+## Apply to all items
+
+| Case | Test |
+|---|---|
+| Looks: the same name without the item's own in front, plus the pack's edition (`xt-m0` is XT, `prime` is Prime); case, spaces, `-` and `_` do not count; an item's plain skin is no look unless the pack names it; only hulls and turrets in the cache; the first pack (the active one) wins for the same item and source | unit `bulk`, it `bulk` |
+| Opens from the Garage's button and the palette; no look: the empty state, Add a pack opens the import | it `bulk`, ui `bulk-garage`, `bulk-empty` |
+| Defaults: every modification on, its own skin when an item has one (or the edition's), else the highest modification's | unit `bulk` |
+| Every cell says what happens: own skin, from another modification, the item's own pick, no such skin, no such modification in the game, already on (the recorded pack item's grade), incomplete, not touched | unit `bulk`, it `bulk`, ui `bulk-where` |
+| A modification off, another source, an item's own pick and back to the common choice; the Hulls / Turrets boxes leave a kind out of the run; the filter only shows | unit `bulk`, it `bulk` |
+| The last step lists every change and every skip; the backup is always on; Esc there asks first; Enter is the primary button | it `bulk`, ui `bulk-check` |
+| The game running: the same warning, nothing written until it is closed | it `bulk` |
+| One transaction per item and modification, all of one batch; the Garage shows what the items wear after | it `bulk`, ui `gui-bulk` |
+| A failing item is put back as it was (its earlier modifications of the run too), the others are applied, the reason is said per item | it `bulk` |
+| Stop after this item finishes it and writes no other; while it runs Esc does nothing and imports and cache switches wait | it `bulk`, ui `bulk-running` |
+| Undo all and the batch's one entry in the backups put every file back (a later replacement on top of it too); Restore original files still undoes everything | unit `apply`, unit `model`, it `bulk`, ui `gui-bulk` |
+| Two replacements in the same clock tick never share a backup folder | unit `apply` |
+| Russian fits every step, down to the smallest window; toasts stay above the wizard's buttons | it `bulk`, ui `bulk-*` |
+| Every screen on the design's own sample at 1440 × 900, English and Russian, dark and light, compared 1:1 with `design.pen`'s frames; the sample gives the frames' numbers | ui `design-*` (visual check against `target/design-preview/full/`), it `bulk` |
+| Items in the game's order (resource id), "Already on" is no reason to list, an item is skipped when nothing of it changes | unit `bulk`, it `bulk` |
+
 ## Recognition and labelling
 
 | Case | Test |

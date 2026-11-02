@@ -16,7 +16,7 @@ use tanki_ui::{
 use super::{scroll_page, shell};
 use crate::{
     app::Studio,
-    model::{format_bytes, target_name},
+    model::{BackupRow, backup_rows, format_bytes, target_name},
 };
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
@@ -281,7 +281,8 @@ fn pack_items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
 
 fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
-    let meta = tn(app.backups.len() as u64, "{n} backup", "{n} backups");
+    let entries = backup_rows(&app.backups);
+    let meta = tn(entries.len() as u64, "{n} backup", "{n} backups");
     let body = widgets::panel(ui, rect, tl!("Backups"), Some(&meta));
     let inner = body.shrink(8.0);
     let button = Rect::from_min_size(
@@ -289,7 +290,7 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         Vec2::new(inner.width(), 44.0),
     );
     let list = Rect::from_min_max(inner.min, Pos2::new(inner.max.x, button.min.y - 8.0));
-    if app.backups.is_empty() {
+    if entries.is_empty() {
         fonts::draw_centered(
             ui.painter(),
             Rect::from_center_size(list.center(), Vec2::new(list.width(), 18.0)),
@@ -297,42 +298,82 @@ fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             Text::body(13.0, 400, tokens.text_3),
         );
     }
+    let mut undo = None;
     in_rect(ui, list, |ui| {
         egui::ScrollArea::vertical()
             .id_salt("packs-3")
             .auto_shrink([false, false])
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
-                for backup in &app.backups {
-                    let target = backup.tx.target.as_ref().map_or_else(
-                        || backup.tx.pack_id.clone(),
-                        |t| target_name(&t.id, &t.grade),
-                    );
-                    let name = if backup.tx.variant_name.is_empty() {
-                        target
-                    } else {
-                        format!("{target} · {}", backup.tx.variant_name)
-                    };
-                    let mut meta = fmt(
-                        tl!("{when} · {files}"),
-                        &[
-                            ("when", &shell::describe_time(backup.created_unix)),
-                            (
-                                "files",
-                                &tn(backup.tx.changes.len() as u64, "{n} file", "{n} files"),
-                            ),
-                        ],
-                    );
-                    if backup.restored {
-                        meta = format!("{meta} · {}", tl!("restored"));
+                for entry in &entries {
+                    match entry {
+                        BackupRow::Single(backup) => {
+                            let target = backup.tx.target.as_ref().map_or_else(
+                                || backup.tx.pack_id.clone(),
+                                |t| target_name(&t.id, &t.grade),
+                            );
+                            let name = if backup.tx.variant_name.is_empty() {
+                                target
+                            } else {
+                                format!("{target} · {}", backup.tx.variant_name)
+                            };
+                            let mut meta = fmt(
+                                tl!("{when} · {files}"),
+                                &[
+                                    ("when", &shell::describe_time(backup.created_unix)),
+                                    (
+                                        "files",
+                                        &tn(
+                                            backup.tx.changes.len() as u64,
+                                            "{n} file",
+                                            "{n} files",
+                                        ),
+                                    ),
+                                ],
+                            );
+                            if backup.restored {
+                                meta = format!("{meta} · {}", tl!("restored"));
+                            }
+                            ListRow::new(icons::HISTORY, &name, &meta)
+                                .size(&format_bytes(backup.bytes))
+                                .clickable(false)
+                                .show(ui);
+                        }
+                        BackupRow::Batch(batch) => {
+                            // One run of "Apply to all items": one entry, which undoes the run.
+                            let name = format!(
+                                "{} · {}",
+                                batch.name,
+                                tn(batch.items as u64, "{n} item", "{n} items")
+                            );
+                            let mut meta = fmt(
+                                tl!("{when} · {files}"),
+                                &[
+                                    ("when", &shell::describe_time(batch.created_unix)),
+                                    ("files", &tn(batch.files as u64, "{n} file", "{n} files")),
+                                ],
+                            );
+                            if batch.restored {
+                                meta = format!("{meta} · {}", tl!("restored"));
+                            }
+                            let size = format_bytes(batch.bytes);
+                            let mut row = ListRow::new(icons::LAYERS, &name, &meta)
+                                .size(&size)
+                                .clickable(!batch.restored);
+                            if !batch.restored {
+                                row = row.chip(ChipKind::Neutral, tl!("Undo"));
+                            }
+                            if row.show(ui).clicked() {
+                                undo = Some(batch.id.clone());
+                            }
+                        }
                     }
-                    ListRow::new(icons::HISTORY, &name, &meta)
-                        .size(&format_bytes(backup.bytes))
-                        .clickable(false)
-                        .show(ui);
                 }
             });
     });
+    if let Some(batch) = undo {
+        app.ask_to_restore_batch(&batch);
+    }
     in_rect(ui, button, |ui| {
         if Button::new(ButtonKind::Danger, tl!("Restore original files"))
             .icon(icons::ROTATE_CCW)

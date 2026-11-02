@@ -32,6 +32,32 @@ pub struct Transaction {
     pub target: Option<PackTarget>,
     #[serde(default)]
     pub variant_name: String,
+    /// The run of "apply to all items" this replacement was part of: its transactions are undone
+    /// together and listed as one backup. Missing for a single replacement and in backups written
+    /// by older versions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch: Option<Batch>,
+    /// The modification or edition of the pack item the skin came from (`xt-m0`): a variant id
+    /// repeats in every modification of a pack item, so this tells which one is worn. Missing in
+    /// older backups.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skin_grade: Option<String>,
+}
+
+/// What a transaction records beyond the replacement itself (see [`apply_variant_in`]).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ApplyNote {
+    pub batch: Option<Batch>,
+    pub skin_grade: Option<String>,
+}
+
+/// One run that put a look on many items: every replacement of the run carries it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Batch {
+    /// Unique per run (the time it started, in nanoseconds).
+    pub id: String,
+    /// The look the run put on, as the user saw it ("XT").
+    pub name: String,
 }
 fn hash(data: &[u8]) -> String {
     format!("{:x}", Sha256::digest(data))
@@ -120,7 +146,7 @@ fn atomic_replace(target: &Path, bytes: &[u8]) -> Result<()> {
 }
 
 /// The model and texture files of an item in the cache, which a skin replaces.
-const SKIN_FILES: &[&str] = &[
+pub const SKIN_FILES: &[&str] = &[
     "object.3ds",
     "lightmap.jpg",
     "details.jpg",
@@ -195,6 +221,45 @@ pub fn apply_variant(
     variant: &PackVariant,
     backup_root: &Path,
 ) -> Result<Transaction> {
+    apply_variant_in(
+        scan,
+        pack,
+        target,
+        variant,
+        backup_root,
+        &ApplyNote::default(),
+    )
+}
+
+/// A new backup folder named after `stamp` (nanoseconds), or the next free number when a folder of
+/// that name exists: two replacements in the same clock tick (a batch on a coarse clock) must
+/// never share a folder, or the second would overwrite the first one's originals. Ids keep their
+/// length, so the folders still sort by time.
+fn claim_backup_dir(backup_root: &Path, stamp: u128) -> Result<(String, PathBuf)> {
+    fs::create_dir_all(backup_root)?;
+    for offset in 0..1024_u128 {
+        let id = format!("{}", stamp.saturating_add(offset));
+        let dir = backup_root.join(&id);
+        match fs::create_dir(&dir) {
+            Ok(()) => return Ok((id, dir)),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error.into()),
+        }
+    }
+    anyhow::bail!("no free backup folder name")
+}
+
+/// [`apply_variant`] that records `note` with the transaction: the batch it is part of, so the
+/// whole run can be undone together ([`restore_batch`]) and listed as one backup, and which pack
+/// item the skin came from.
+pub fn apply_variant_in(
+    scan: &CacheScan,
+    pack: &InstalledPack,
+    target: &PackTarget,
+    variant: &PackVariant,
+    backup_root: &Path,
+    note: &ApplyNote,
+) -> Result<Transaction> {
     anyhow::ensure!(
         pack.manifest.games.is_empty() || pack.manifest.games.contains(&scan.game),
         "pack does not support {}",
@@ -253,9 +318,7 @@ pub fn apply_variant(
         );
     }
     let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-    let id = format!("{stamp}");
-    let dir = backup_root.join(&id);
-    fs::create_dir_all(&dir)?;
+    let (id, dir) = claim_backup_dir(backup_root, stamp)?;
     let mut tx = Transaction {
         id,
         pack_id: pack.manifest.id.clone(),
@@ -263,6 +326,8 @@ pub fn apply_variant(
         changes: Vec::new(),
         target: Some(target.clone()),
         variant_name: variant.name.clone(),
+        batch: note.batch.clone(),
+        skin_grade: note.skin_grade.clone(),
     };
     let mut old = Vec::new();
     for (index, (path, new)) in targets.iter().enumerate() {
@@ -448,6 +513,10 @@ pub struct AppliedSkin {
     pub pack_id: String,
     pub variant_id: String,
     pub variant_name: String,
+    /// The pack item's modification or edition, when the backup recorded it.
+    pub skin_grade: Option<String>,
+    /// The batch the replacement was part of.
+    pub batch: Option<String>,
 }
 
 /// The skins in the cache now: for each item, its newest replacement not restored yet, when every
@@ -472,6 +541,8 @@ pub fn applied_skins(backup_root: &Path) -> Result<Vec<AppliedSkin>> {
                 pack_id: backup.tx.pack_id.clone(),
                 variant_id: backup.tx.variant_id.clone(),
                 variant_name: backup.tx.variant_name.clone(),
+                skin_grade: backup.tx.skin_grade.clone(),
+                batch: backup.tx.batch.as_ref().map(|b| b.id.clone()),
             });
         }
     }
@@ -497,6 +568,46 @@ pub fn restore_all(backup_root: &Path) -> Result<RestoreSummary> {
     }
     let mut summary = RestoreSummary::default();
     for backup in &pending {
+        restore_transaction(&backup.dir, &backup.tx)?;
+        summary.replacements += 1;
+        summary.files += backup.tx.changes.len();
+    }
+    Ok(summary)
+}
+
+/// Undo one batch ([`apply_variant_in`]): put back what its items wore before it. A later
+/// replacement of a file the batch wrote sits on top of the batch's, so it is undone too (first);
+/// later replacements of other files stay. Newest first, and every backup is checked before
+/// anything is written, as in [`restore_all`].
+pub fn restore_batch(backup_root: &Path, batch: &str) -> Result<RestoreSummary> {
+    let pending = pending_restores(backup_root)?;
+    let in_batch = |backup: &BackupEntry| backup.tx.batch.as_ref().is_some_and(|b| b.id == batch);
+    // Newest first: the batch's oldest replacement is its last one in the list.
+    let Some(oldest) = pending.iter().rposition(in_batch) else {
+        return Ok(RestoreSummary::default());
+    };
+    let mut touched: BTreeSet<&Path> = BTreeSet::new();
+    let mut chosen = Vec::new();
+    // From the oldest member up, so a replacement on top of one already chosen is found too.
+    for backup in pending.iter().take(oldest.saturating_add(1)).rev() {
+        let on_top = backup
+            .tx
+            .changes
+            .iter()
+            .any(|change| touched.contains(change.target.as_path()));
+        if in_batch(backup) || on_top {
+            touched.extend(backup.tx.changes.iter().map(|c| c.target.as_path()));
+            chosen.push(backup);
+        }
+    }
+    chosen.reverse();
+    for backup in &chosen {
+        for change in &backup.tx.changes {
+            checked_original(&backup.dir, change)?;
+        }
+    }
+    let mut summary = RestoreSummary::default();
+    for backup in chosen {
         restore_transaction(&backup.dir, &backup.tx)?;
         summary.replacements += 1;
         summary.files += backup.tx.changes.len();
@@ -743,6 +854,165 @@ mod tests {
         assert!(pending_restores(&backups)?.is_empty());
         assert_eq!(restore_all(&backups)?, RestoreSummary::default());
         fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn two_replacements_in_one_clock_tick_get_folders_of_their_own() -> Result<()> {
+        let root = std::env::temp_dir().join(format!(
+            "tanki-apply-tick-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        ));
+        let (first, first_dir) = claim_backup_dir(&root, 1_700_000_000_000_000_000)?;
+        let (second, second_dir) = claim_backup_dir(&root, 1_700_000_000_000_000_000)?;
+        assert_ne!(first_dir, second_dir, "a folder is never shared");
+        assert_eq!(
+            first.len(),
+            second.len(),
+            "ids keep their length, so they sort by time"
+        );
+        assert!(second > first);
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn undoing_a_batch_undoes_what_sits_on_it_and_keeps_the_rest() -> Result<()> {
+        let root = std::env::temp_dir().join(format!(
+            "tanki-apply-batch-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        ));
+        let (cache, pack_dir, backups) =
+            (root.join("cache"), root.join("pack"), root.join("backups"));
+        fs::create_dir_all(&cache)?;
+        fs::create_dir_all(&pack_dir)?;
+        let wasp = cache.join(STANDARD.encode("http://example.test/0/0/10/14/111/object.3ds"));
+        let rail = cache.join(STANDARD.encode("http://example.test/0/0/10/64/111/object.3ds"));
+        fs::write(&wasp, b"wasp original")?;
+        fs::write(&rail, b"rail original")?;
+        let target = |kind: &str, id: &str| PackTarget {
+            kind: kind.into(),
+            id: id.into(),
+            grade: "m3".into(),
+        };
+        let variant = |id: &str| -> Result<PackVariant> {
+            fs::write(pack_dir.join(format!("{id}.3ds")), id)?;
+            Ok(PackVariant {
+                id: id.into(),
+                name: id.into(),
+                preview: None,
+                resources: vec![PackResource {
+                    role: "model".into(),
+                    path: format!("{id}.3ds"),
+                    sha256: hash(id.as_bytes()),
+                }],
+            })
+        };
+        let pack = InstalledPack {
+            path: pack_dir.clone(),
+            manifest: PackManifest {
+                format_version: 1,
+                id: "test".into(),
+                name: "Test".into(),
+                version: "1".into(),
+                author: String::new(),
+                license: String::new(),
+                games: vec!["air-cache".into()],
+                items: Vec::new(),
+            },
+        };
+        let scan = scan_cache(&cache, Some("air-cache"))?;
+        let batch = Batch {
+            id: "42".into(),
+            name: "XT".into(),
+        };
+        let note = ApplyNote {
+            batch: Some(batch.clone()),
+            skin_grade: Some("xt-m3".into()),
+        };
+        let before_batch = variant("before")?;
+        apply_variant(
+            &scan,
+            &pack,
+            &target("turret", "railgun"),
+            &before_batch,
+            &backups,
+        )?;
+        let (xt_wasp, xt_rail) = (variant("xt-wasp")?, variant("xt-rail")?);
+        apply_variant_in(
+            &scan,
+            &pack,
+            &target("hull", "wasp"),
+            &xt_wasp,
+            &backups,
+            &note,
+        )?;
+        apply_variant_in(
+            &scan,
+            &pack,
+            &target("turret", "railgun"),
+            &xt_rail,
+            &backups,
+            &note,
+        )?;
+        // Later, one by one: a skin on top of the batch's Wasp.
+        apply_variant(
+            &scan,
+            &pack,
+            &target("hull", "wasp"),
+            &variant("late")?,
+            &backups,
+        )?;
+        let tagged = list_backups(&backups)?
+            .iter()
+            .filter(|b| b.tx.batch.as_ref() == Some(&batch))
+            .count();
+        assert_eq!(tagged, 2, "both replacements of the run carry the batch");
+        let worn = applied_skins(&backups)?;
+        let rail_skin = worn
+            .iter()
+            .find(|s| s.target.id == "railgun")
+            .expect("the Railgun wears the batch's skin");
+        assert_eq!(rail_skin.batch.as_deref(), Some("42"));
+        assert_eq!(rail_skin.skin_grade.as_deref(), Some("xt-m3"));
+
+        assert_eq!(restore_batch(&backups, "nope")?, RestoreSummary::default());
+        let summary = restore_batch(&backups, "42")?;
+        assert_eq!(
+            summary,
+            RestoreSummary {
+                replacements: 3,
+                files: 3
+            },
+            "the two of the batch and the one on top of it"
+        );
+        assert_eq!(fs::read(&wasp)?, b"wasp original");
+        assert_eq!(
+            fs::read(&rail)?,
+            b"before",
+            "what the Railgun wore before the batch"
+        );
+        let pending = pending_restores(&backups)?;
+        assert_eq!(pending.len(), 1, "the earlier replacement stays");
+        assert_eq!(pending[0].tx.variant_id, "before");
+        restore_all(&backups)?;
+        assert_eq!(fs::read(&rail)?, b"rail original");
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn a_backup_without_a_batch_still_loads() -> Result<()> {
+        let old = r#"{"id":"1","pack_id":"p","variant_id":"v","changes":[]}"#;
+        let tx: Transaction = serde_json::from_str(old)?;
+        assert!(tx.batch.is_none());
+        let written = serde_json::to_string(&tx)?;
+        assert!(
+            !written.contains("batch"),
+            "a single replacement writes no batch"
+        );
         Ok(())
     }
 }

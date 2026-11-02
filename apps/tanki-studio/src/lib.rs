@@ -7,6 +7,7 @@
 pub mod about;
 pub mod actions;
 pub mod app;
+pub mod bulk;
 pub mod commands;
 pub mod dev;
 pub mod errors;

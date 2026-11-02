@@ -326,3 +326,491 @@ pub fn scratch(label: &str) -> PathBuf {
     fs::create_dir_all(&dir).expect("create scratch dir");
     dir
 }
+
+/// One item of [`build_looks`] in the cache: which modifications it has, and their files.
+pub struct LooksItem {
+    pub kind: &'static str,
+    pub id: &'static str,
+    /// Resource id of M0; M`j` is `first_id + 2 j`.
+    pub first_id: u64,
+    pub present: [bool; 4],
+    /// The cache files of each modification (empty when it is not in the cache).
+    pub files: [Vec<PathBuf>; 4],
+}
+
+impl LooksItem {
+    /// Every cache file of the item.
+    pub fn all_files(&self) -> Vec<PathBuf> {
+        self.files.iter().flatten().cloned().collect()
+    }
+}
+
+/// A cache and two packs whose skins share names across items and modifications, for "apply a
+/// look to all items". Synthetic: every file is generated here.
+pub struct LooksFixture {
+    pub cache: PathBuf,
+    pub items: Vec<LooksItem>,
+    /// Pack folders, ready to import: "Looks A" (`looks-a`) and "Looks B" (`looks-b`).
+    pub packs: Vec<PathBuf>,
+    /// Hand labels that make the items known: (marker, kind, id, grade).
+    pub labels: Vec<(String, String, String, String)>,
+}
+
+impl LooksFixture {
+    pub fn item(&self, id: &str) -> &LooksItem {
+        self.items
+            .iter()
+            .find(|item| item.id == id)
+            .expect("an item of the fixture")
+    }
+}
+
+/// The model bytes the looks fixture's skin of `item` at `grade` in `pack` ships, so a test can
+/// tell which skin reached a cache file.
+pub fn looks_model(pack: &str, item: &str, grade: &str) -> Vec<u8> {
+    format!("{pack}:{item}:{grade}:model").into_bytes()
+}
+
+/// The cache marker of a resource id (`/0/0/40/0/`).
+pub fn id_marker(id: u64) -> String {
+    format!(
+        "/{:o}/{:o}/{:o}/{:o}/",
+        id >> 32,
+        (id >> 16) & 0xffff,
+        (id >> 8) & 0xff,
+        id & 0xff
+    )
+}
+
+/// The looks fixture:
+///
+/// - the cache has hulls Viking, Hunter (no M0) and Dictator, turrets Smoky and Thunder, each
+///   modification a block of consecutive ids, known through [`LooksFixture::labels`];
+/// - "Looks A" has XT for Viking M0–M3, Hunter M1–M3, Dictator M0–M3 (its M2 without a model, so
+///   incomplete) and Smoky M3 only; Legacy for Viking and Hunter M3; Prime (an edition with no
+///   modification) for Viking and Thunder; and Viking's plain M2 skin, which is no look;
+/// - "Looks B" has XT for Smoky M0 and again Viking M3, and Desert Camo for Thunder M3.
+pub fn build_looks(work: &Path) -> Result<LooksFixture> {
+    let cache = work.join("cache");
+    fs::create_dir_all(&cache)?;
+    let cache = cache.canonicalize()?;
+    let plan: [(&str, &str, u64, [bool; 4]); 5] = [
+        ("hull", "viking", 16_384, [true; 4]),
+        ("hull", "hunter", 16_400, [false, true, true, true]),
+        ("hull", "dictator", 16_416, [true; 4]),
+        ("turret", "smoky", 16_432, [true; 4]),
+        ("turret", "thunder", 16_448, [true; 4]),
+    ];
+    let mut items = Vec::new();
+    let mut labels = Vec::new();
+    for (kind, id, first_id, present) in plan {
+        let mut files: [Vec<PathBuf>; 4] = Default::default();
+        for (j, slot) in files.iter_mut().enumerate() {
+            if !present[j] {
+                continue;
+            }
+            let resource = first_id + 2 * j as u64;
+            let marker = id_marker(resource);
+            labels.push((
+                marker.clone(),
+                kind.to_owned(),
+                id.to_owned(),
+                format!("m{j}"),
+            ));
+            for revision in REVISIONS {
+                for role in ROLES {
+                    let url = format!("http://cache.test{marker}{revision}/{role}");
+                    let bytes = if role.ends_with(".jpg") {
+                        jpeg(16, 16, [60, 60 + 20 * j as u8, 90])
+                    } else {
+                        format!("original-{id}-m{j}-{revision}-{role}").into_bytes()
+                    };
+                    slot.push(write_cache_file(&cache, &url, &bytes)?);
+                }
+            }
+        }
+        items.push(LooksItem {
+            kind,
+            id,
+            first_id,
+            present,
+            files,
+        });
+    }
+    // (kind, item, grade, variant id, variant name, with a model)
+    type Skin = (
+        &'static str,
+        &'static str,
+        &'static str,
+        &'static str,
+        &'static str,
+        bool,
+    );
+    let pack_a: &[Skin] = &[
+        ("hull", "viking", "xt-m0", "default", "Viking", true),
+        ("hull", "viking", "xt-m1", "default", "Viking", true),
+        ("hull", "viking", "xt-m2", "default", "Viking", true),
+        ("hull", "viking", "xt-m3", "default", "Viking", true),
+        ("hull", "viking", "m3", "legacy", "Viking Legacy", true),
+        ("hull", "viking", "prime", "default", "Viking", true),
+        ("hull", "viking", "m2", "default", "Viking", true),
+        ("hull", "hunter", "xt-m1", "default", "Hunter", true),
+        ("hull", "hunter", "xt-m2", "default", "Hunter", true),
+        ("hull", "hunter", "xt-m3", "default", "Hunter", true),
+        ("hull", "hunter", "m3", "legacy", "Hunter Legacy", true),
+        ("hull", "dictator", "xt-m0", "default", "Dictator", true),
+        ("hull", "dictator", "xt-m1", "default", "Dictator", true),
+        ("hull", "dictator", "xt-m2", "default", "Dictator", false),
+        ("hull", "dictator", "xt-m3", "default", "Dictator", true),
+        ("turret", "smoky", "xt-m3", "default", "Smoky", true),
+        ("turret", "thunder", "prime", "default", "Thunder", true),
+    ];
+    let pack_b: &[Skin] = &[
+        ("turret", "smoky", "xt-m0", "default", "Smoky", true),
+        ("hull", "viking", "xt-m3", "default", "Viking", true),
+        (
+            "turret",
+            "thunder",
+            "m3",
+            "desert-camo",
+            "Desert Camo",
+            true,
+        ),
+    ];
+    let mut packs = Vec::new();
+    for (pack_id, name, skins) in [
+        ("looks-a", "Looks A", pack_a),
+        ("looks-b", "Looks B", pack_b),
+    ] {
+        let dir = work.join(pack_id);
+        fs::create_dir_all(&dir)?;
+        let details = jpeg(16, 16, [180, 40, 40]);
+        let alpha = jpeg(16, 16, [255, 255, 255]);
+        let lightmap = jpeg(16, 16, [120, 120, 120]);
+        let mut manifest_items = Vec::new();
+        for &(kind, item, grade, variant, variant_name, with_model) in skins {
+            let folder = format!("{item}/{grade}/{variant}");
+            fs::create_dir_all(dir.join(&folder))?;
+            let model = looks_model(pack_id, item, grade);
+            let mut resources = Vec::new();
+            if with_model {
+                fs::write(dir.join(&folder).join("model.3ds"), &model)?;
+                resources.push(json!({"role": "model", "path": format!("{folder}/model.3ds"), "sha256": sha256(&model)}));
+            }
+            for (role, file, bytes) in [
+                ("details", "details.jpg", &details),
+                ("details_alpha", "details_alpha.jpg", &alpha),
+                ("lightmap", "lightmap.jpg", &lightmap),
+            ] {
+                fs::write(dir.join(&folder).join(file), bytes)?;
+                resources.push(json!({"role": role, "path": format!("{folder}/{file}"), "sha256": sha256(bytes)}));
+            }
+            manifest_items.push(json!({
+                "target": {"kind": kind, "id": item, "grade": grade},
+                "variants": [{"id": variant, "name": variant_name, "resources": resources}]
+            }));
+        }
+        let manifest = json!({
+            "format_version": 1,
+            "id": pack_id,
+            "name": name,
+            "version": "1.0.0",
+            "author": "tanki-testkit",
+            "license": "CC0-1.0",
+            "games": ["air-cache"],
+            "items": manifest_items,
+        });
+        fs::write(
+            dir.join("manifest.json"),
+            serde_json::to_vec_pretty(&manifest)?,
+        )?;
+        packs.push(dir);
+    }
+    Ok(LooksFixture {
+        cache,
+        items,
+        packs,
+        labels,
+    })
+}
+
+/// A skin of a fixture pack: (kind, item, grade, variant id, variant name).
+type SampleSkin = (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+);
+
+/// A pack folder with one complete skin (model, details, alpha, lightmap) per entry of `skins`.
+fn write_pack(
+    dir: &Path,
+    manifest: (&str, &str, &str, &str, &str),
+    skins: &[SampleSkin],
+) -> Result<PathBuf> {
+    let (id, name, version, author, license) = manifest;
+    fs::create_dir_all(dir)?;
+    let details = jpeg(16, 16, [180, 40, 40]);
+    let alpha = jpeg(16, 16, [255, 255, 255]);
+    let lightmap = jpeg(16, 16, [120, 120, 120]);
+    let mut items = Vec::new();
+    for &(kind, item, grade, variant, variant_name) in skins {
+        let folder = format!("{item}/{grade}/{variant}");
+        fs::create_dir_all(dir.join(&folder))?;
+        let model = looks_model(id, item, grade);
+        fs::write(dir.join(&folder).join("model.3ds"), &model)?;
+        let mut resources = vec![
+            json!({"role": "model", "path": format!("{folder}/model.3ds"), "sha256": sha256(&model)}),
+        ];
+        for (role, file, bytes) in [
+            ("details", "details.jpg", &details),
+            ("details_alpha", "details_alpha.jpg", &alpha),
+            ("lightmap", "lightmap.jpg", &lightmap),
+        ] {
+            fs::write(dir.join(&folder).join(file), bytes)?;
+            resources.push(
+                json!({"role": role, "path": format!("{folder}/{file}"), "sha256": sha256(bytes)}),
+            );
+        }
+        items.push(json!({
+            "target": {"kind": kind, "id": item, "grade": grade},
+            "variants": [{"id": variant, "name": variant_name, "resources": resources}]
+        }));
+    }
+    let manifest = json!({
+        "format_version": 1, "id": id, "name": name, "version": version,
+        "author": author, "license": license, "games": ["air-cache"], "items": items,
+    });
+    fs::write(
+        dir.join("manifest.json"),
+        serde_json::to_vec_pretty(&manifest)?,
+    )?;
+    Ok(dir.to_path_buf())
+}
+
+/// A skin the design sample wears already: (pack id, item, the pack item's grade, cache
+/// modification).
+pub type SampleWorn = (&'static str, &'static str, &'static str, u8);
+
+/// The design's own sample of "Apply to all items", for screenshots compared with `design.pen`
+/// 1:1: the items of its frames (Wasp, Hornet, Viking, Dictator, Railgun, Hunter, Smoky… in the
+/// game's order), the looks XT (14 items in 2 packs), Legacy, Prime, Neon, Old and Winter in the
+/// packs "Desert Camo", "Arctic Ops" and "Neon Grid", and the skins some items wear already
+/// ([`design_sample_worn`]), so step 2 shows the design's cells. Synthetic, like everything here.
+pub fn build_design_sample(work: &Path) -> Result<LooksFixture> {
+    let cache = work.join("cache");
+    fs::create_dir_all(&cache)?;
+    let cache = cache.canonicalize()?;
+    let plan: [(&str, &str, [bool; 4]); 14] = [
+        ("hull", "wasp", [true; 4]),
+        ("hull", "hornet", [true; 4]),
+        ("hull", "viking", [true; 4]),
+        ("hull", "dictator", [false, true, true, true]),
+        ("turret", "railgun", [true; 4]),
+        ("hull", "hunter", [true; 4]),
+        ("turret", "smoky", [true; 4]),
+        ("hull", "titan", [true; 4]),
+        ("hull", "mammoth", [true; 4]),
+        ("hull", "crusader", [true; 4]),
+        ("turret", "twins", [true; 4]),
+        ("turret", "firebird", [true; 4]),
+        ("turret", "freeze", [true; 4]),
+        ("turret", "isida", [true; 4]),
+    ];
+    let mut items = Vec::new();
+    let mut labels = Vec::new();
+    for (index, (kind, id, present)) in plan.into_iter().enumerate() {
+        let first_id = 20_480 + 16 * index as u64;
+        let mut files: [Vec<PathBuf>; 4] = Default::default();
+        for (j, slot) in files.iter_mut().enumerate() {
+            if !present[j] {
+                continue;
+            }
+            let marker = id_marker(first_id + 2 * j as u64);
+            labels.push((
+                marker.clone(),
+                kind.to_owned(),
+                id.to_owned(),
+                format!("m{j}"),
+            ));
+            for revision in REVISIONS {
+                for role in ROLES {
+                    let url = format!("http://cache.test{marker}{revision}/{role}");
+                    let bytes = if role.ends_with(".jpg") {
+                        jpeg(16, 16, [60, 60 + 20 * j as u8, 90])
+                    } else {
+                        format!("original-{id}-m{j}-{revision}-{role}").into_bytes()
+                    };
+                    slot.push(write_cache_file(&cache, &url, &bytes)?);
+                }
+            }
+        }
+        items.push(LooksItem {
+            kind,
+            id,
+            first_id,
+            present,
+            files,
+        });
+    }
+    let title = |id: &str| -> &'static str {
+        match id {
+            "wasp" => "Wasp",
+            "hornet" => "Hornet",
+            "viking" => "Viking",
+            "dictator" => "Dictator",
+            "railgun" => "Railgun",
+            "hunter" => "Hunter",
+            "smoky" => "Smoky",
+            "titan" => "Titan",
+            "mammoth" => "Mammoth",
+            "crusader" => "Crusader",
+            "twins" => "Twins",
+            "firebird" => "Firebird",
+            "freeze" => "Freeze",
+            _ => "Isida",
+        }
+    };
+    let kind_of = |id: &str| {
+        if ["railgun", "smoky", "twins", "firebird", "freeze", "isida"].contains(&id) {
+            "turret"
+        } else {
+            "hull"
+        }
+    };
+    let mut camo: Vec<SampleSkin> = Vec::new();
+    let mut arctic: Vec<SampleSkin> = Vec::new();
+    let mut neon: Vec<SampleSkin> = Vec::new();
+    // XT: which modifications each item has a skin made for ("Desert Camo", Isida's in "Arctic Ops").
+    let xt: [(&str, &[&str]); 14] = [
+        ("wasp", &["xt-m0", "xt-m1", "xt-m2", "xt-m3"]),
+        ("hornet", &["xt-m0", "xt-m1", "xt-m2"]),
+        ("viking", &["xt-m0", "xt-m1", "xt-m2"]),
+        ("dictator", &["xt-m1", "xt-m2"]),
+        ("railgun", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("hunter", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("smoky", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("titan", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("mammoth", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("crusader", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("twins", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("firebird", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("freeze", &["xt-m1", "xt-m2", "xt-m3"]),
+        ("isida", &["xt-m1", "xt-m2", "xt-m3"]),
+    ];
+    for (id, grades) in xt {
+        let pack = if id == "isida" {
+            &mut arctic
+        } else {
+            &mut camo
+        };
+        for grade in grades {
+            pack.push((kind_of(id), id, grade, "default", title(id)));
+        }
+    }
+    // Legacy: 7 hulls and 5 turrets, M0-M3, in "Arctic Ops".
+    let legacy = [
+        "wasp", "hornet", "viking", "dictator", "hunter", "titan", "mammoth", "smoky", "railgun",
+        "twins", "firebird", "freeze",
+    ];
+    let legacy_names = [
+        "Wasp Legacy",
+        "Hornet Legacy",
+        "Viking Legacy",
+        "Dictator Legacy",
+        "Hunter Legacy",
+        "Titan Legacy",
+        "Mammoth Legacy",
+        "Smoky Legacy",
+        "Railgun Legacy",
+        "Twins Legacy",
+        "Firebird Legacy",
+        "Freeze Legacy",
+    ];
+    for (index, (id, name)) in legacy.iter().zip(legacy_names).enumerate() {
+        let grade = ["m0", "m1", "m2", "m3"][index % 4];
+        arctic.push((kind_of(id), id, grade, "legacy", name));
+    }
+    // Prime: 5 hulls and 4 turrets, made for M3 only, in "Neon Grid".
+    for id in [
+        "wasp", "hornet", "viking", "dictator", "hunter", "railgun", "smoky", "twins", "firebird",
+    ] {
+        neon.push((kind_of(id), id, "prime-m3", "default", title(id)));
+    }
+    // Neon: 4 hulls and 2 turrets, M1-M3.
+    let neon_names = [
+        ("wasp", "Wasp Neon"),
+        ("hornet", "Hornet Neon"),
+        ("viking", "Viking Neon"),
+        ("titan", "Titan Neon"),
+        ("railgun", "Railgun Neon"),
+        ("smoky", "Smoky Neon"),
+    ];
+    for (index, (id, name)) in neon_names.into_iter().enumerate() {
+        let grade = ["m1", "m2", "m3"][index % 3];
+        neon.push((kind_of(id), id, grade, "neon", name));
+    }
+    // Old: 5 hulls, M0-M3.
+    let old_names = [
+        ("wasp", "Wasp Old"),
+        ("hornet", "Hornet Old"),
+        ("viking", "Viking Old"),
+        ("dictator", "Dictator Old"),
+        ("mammoth", "Mammoth Old"),
+    ];
+    for (index, (id, name)) in old_names.into_iter().enumerate() {
+        let grade = ["m0", "m1", "m2", "m3", "m3"][index];
+        neon.push((kind_of(id), id, grade, "old", name));
+    }
+    // Winter: 2 hulls and a turret, M3, in two packs.
+    camo.push(("hull", "wasp", "m3", "winter", "Wasp Winter"));
+    arctic.push(("hull", "hornet", "m3", "winter", "Hornet Winter"));
+    arctic.push(("turret", "railgun", "m3", "winter", "Railgun Winter"));
+    let packs = vec![
+        write_pack(
+            &work.join("desert-camo"),
+            ("desert-camo", "Desert Camo", "1.2.0", "Kolya", "MIT"),
+            &camo,
+        )?,
+        write_pack(
+            &work.join("arctic-ops"),
+            ("arctic-ops", "Arctic Ops", "0.9.3", "Frost", "CC-BY"),
+            &arctic,
+        )?,
+        write_pack(
+            &work.join("neon-grid"),
+            ("neon-grid", "Neon Grid", "1.0.0", "Vex", "MIT"),
+            &neon,
+        )?,
+    ];
+    Ok(LooksFixture {
+        cache,
+        items,
+        packs,
+        labels,
+    })
+}
+
+/// The skins the design sample's items wear before "Apply to all items" opens: Viking's M1 its
+/// XT M1 (step 2 says "Already on"), and the XT the hidden rows have already, so the counts are
+/// the design's (12 items change, 24 skins, 2 items with nothing to change).
+pub fn design_sample_worn() -> Vec<SampleWorn> {
+    let mut worn = vec![
+        ("desert-camo", "viking", "xt-m1", 1),
+        ("desert-camo", "hunter", "xt-m3", 0),
+        ("desert-camo", "titan", "xt-m2", 2),
+        ("desert-camo", "mammoth", "xt-m2", 2),
+    ];
+    for id in ["crusader", "twins", "firebird"] {
+        worn.push(("desert-camo", id, "xt-m1", 1));
+        worn.push(("desert-camo", id, "xt-m2", 2));
+    }
+    worn.push(("desert-camo", "freeze", "xt-m3", 0));
+    worn.push(("desert-camo", "freeze", "xt-m1", 1));
+    worn.push(("desert-camo", "freeze", "xt-m2", 2));
+    worn.push(("arctic-ops", "isida", "xt-m3", 0));
+    worn.push(("arctic-ops", "isida", "xt-m1", 1));
+    worn.push(("arctic-ops", "isida", "xt-m2", 2));
+    worn
+}

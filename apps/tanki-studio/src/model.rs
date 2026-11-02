@@ -516,6 +516,76 @@ pub fn caches_to_ask(found: &[String], known: Option<&[String]>) -> Option<Vec<b
     new.contains(&true).then_some(new)
 }
 
+/// One run of "Apply to all items" in the backups list: its replacements as one entry.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BatchRow {
+    pub id: String,
+    /// The look it put on.
+    pub name: String,
+    /// Different items it changed.
+    pub items: usize,
+    pub files: usize,
+    pub bytes: u64,
+    /// When its newest replacement was made.
+    pub created_unix: u64,
+    /// Every replacement of it is undone.
+    pub restored: bool,
+}
+
+/// An entry of the backups list.
+#[derive(Clone, Debug)]
+pub enum BackupRow<'a> {
+    Single(&'a tanki_core::apply::BackupEntry),
+    Batch(BatchRow),
+}
+
+/// The backups as the list shows them, newest first: a single replacement is an entry of its own,
+/// a run of "Apply to all items" is one entry where its newest replacement is.
+pub fn backup_rows(backups: &[tanki_core::apply::BackupEntry]) -> Vec<BackupRow<'_>> {
+    let mut rows: Vec<BackupRow<'_>> = Vec::new();
+    for backup in backups {
+        let Some(batch) = &backup.tx.batch else {
+            rows.push(BackupRow::Single(backup));
+            continue;
+        };
+        let found = rows.iter_mut().find_map(|row| match row {
+            BackupRow::Batch(row) if row.id == batch.id => Some(row),
+            _ => None,
+        });
+        match found {
+            Some(row) => {
+                row.files += backup.tx.changes.len();
+                row.bytes = row.bytes.saturating_add(backup.bytes);
+                row.restored &= backup.restored;
+            }
+            None => rows.push(BackupRow::Batch(BatchRow {
+                id: batch.id.clone(),
+                name: batch.name.clone(),
+                items: 0,
+                files: backup.tx.changes.len(),
+                bytes: backup.bytes,
+                created_unix: backup.created_unix,
+                restored: backup.restored,
+            })),
+        }
+    }
+    for row in &mut rows {
+        if let BackupRow::Batch(row) = row {
+            let mut items: Vec<(&str, &str)> = Vec::new();
+            for backup in backups {
+                if backup.tx.batch.as_ref().is_some_and(|b| b.id == row.id)
+                    && let Some(target) = &backup.tx.target
+                    && !items.contains(&(target.kind.as_str(), target.id.as_str()))
+                {
+                    items.push((target.kind.as_str(), target.id.as_str()));
+                }
+            }
+            row.items = items.len();
+        }
+    }
+    rows
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -740,5 +810,52 @@ mod tests {
         assert_eq!(wasp.name(), "Wasp");
         assert_eq!(grade_index("m2"), Some(2));
         assert_eq!(grade_code(9), "m3");
+    }
+
+    #[test]
+    fn a_batch_is_one_entry_of_the_backups_and_single_replacements_stay_apart() {
+        use tanki_core::apply::{BackupEntry, Batch, Transaction};
+        use tanki_core::pack::PackTarget;
+        let entry =
+            |id: &str, item: &str, grade: &str, batch: Option<&str>, restored: bool| BackupEntry {
+                dir: PathBuf::from(id),
+                tx: Transaction {
+                    id: id.into(),
+                    pack_id: "p".into(),
+                    variant_id: "v".into(),
+                    changes: Vec::new(),
+                    target: Some(PackTarget {
+                        kind: "hull".into(),
+                        id: item.into(),
+                        grade: grade.into(),
+                    }),
+                    variant_name: "V".into(),
+                    batch: batch.map(|id| Batch {
+                        id: id.into(),
+                        name: "XT".into(),
+                    }),
+                    skin_grade: None,
+                },
+                created_unix: id.parse().unwrap_or(0),
+                bytes: 10,
+                restored,
+            };
+        // Newest first, as `list_backups` gives them.
+        let backups = vec![
+            entry("5", "wasp", "m3", None, false),
+            entry("4", "viking", "m1", Some("b"), false),
+            entry("3", "viking", "m0", Some("b"), false),
+            entry("2", "hunter", "m3", Some("b"), true),
+            entry("1", "wasp", "m3", None, true),
+        ];
+        let rows = backup_rows(&backups);
+        assert_eq!(rows.len(), 3);
+        assert!(matches!(rows[0], BackupRow::Single(b) if b.tx.id == "5"));
+        let BackupRow::Batch(batch) = &rows[1] else {
+            panic!("the batch in the place of its newest replacement");
+        };
+        assert_eq!((batch.items, batch.bytes, batch.created_unix), (2, 30, 4));
+        assert!(!batch.restored, "partly restored is not restored");
+        assert!(matches!(rows[2], BackupRow::Single(b) if b.tx.id == "1"));
     }
 }
