@@ -47,6 +47,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | An installer changed after its check is not run, and the app starts again | unit `an_installer_changed_after_its_check_is_not_run…` |
 | A cancel is told apart from a failure: a failure after Cancel is still reported | unit `progress`, it `a_failed_update_is_offered_again…` |
 | The real GitHub answers (by hand: `cargo test -p tanki-update -- --ignored`) | unit `the_published_release_is_offered_to_an_older_version` |
+| The Telegram post of every version in CHANGELOG.ru.md has its title, headlines, #обновление tag and both buttons, and fits one message (4096 characters) | `cargo xtask telegram` |
 
 ## Cache
 

@@ -45,6 +45,8 @@ Release builds use no build cache, so nothing cached by another branch can reach
    release**. Publishing creates the tag. A published version is never rebuilt: the next release
    raises the version.
 
+Publishing also posts the release to the Telegram channel ([below](#announcing-in-telegram)).
+
 Once a release is published, every installed copy older than it offers it at its next start
 (at most every twelve hours). To try that path on an installed copy before the next release, start it
 with `TANKI_PRETEND_VERSION=0.0.1`: it then takes itself for that version, offers the current
@@ -54,6 +56,48 @@ release's `SHA256SUMS.txt` lists, so a release must always carry it.
 A manual run (**Actions → Release → Run workflow**) can name a test version such as `0.2.0-rc.1`;
 it drafts a pre-release. A pull request that changes packaging builds both platforms without
 drafting anything, and its files can be downloaded from the run.
+
+## Announcing in Telegram
+
+When a release is published, the **Telegram** workflow
+([telegram.yml](../.github/workflows/telegram.yml)) posts it to the channel
+[@tankiskinstudio](https://t.me/tankiskinstudio), from its [CHANGELOG.ru.md](../CHANGELOG.ru.md)
+section only: «🚀 Tanki Skin Studio <version>», a line saying the app offers the update itself,
+the headline of each change under ✨ Новое, 🔄 Изменено and 🐞 Исправлено (its bold lead kept
+bold, cut at the first ":" or ". " as About cuts it), the `#обновление` tag, and two buttons:
+**⬇️ Скачать** (the release page) and **📋 Все изменения** (CHANGELOG.ru.md at the release's tag).
+The link preview is off. A version with no Russian section is not posted: the run warns instead.
+Only publishing posts, so a draft never does, and a pre-release is skipped. The post is built by
+[packaging/telegram-post.py](../packaging/telegram-post.py), which escapes every value for
+Telegram's HTML and drops the last headlines rather than go over Telegram's 4096 characters.
+`cargo xtask telegram` (part of `cargo xtask ci`) builds the post of every version in
+CHANGELOG.ru.md and checks it fits. To see a post without sending anything (`--json` prints the
+Bot API request):
+
+```sh
+packaging/telegram-post.py 0.5.0 --dry-run
+```
+
+The workflow posts with plain `curl` to the Bot API, with no third-party action; curl reads the
+token from its standard input, so it is in no command line and no log. Set it up once:
+
+1. In Telegram, open [@BotFather](https://t.me/BotFather), send `/newbot`, and give it a name and a
+   username. It answers with the bot's token. Keep it secret: anyone with it can post as the bot.
+2. In the channel, open **Administrators → Add Admin**, find the bot by its username, and leave it
+   only **Post Messages**; turn every other right off.
+3. In **Settings → Environments → release**, add two secrets:
+
+   | Secret | Value |
+   |---|---|
+   | `TELEGRAM_BOT_TOKEN` | the token from @BotFather |
+   | `TELEGRAM_CHAT_ID` | `@tankiskinstudio` |
+
+   Without either one the workflow warns and posts nothing. If the environment requires a reviewer,
+   the post waits for that approval like the release builds do.
+4. To post a release again, or to try the setup, run **Actions → Telegram → Run workflow** with the
+   version. With **Dry run** it shows the post in the log and posts nothing.
+
+If the bot's token leaks, send `/revoke` to @BotFather and replace the secret.
 
 ## Verifying a download
 

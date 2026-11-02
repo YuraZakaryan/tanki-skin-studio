@@ -1,0 +1,55 @@
+name: Telegram
+
+# Announces every published release in the project's Telegram channel, in Russian, with the
+# headlines of its CHANGELOG.ru.md section and buttons to the release (packaging/telegram-post.py);
+# a version with no Russian section is not posted. Only publishing triggers it, so a draft never
+# posts; pre-releases are skipped. The bot token is a
+# secret of the `release` environment, and only the script's curl sees it (docs/releasing.md).
+# A manual run posts, or with "Dry run" only shows, the message of any version.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to post, e.g. 0.5.0"
+        type: string
+        required: true
+      dry_run:
+        description: "Dry run: show the message in the log, post nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-${{ github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  post:
+    name: Post to the channel
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Post
+        env:
+          # Values reach the script through the environment, never pasted into the command.
+          TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          INPUT_VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          version="${INPUT_VERSION:-${TAG#v}}"
+          args=("$version")
+          if [ -n "$RELEASE_URL" ]; then args+=(--url "$RELEASE_URL"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          python3 -I packaging/telegram-post.py "${args[@]}"
