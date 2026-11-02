@@ -231,7 +231,7 @@ pub fn free_space(path: &Path) -> Option<u64> {
     while !at.exists() {
         at = at.parent()?;
     }
-    let at = at.canonicalize().ok()?;
+    let at = plain(&at.canonicalize().ok()?);
     let disks = sysinfo::Disks::new_with_refreshed_list();
     disks
         .list()
@@ -239,6 +239,28 @@ pub fn free_space(path: &Path) -> Option<u64> {
         .filter(|d| at.starts_with(d.mount_point()))
         .max_by_key(|d| d.mount_point().as_os_str().len())
         .map(|d| d.available_space())
+}
+
+/// `path` without Windows' verbatim prefix: `canonicalize` gives `\\?\C:\...`, which never starts
+/// with a disk's mount point `C:\`. Elsewhere it is `path` as it is.
+fn plain(path: &Path) -> std::path::PathBuf {
+    use std::path::{Component, Prefix};
+    let mut out = std::path::PathBuf::new();
+    for part in path.components() {
+        match part {
+            Component::Prefix(prefix) => match prefix.kind() {
+                Prefix::VerbatimDisk(disk) => out.push(format!("{}:", disk as char)),
+                Prefix::VerbatimUNC(server, share) => out.push(format!(
+                    r"\\{}\{}",
+                    server.to_string_lossy(),
+                    share.to_string_lossy()
+                )),
+                _ => out.push(part),
+            },
+            other => out.push(other),
+        }
+    }
+    out
 }
 
 /// What a backup of `target` takes at most: the cache files of the item, whose originals are kept.

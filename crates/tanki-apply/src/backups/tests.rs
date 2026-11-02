@@ -196,3 +196,17 @@ fn shortfall_keeps_a_spare() {
     assert_eq!(shortfall(100, 50), SPARE + 50);
     assert!(free_space(&std::env::temp_dir()).is_some_and(|b| b > 0));
 }
+
+#[cfg(windows)]
+#[test]
+fn a_verbatim_windows_path_is_on_its_disk() {
+    use std::path::Path;
+    assert_eq!(
+        plain(Path::new(r"\\?\C:\Users\a")),
+        Path::new(r"C:\Users\a")
+    );
+    assert_eq!(
+        plain(Path::new(r"\\?\UNC\server\share\x")),
+        Path::new(r"\\server\share\x")
+    );
+}
