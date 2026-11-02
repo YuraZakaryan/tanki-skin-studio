@@ -842,6 +842,8 @@ pub struct PaintsFixture {
     pub ember_marker: String,
     pub moss_marker: String,
     pub other_marker: String,
+    /// Storm's marker: it wears Ember's picture, put on by hand.
+    pub storm_marker: String,
     /// The resource id of the paint no pack has.
     pub other_id: u64,
     /// Ember's picture in the cache.
@@ -948,6 +950,8 @@ pub fn build_paints(work: &Path) -> Result<PaintsFixture> {
     cached(6002, &brighter, 3.0)?;
     // A paint no pack has.
     cached(6006, &still(7.0), 7.0)?;
+    // Storm, wearing Ember's picture (put on by hand): its preview still names it.
+    cached(6008, &paints[0].1, 5.0)?;
     // A picture alone that is no paint, and an effect: a texture and a mostly clear glow beside it.
     write_cache_file(
         &cache,
@@ -976,6 +980,7 @@ pub fn build_paints(work: &Path) -> Result<PaintsFixture> {
         ember_marker: id_marker(6000),
         moss_marker: id_marker(6002),
         other_marker: id_marker(6006),
+        storm_marker: id_marker(6008),
         other_id: 6006,
         ember_file,
     })

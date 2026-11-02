@@ -427,15 +427,18 @@ fn closest<'a>(
 
 /// The id of a paint the cache has and no pack names: `unnamed-` and its resource id.
 pub fn unnamed_paint(number: u64) -> String {
-    format!("unnamed-{number}")
+    format!("{UNNAMED}{number}")
 }
+
+const UNNAMED: &str = "unnamed-";
 
 /// Paints in the cache (see the module docs). A paint is a picture alone on its id; when the game
 /// shows it in its garage, its preview sits on the next id. A paint is named by its picture (a
 /// pack's paint of the same size that looks the same) or by its preview (a pack's paint whose
-/// preview looks the same; the picture decides between paints whose previews are alike), and the
-/// two must not disagree. A paint with a preview that no pack names is still a paint: it is listed
-/// unnamed, and any paint can take its place.
+/// preview looks the same; the picture decides between paints whose previews are alike). The
+/// preview wins: the picture is what the paint wears, another paint's after a replacement. A paint
+/// with a preview that no pack names is still a paint: it is listed unnamed, and any paint can take
+/// its place.
 fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
     let paints = pack_paints(packs);
     // The cache's groups by resource id, every revision.
@@ -456,9 +459,11 @@ fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognitio
     let mut verdicts: BTreeMap<u64, (String, Option<String>, &'static str)> = BTreeMap::new();
     for (number, revisions) in &ids {
         if !revisions.iter().all(alone)
-            || revisions
-                .iter()
-                .any(|files| identify(&scan.game, &files[0].group).is_some())
+            // A paint known by name stays as it is; one known only as unnamed may get its name.
+            || revisions.iter().any(|files| {
+                identify(&scan.game, &files[0].group)
+                    .is_some_and(|known| !known.id.starts_with(UNNAMED))
+            })
         {
             continue;
         }
@@ -541,11 +546,11 @@ fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognitio
                 closest(picture, same_size, f32::MAX, PAINT_MARGIN).map(str::to_owned)
             })
         });
+        // The preview names the paint; the picture is what it wears now, which a replacement (by
+        // this app, by hand) changes. So the preview wins when the two disagree.
         let verdict = match (by_picture, by_preview) {
-            // The picture and the preview name two paints: a paint still, of no name.
-            (Some(a), Some(b)) if a != b => (marker, None, "preview"),
-            (Some(id), _) => (marker, Some(id), "picture"),
-            (None, Some(id)) => (marker, Some(id), "preview"),
+            (_, Some(id)) => (marker, Some(id), "preview"),
+            (Some(id), None) => (marker, Some(id), "picture"),
             (None, None) if preview.is_some() => (marker, None, "preview"),
             (None, None) => continue,
         };
@@ -570,6 +575,8 @@ fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognitio
                 grade: "m0".to_owned(),
             }
         })
+        // What is known already is not found again.
+        .filter(|r| identify(&scan.game, &r.marker).is_none_or(|known| known.id != r.id))
         .collect()
 }
 

@@ -747,6 +747,16 @@ fn paints_are_imported_found_by_their_picture_and_take_each_others_place() -> Re
 
     // The cache's copies are other bytes, the same pictures: found by how they look.
     let scan = scan_cache(&fixture.cache, Some("air-cache"))?;
+    // Storm was labelled unnamed before (an older search): the search may still name it.
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    let unnamed_storm = tanki_core::recognize::unnamed_paint(6008);
+    store.save_user_target(
+        &scan.game,
+        &fixture.storm_marker,
+        "paint",
+        &unnamed_storm,
+        "m0",
+    )?;
     let found = recognise_by_content(&scan, std::slice::from_ref(&pack));
     let named: Vec<(&str, &str, &str)> = found
         .iter()
@@ -759,17 +769,21 @@ fn paints_are_imported_found_by_their_picture_and_take_each_others_place() -> Re
             (fixture.ember_marker.as_str(), "ember", "m0"),
             (fixture.moss_marker.as_str(), "moss", "m0"),
             (fixture.other_marker.as_str(), other.as_str(), "m0"),
+            (fixture.storm_marker.as_str(), "storm", "m0"),
         ],
-        "Ember by its picture, Moss by its preview, a paint no pack has unnamed; a lone picture \
-         and an effect are no paints"
+        "Ember by its picture and preview, Moss by its preview, a paint no pack has unnamed, Storm \
+         by its preview though it wears Ember's picture; a lone picture and an effect are no paints"
     );
     let evidence: Vec<&str> = found.iter().map(|r| r.evidence).collect();
-    assert_eq!(evidence, ["picture", "preview", "preview"]);
-    let store = StateStore::open(&data.join("state.sqlite"))?;
+    assert_eq!(evidence, ["preview", "preview", "preview", "preview"]);
     for r in &found {
         store.save_user_target(&scan.game, &r.marker, &r.kind, &r.id, &r.grade)?;
     }
     let scan = scan_cache(&fixture.cache, Some("air-cache"))?;
+    assert!(
+        recognise_by_content(&scan, std::slice::from_ref(&pack)).is_empty(),
+        "what is known is not found again"
+    );
     let ember = tanki_core::pack::PackTarget {
         kind: "paint".into(),
         id: "ember".into(),
