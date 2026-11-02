@@ -21,11 +21,10 @@ use std::{
 };
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sha2::{Digest, Sha256};
 use tanki_core::{
     apply::{apply_variant, latest_transaction, restore_transaction},
     cache::{CacheScan, known_target_group, scan_cache},
-    pack::{InstalledPack, load_pack, read_pack_resource},
+    pack::{InstalledPack, load_pack, read_pack_resource, sha256_hex},
     session::SessionState,
     state::StateStore,
 };
@@ -50,7 +49,7 @@ fn tree(root: &Path) -> Tree {
                         .unwrap()
                         .to_string_lossy()
                         .into_owned(),
-                    format!("{:x}", Sha256::digest(bytes)),
+                    sha256_hex(&bytes),
                 );
             }
         }
@@ -170,7 +169,7 @@ fn the_real_cache_is_scanned_and_its_originals_are_compared_with_the_archive() {
         for variant in &item.variants {
             for resource in &variant.resources {
                 let bytes = read_pack_resource(&real.pack, &resource.path).unwrap();
-                let hash = format!("{:x}", Sha256::digest(&bytes));
+                let hash = sha256_hex(&bytes);
                 let cache_role = match resource.role.as_str() {
                     "model" => "object.3ds",
                     "lightmap" => "lightmap.jpg",
@@ -183,9 +182,7 @@ fn the_real_cache_is_scanned_and_its_originals_are_compared_with_the_archive() {
                         known_target_group(&scan.game, &r.group) == Some(target)
                             && r.role == cache_role
                     })
-                    .filter(|r| {
-                        fs::read(&r.path).is_ok_and(|b| format!("{:x}", Sha256::digest(b)) == hash)
-                    })
+                    .filter(|r| fs::read(&r.path).is_ok_and(|b| sha256_hex(&b) == hash))
                     .count();
                 eprintln!(
                     "{target:?} {:<5} {:<9} identical to cache originals: {same}",

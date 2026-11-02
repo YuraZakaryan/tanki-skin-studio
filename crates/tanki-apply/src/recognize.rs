@@ -12,7 +12,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use sha2::{Digest, Sha256};
 use tanki_cache::{
     cache::CacheScan,
     targets::{identify, marker_for_group},
@@ -39,7 +38,7 @@ pub struct Recognition {
 type Target = (String, String, String);
 
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    tanki_pack::pack::sha256_hex(bytes)
 }
 
 /// Garage previews are 164 x 106 pictures; the cache keeps the colour in `image.jpg` and the

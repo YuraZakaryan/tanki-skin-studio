@@ -47,7 +47,6 @@ use std::{
 };
 
 use eframe::egui;
-use sha2::{Digest, Sha256};
 
 use crate::{
     app::{Dialog, Page, Selection, Studio},
@@ -353,7 +352,7 @@ fn tree(root: &Path) -> Tree {
                     .unwrap_or(&path)
                     .to_string_lossy()
                     .into_owned();
-                out.insert(name, format!("{:x}", Sha256::digest(bytes)));
+                out.insert(name, tanki_core::pack::sha256_hex(&bytes));
             }
         }
     }

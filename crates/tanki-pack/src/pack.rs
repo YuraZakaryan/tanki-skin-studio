@@ -82,7 +82,17 @@ fn safe_id(s: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_'))
 }
 fn hash(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    sha256_hex(data)
+}
+
+/// Lower-case hex of `bytes` (a digest no longer formats itself with `{:x}`).
+pub fn hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// The SHA-256 of `data` as 64 lower-case hex digits, as manifests and backups record it.
+pub fn sha256_hex(data: &[u8]) -> String {
+    hex(&Sha256::digest(data))
 }
 
 fn read_from_source(source: &Path, relative: &str) -> Result<Vec<u8>> {
