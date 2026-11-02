@@ -203,7 +203,7 @@ fn copy_resource(from: &Path, pack_dir: &Path, relative: &str, role: &str) -> Re
     Ok(PackResource {
         role: role.to_owned(),
         path: relative.to_owned(),
-        sha256: format!("{:x}", Sha256::digest(&bytes)),
+        sha256: crate::pack::sha256_hex(&bytes),
     })
 }
 
@@ -331,7 +331,7 @@ pub fn build_model_pack(source: &Path, pack_dir: &Path) -> Result<ArchiveSummary
             id => id,
         },
         name,
-        version: format!("{:x}", content.finalize())[..12].to_owned(),
+        version: crate::pack::hex(&content.finalize())[..12].to_owned(),
         author: String::new(),
         license: "unspecified".into(),
         games: vec!["air-cache".into()],

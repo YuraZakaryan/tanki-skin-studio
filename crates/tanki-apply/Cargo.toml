@@ -13,7 +13,6 @@ anyhow.workspace = true
 image.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sha2.workspace = true
 sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
 tanki-cache = { path = "../tanki-cache" }
 tanki-pack = { path = "../tanki-pack" }

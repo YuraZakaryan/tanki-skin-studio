@@ -3,7 +3,6 @@
 use anyhow::{Context, Result};
 use image::{DynamicImage, ImageFormat, codecs::jpeg::JpegEncoder};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeSet, HashMap},
     fs::{self, OpenOptions},
@@ -60,7 +59,7 @@ pub struct Batch {
     pub name: String,
 }
 fn hash(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    tanki_pack::pack::sha256_hex(data)
 }
 fn jpeg_rgb(image: &DynamicImage) -> Result<Vec<u8>> {
     let rgb = image.to_rgb8();

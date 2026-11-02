@@ -3,8 +3,7 @@
 use std::{fs, path::Path};
 
 use base64::{Engine, engine::general_purpose::STANDARD};
-use sha2::{Digest, Sha256};
-use tanki_core::state::StateStore;
+use tanki_core::{pack::sha256_hex, state::StateStore};
 use tanki_testkit::scratch;
 
 use crate::common::{env, harness};
@@ -22,9 +21,9 @@ fn isida_pack(model: &[u8]) -> std::path::PathBuf {
     let manifest = format!(
         r#"{{"format_version":1,"id":"isida-pack","name":"Isida","version":"1","games":["air-cache"],
         "items":[{{"target":{{"kind":"turret","id":"isida","grade":"m3"}},
-        "variants":[{{"id":"a","name":"Isida A","resources":[{{"role":"model","path":"isida.3ds","sha256":"{:x}"}},{{"role":"lightmap","path":"isida.jpg","sha256":"{:x}"}}]}}]}}]}}"#,
-        Sha256::digest(model),
-        Sha256::digest(b"isida-light-3")
+        "variants":[{{"id":"a","name":"Isida A","resources":[{{"role":"model","path":"isida.3ds","sha256":"{}"}},{{"role":"lightmap","path":"isida.jpg","sha256":"{}"}}]}}]}}]}}"#,
+        sha256_hex(model),
+        sha256_hex(b"isida-light-3")
     );
     fs::write(dir.join("manifest.json"), manifest).unwrap();
     dir

@@ -50,7 +50,10 @@ impl CacheFixture {
 }
 
 pub fn sha256(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    Sha256::digest(data)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 pub fn jpeg(width: u32, height: u32, rgb: [u8; 3]) -> Vec<u8> {
