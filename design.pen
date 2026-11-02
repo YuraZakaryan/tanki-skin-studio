@@ -145118,15 +145118,15 @@
 															"id": "KEiwl",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Inferno",
+															"name": "Galaxy",
 															"width": "fill_container",
 															"stroke": "$primary",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Inferno"
+																	"content": "Galaxy"
 																},
 																"NDlyz": {
-																	"content": "Paint"
+																	"content": "Animated · 18 frames"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -145140,15 +145140,15 @@
 															"id": "NhTa7",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Galaxy",
+															"name": "Inferno",
 															"width": "fill_container",
 															"stroke": "$border",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Galaxy"
+																	"content": "Inferno"
 																},
 																"NDlyz": {
-																	"content": "Animated · 18 frames"
+																	"content": "Paint"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -145204,7 +145204,7 @@
 															"fill": "$text-3",
 															"textGrowth": "fixed-width",
 															"width": "fill_container",
-															"content": "Close the game before replacing.",
+															"content": "Animated paint: it moves only where your game's server animates the paint it replaces. Elsewhere it shows its most typical frame, still.",
 															"fontFamily": "$font-body",
 															"fontSize": 12,
 															"fontWeight": "normal"
@@ -145757,15 +145757,15 @@
 															"id": "67LcH",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Inferno",
+															"name": "Galaxy",
 															"width": "fill_container",
 															"stroke": "$primary",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Inferno"
+																	"content": "Galaxy"
 																},
 																"NDlyz": {
-																	"content": "Paint"
+																	"content": "Animated · 18 frames"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -145779,15 +145779,15 @@
 															"id": "a9DMr",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Galaxy",
+															"name": "Inferno",
 															"width": "fill_container",
 															"stroke": "$border",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Galaxy"
+																	"content": "Inferno"
 																},
 																"NDlyz": {
-																	"content": "Animated · 18 frames"
+																	"content": "Paint"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -145843,7 +145843,7 @@
 															"fill": "$text-3",
 															"textGrowth": "fixed-width",
 															"width": "fill_container",
-															"content": "Close the game before replacing.",
+															"content": "Animated paint: it moves only where your game's server animates the paint it replaces. Elsewhere it shows its most typical frame, still.",
 															"fontFamily": "$font-body",
 															"fontSize": 12,
 															"fontWeight": "normal"
@@ -146408,15 +146408,15 @@
 															"id": "bKt7a",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Inferno",
+															"name": "Galaxy",
 															"width": "fill_container",
 															"stroke": "$primary",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Inferno"
+																	"content": "Galaxy"
 																},
 																"NDlyz": {
-																	"content": "Краска"
+																	"content": "Анимированная · 18 кадров"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -146430,15 +146430,15 @@
 															"id": "8g2bO",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Galaxy",
+															"name": "Inferno",
 															"width": "fill_container",
 															"stroke": "$border",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Galaxy"
+																	"content": "Inferno"
 																},
 																"NDlyz": {
-																	"content": "Анимированная · 18 кадров"
+																	"content": "Краска"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -146494,7 +146494,7 @@
 															"fill": "$text-3",
 															"textGrowth": "fixed-width",
 															"width": "fill_container",
-															"content": "Закройте игру перед заменой.",
+															"content": "Анимированная краска: двигается, только если сервер вашей игры анимирует краску, которую она заменяет. Иначе в игре будет её самый характерный кадр, без движения.",
 															"fontFamily": "$font-body",
 															"fontSize": 12,
 															"fontWeight": "normal"
@@ -147059,15 +147059,15 @@
 															"id": "dVyXl",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Inferno",
+															"name": "Galaxy",
 															"width": "fill_container",
 															"stroke": "$primary",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Inferno"
+																	"content": "Galaxy"
 																},
 																"NDlyz": {
-																	"content": "Краска"
+																	"content": "Анимированная · 18 кадров"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -147081,15 +147081,15 @@
 															"id": "IyFqn",
 															"type": "ref",
 															"ref": "Y1YDWT",
-															"name": "Galaxy",
+															"name": "Inferno",
 															"width": "fill_container",
 															"stroke": "$border",
 															"descendants": {
 																"BUVOK": {
-																	"content": "Galaxy"
+																	"content": "Inferno"
 																},
 																"NDlyz": {
-																	"content": "Анимированная · 18 кадров"
+																	"content": "Краска"
 																},
 																"S9m4V": {
 																	"enabled": false
@@ -147145,7 +147145,7 @@
 															"fill": "$text-3",
 															"textGrowth": "fixed-width",
 															"width": "fill_container",
-															"content": "Закройте игру перед заменой.",
+															"content": "Анимированная краска: двигается, только если сервер вашей игры анимирует краску, которую она заменяет. Иначе в игре будет её самый характерный кадр, без движения.",
 															"fontFamily": "$font-body",
 															"fontSize": 12,
 															"fontWeight": "normal"

@@ -131,6 +131,7 @@
 	Paint	Краска
 	Paint #{n}	Краска №{n}
 	Paints	Краски
+	Animated paint: it moves only where your game's server animates the paint it replaces. Elsewhere it shows its most typical frame, still.	Анимированная краска: двигается, только если сервер вашей игры анимирует краску, которую она заменяет. Иначе в игре будет её самый характерный кадр, без движения.
 @plural	Animated · {n} frame|Animated · {n} frames	Анимированная · {n} кадр|Анимированная · {n} кадра|Анимированная · {n} кадров
 	Pick an item below to see its modifications.	Выберите предмет ниже, чтобы увидеть его модификации.
 	Pick an item in the Garage or a resource in Resources.	Выберите предмет в Гараже или ресурс в разделе «Ресурсы».

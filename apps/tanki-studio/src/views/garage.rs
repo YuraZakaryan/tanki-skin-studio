@@ -489,8 +489,35 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             &[("files", &chosen_missing.join(", "))],
         )
     });
-    // Bottom stack: wide Apply button and a hint (two lines when it says why it cannot apply).
-    let hint_y = inner.max.y - 15.0 - if blocked.is_some() { 17.0 } else { 0.0 };
+    // An animated paint plays only where the game's server animates the paint it replaces, which
+    // no file in the cache can change: said when one is picked (see `tanki_core::paint`).
+    let animated = chosen
+        .and_then(|(item, variant)| app.pack_variant(item, variant))
+        .filter(|(item, _)| item.target.kind == "paint")
+        .and_then(|(_, v)| app.paint_frames_of(v))
+        .map(|_| {
+            tl!("Animated paint: it moves only where your game's server animates the paint it replaces. Elsewhere it shows its most typical frame, still.")
+        });
+    // The note under the button: why it cannot apply (red), or how an animated paint plays.
+    let note = blocked
+        .clone()
+        .map(|reason| (reason, tokens.danger, icons::TRIANGLE_ALERT))
+        .or_else(|| animated.map(|text| (text.to_owned(), tokens.text_2, icons::INFO)));
+    let note_galley = note.as_ref().map(|(text, color, _)| {
+        fonts::paragraph(
+            ui.painter(),
+            text,
+            Text::body(12.0, 400, *color),
+            inner.width() - 22.0,
+            Some(17.0),
+        )
+    });
+    // Bottom stack: wide Apply button and a hint, or a note of as many lines as it takes.
+    let hint_y = inner.max.y
+        - 15.0
+        - note_galley
+            .as_ref()
+            .map_or(0.0, |galley| (galley.size().y - 17.0).max(0.0));
     let apply = Rect::from_min_size(
         Pos2::new(inner.min.x, hint_y - 10.0 - 46.0),
         Vec2::new(inner.width(), 46.0),
@@ -587,26 +614,19 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .show(ui);
         apply_clicked |= response.clicked();
     });
-    match &blocked {
-        Some(reason) => {
+    match (note, note_galley) {
+        (Some((_, color, icon)), Some(text)) => {
             fonts::icon(
                 ui.painter(),
                 Pos2::new(inner.min.x + 7.0, hint_y + 8.0),
-                icons::TRIANGLE_ALERT,
+                icon,
                 14.0,
-                tokens.danger,
-            );
-            let text = fonts::paragraph(
-                ui.painter(),
-                reason,
-                Text::body(12.0, 400, tokens.danger),
-                inner.width() - 22.0,
-                Some(17.0),
+                color,
             );
             ui.painter()
-                .galley(Pos2::new(inner.min.x + 22.0, hint_y), text, tokens.danger);
+                .galley(Pos2::new(inner.min.x + 22.0, hint_y), text, color);
         }
-        None => {
+        _ => {
             let lost = chosen.is_some() && chosen == app.lost_variant(&selection);
             let hint = if chosen.is_none() && !options.is_empty() {
                 tl!("Pick a skin above to apply it.")
@@ -807,9 +827,17 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                             },
                             |s| s.grade,
                         );
-                        let cover = covers[index].as_ref().map_or(Cover::Icon(icons::BOX), |t| {
-                            Cover::Image(t.id(), t.size_vec2())
-                        });
+                        // No picture yet: a box, or a brush for a paint.
+                        let placeholder = if item.kind == "paint" {
+                            icons::PAINTBRUSH
+                        } else {
+                            icons::BOX
+                        };
+                        let cover = covers[index]
+                            .as_ref()
+                            .map_or(Cover::Icon(placeholder), |t| {
+                                Cover::Image(t.id(), t.size_vec2())
+                            });
                         let name = item.name();
                         let response = widgets::item_card(
                             ui,

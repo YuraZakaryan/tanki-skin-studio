@@ -662,6 +662,17 @@ const SCENES: &[Scene] = &[
         checks: &[has("the lime selected paint card", PRIMARY, 6, 300)],
         ..SCENE
     },
+    // An animated paint picked: the note on how the game's server decides whether it moves.
+    Scene {
+        name: "garage-paints-animated",
+        page: "garage",
+        actions: "select:paint;pick:2",
+        paints: true,
+        size: "1000x720",
+        lang: "ru",
+        checks: &[has("the lime selected paint card", PRIMARY, 6, 300)],
+        ..SCENE
+    },
     Scene {
         name: "garage-paints-light",
         page: "garage",

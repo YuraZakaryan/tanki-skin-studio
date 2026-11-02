@@ -129,7 +129,9 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
 - **Any paint fits any paint.** Pick a paint in the Garage's **Paints** tab and put any paint of
   the pack in its place. An animated paint (a sheet of frames) is found and laid out by itself: in
   place of a still paint it shows its most typical frame, in place of an animated one it plays,
-  retimed into the replaced paint's frames. Animated paints are marked in the list.
+  retimed into the replaced paint's frames. Animated paints are marked in the list. Whether a paint
+  moves is your game's server's call, not the cache's: it plays only where the server animates the
+  paint it replaces, and the Garage says so when you pick one.
 - **An incomplete skin cannot be applied.** If a pack is missing any file the item needs (model,
   details, lightmap; only the preview, and an alpha the item has none of, are optional), the skin
   is marked **Incomplete**, Apply is disabled, and the missing file is named. Nothing is
