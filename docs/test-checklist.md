@@ -123,6 +123,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Goes on later: queued on Apply (a newer choice for the same modification wins), kept across starts; the review lists it apart from the skipped ones; nothing goes on while the cache is unchanged, the game runs or a dialog or the wizard is open | unit `later`, unit `tanki-state`, it `bulk` |
 | Once the game downloads the modification the skin goes on by itself in one batch; the Garage's bar says so and Undo puts the game's files back; the sidebar's Garage has a badge; a skin that can never go on leaves the queue with a toast | it `bulk`, ui `design-8-*` |
 | Packs → Go on later lists what waits, Remove takes it out; the Item page marks a waiting modification | it `bulk`, ui `design-7-*`, `design-9-*` |
+| Random use of the wizard and of the skins that go on later (every choice, runs with the game closed and running, stops, undos, the game downloading the missing modification, rescans, removals, stray clicks; seeded, `TANKI_BULK_MONKEYS=<n>` for more walks): the queue keeps one skin per modification, and every backup restores every cache file to the game's own | it `bulk` |
 | Settings: rescan Automatic / Every hour / Manual is kept; Automatic looks at launch, on coming back to the window and every 5 minutes and reads the cache only when its stamp changed; Rescan now; theme, language; About with Check for updates and links; stacks and wraps in a narrow window | unit `later`, it `bulk`, it `navigation`, it `chaos`, ui `design-10-*` |
 
 ## Recognition and labelling

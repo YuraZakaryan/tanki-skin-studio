@@ -863,3 +863,228 @@ fn a_skin_waiting_in_packs_can_be_removed_and_the_rescan_choice_is_kept() {
         Some("manual".to_owned())
     );
 }
+
+/// A seeded xorshift: the same seed walks the same path, so a failure can be replayed.
+struct Rng(u64);
+
+impl Rng {
+    fn below(&mut self, n: usize) -> usize {
+        self.0 ^= self.0 << 13;
+        self.0 ^= self.0 >> 7;
+        self.0 ^= self.0 << 17;
+        (self.0 % n.max(1) as u64) as usize
+    }
+}
+
+/// One random walk through Apply to all items and the skins that go on later: every choice of
+/// the wizard, runs with the game closed and running, stops, undos, the game downloading the
+/// missing modification, rescans, removals and stray clicks. After every step the queue holds
+/// one skin per modification at most; at the end every backup restores and every cache file is
+/// the game's own again. Returns how many skins were written and how often queued skins went on
+/// by themselves.
+fn bulk_walk(seed: u64, steps: usize) -> (usize, usize) {
+    let looks = looks(&format!("bulk-monkey-{seed}"));
+    let hunter = looks.fixture.item("hunter").first_id;
+    StateStore::open(&looks.work.join("data/state.sqlite"))
+        .expect("state store")
+        .save_user_target("air-cache", &id_marker(hunter), "hull", "hunter", "m0")
+        .expect("label");
+    let all = looks.all();
+    let mut originals: Vec<(PathBuf, Vec<u8>)> = all.iter().cloned().zip(contents(&all)).collect();
+    let mut downloaded = false;
+    let mut h = harness(&looks);
+    let mut rng = Rng(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
+    let pages = [
+        Page::Overview,
+        Page::Garage,
+        Page::Resources,
+        Page::Packs,
+        Page::Info,
+        Page::Settings,
+    ];
+    let mut went_on = 0;
+    for step in 0..steps {
+        let before = h.state().later_done.is_some();
+        let pick = rng.below(24);
+        let k = rng.below(4) as u8;
+        match pick {
+            0 | 1 => {
+                if h.state().bulk.is_none() {
+                    h.state_mut().dialog = None;
+                    h.state_mut().open_bulk();
+                }
+            }
+            2 => {
+                let n = h.state().bulk.as_ref().map_or(0, |w| w.looks.len());
+                let look = rng.below(n);
+                h.state_mut().bulk_select_look(look);
+            }
+            3 | 4 => h.state_mut().bulk_next(),
+            5 => h.state_mut().bulk_back(),
+            6 => h.state_mut().bulk_set_on(k, rng.below(3) > 0),
+            7 => {
+                // Its own skin, or another modification's.
+                let source = match rng.below(4) as u8 {
+                    0 => Source::Own,
+                    s if s - 1 < k => Source::From(s - 1),
+                    s => Source::From(s),
+                };
+                h.state_mut().bulk_set_source(k, source);
+            }
+            8 => {
+                let rows: Vec<(String, String)> = h
+                    .state()
+                    .bulk
+                    .as_ref()
+                    .and_then(|w| w.plan.as_ref())
+                    .map(|p| {
+                        p.rows
+                            .iter()
+                            .map(|r| (r.kind.clone(), r.id.clone()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                if let Some((kind, id)) = rows.get(rng.below(rows.len())) {
+                    let choice = match rng.below(4) {
+                        0 => None,
+                        1 => Some(Pick::Off),
+                        2 => Some(Pick::Skin(None)),
+                        _ => Some(Pick::Skin(Some(rng.below(4) as u8))),
+                    };
+                    h.state_mut().bulk_set_pick(kind, id, k, choice);
+                }
+            }
+            9 => {
+                let kind = ["hull", "turret"][rng.below(2)];
+                h.state_mut().bulk_set_kind(kind, rng.below(3) > 0);
+            }
+            10 | 11 => {
+                // From "Where", "Check and apply" first, as a person would.
+                if h.state()
+                    .bulk
+                    .as_ref()
+                    .is_some_and(|w| w.step == BulkStep::Where)
+                {
+                    h.state_mut().bulk_next();
+                }
+                // Now and then the game is running when Apply is pressed.
+                let running = rng.below(5) == 0;
+                h.state_mut().game_processes_override = Some(if running {
+                    vec!["Game.exe".into()]
+                } else {
+                    Vec::new()
+                });
+                h.state_mut().bulk_apply();
+                h.state_mut().game_processes_override = Some(Vec::new());
+            }
+            12 => h.state_mut().bulk_recheck(),
+            13 => h.state_mut().bulk_undo(),
+            14 => {
+                h.state_mut().close_bulk();
+                if rng.below(2) == 0 {
+                    h.state_mut().confirm_close_bulk();
+                }
+            }
+            15 | 16 => {
+                // The game downloads the Hunter's M0, once, after something waits for it.
+                if !downloaded && !h.state().later.is_empty() {
+                    downloaded = true;
+                    let files = write_looks_modification(&looks.fixture.cache, "hunter", hunter, 0)
+                        .expect("download");
+                    originals.extend(files.iter().cloned().zip(contents(&files)));
+                }
+                h.state_mut().look_at_cache(false);
+            }
+            17 => {
+                let queued = h.state().later.clone();
+                if let Some(skin) = queued.get(rng.below(queued.len())) {
+                    h.state_mut().remove_later(skin);
+                }
+            }
+            18 => {
+                if rng.below(2) == 0 {
+                    h.state_mut().undo_later();
+                } else {
+                    h.state_mut().dismiss_later_done();
+                }
+            }
+            19 => {
+                let page = pages[rng.below(pages.len())];
+                h.state_mut().go(page);
+            }
+            20 => {
+                let labels: Vec<String> = h
+                    .query_all_by_role(Role::Button)
+                    .filter(|n| !n.accesskit_node().is_disabled())
+                    .filter_map(|n| n.accesskit_node().label())
+                    .filter(|l| {
+                        !l.starts_with("Report")
+                            && !l.starts_with("Source")
+                            && !l.starts_with("What's")
+                    })
+                    .collect();
+                if let Some(label) = labels.get(rng.below(labels.len()))
+                    && let Some(node) = h.query_all_by_label(label).next()
+                {
+                    node.click();
+                }
+            }
+            // M0 from M3 gives the Hunter, which has no M0 yet, a skin that goes on later.
+            21 | 22 => h.state_mut().bulk_set_source(0, Source::From(3)),
+            _ => h.key_press(Key::Escape),
+        }
+        h.run_steps(2);
+        let queue = &h.state().later;
+        for (index, skin) in queue.iter().enumerate() {
+            assert!(
+                !queue[index + 1..].iter().any(|other| other.same_slot(skin)),
+                "seed {seed}, step {step}: one skin per modification in the queue"
+            );
+        }
+        if let Some(done) = &h.state().later_done {
+            assert!(!done.items.is_empty(), "seed {seed}, step {step}");
+            went_on += usize::from(!before);
+        }
+    }
+    h.state_mut().dialog = None;
+    h.state_mut().bulk = None;
+    h.run_steps(2);
+    let backups = tanki_core::apply::list_backups(&looks.work.join("data/backups"))
+        .expect("backups readable");
+    for backup in &backups {
+        tanki_core::apply::restore_transaction(&backup.dir, &backup.tx)
+            .expect("every backup restores");
+    }
+    for (path, bytes) in &originals {
+        assert_eq!(
+            std::fs::read(path).ok().as_ref(),
+            Some(bytes),
+            "seed {seed}: after {} writes {} is the game's own again",
+            backups.len(),
+            path.display()
+        );
+    }
+    drop(h);
+    // Hundreds of walks would otherwise fill the temporary folder.
+    let _ = std::fs::remove_dir_all(&looks.work);
+    (backups.len(), went_on)
+}
+
+#[test]
+fn random_use_of_apply_to_all_and_later_never_breaks_and_everything_undoes() {
+    // `TANKI_BULK_MONKEYS=<n>` walks more seeds (the gate walks a few).
+    let seeds: u64 = std::env::var("TANKI_BULK_MONKEYS")
+        .ok()
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(6);
+    let (mut writes, mut later) = (0, 0);
+    for seed in 1..=seeds {
+        let (w, l) = bulk_walk(seed, 220);
+        writes += w;
+        later += l;
+    }
+    eprintln!(
+        "bulk monkeys: {seeds} seeds, {writes} skins written, {later} times a queued skin went on"
+    );
+    assert!(writes > 0, "and some of them wrote skins");
+}
