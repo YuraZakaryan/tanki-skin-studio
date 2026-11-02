@@ -761,7 +761,7 @@ fn cell_view(look: &Look, modification: u8, cell: &Cell) -> (Tone, char, String)
             Tone::Missing,
             icons::CIRCLE_SLASH,
             fmt(
-                tl!("No {modification} in game"),
+                tl!("No {modification} in cache"),
                 &[("modification", &grade(modification))],
             ),
         ),
@@ -1792,7 +1792,7 @@ fn skip_reason(look: &Look, modification: u8, cell: &Cell) -> String {
             ],
         ),
         Cell::NotInGame => fmt(
-            tl!("This item has no {modification} in the game"),
+            tl!("This item has no {modification} in the cache"),
             &[("modification", &grade(modification))],
         ),
         Cell::Already => tl!("This skin is on it already").to_owned(),
@@ -1809,7 +1809,7 @@ fn short_reason(look: &Look, modification: u8, cell: &Cell) -> String {
     match cell {
         Cell::Missing { source } => fmt(tl!("no {skin}"), &[("skin", &skin_name(look, *source))]),
         Cell::NotInGame => fmt(
-            tl!("no {modification} in the game"),
+            tl!("no {modification} in the cache"),
             &[("modification", &grade(modification))],
         ),
         Cell::Already => tl!("already on").to_owned(),

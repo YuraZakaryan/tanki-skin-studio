@@ -194,7 +194,7 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
         matches!(cell(&h, "viking", 3), Some(Cell::Change { skin, .. }) if skin.pack_id == "looks-b"),
         "the same look of the same item in two packs: the first pack's (the active one)"
     );
-    for label in ["Skin incomplete", "No M0 in game", "No XT M1", "XT M3"] {
+    for label in ["Skin incomplete", "No M0 in cache", "No XT M1", "XT M3"] {
         assert!(
             h.query_all_by_label(label).next().is_some(),
             "a cell says “{label}”"

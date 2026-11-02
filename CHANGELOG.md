@@ -13,7 +13,7 @@ All notable changes are recorded here. The format follows
   look, gathered from every installed pack, the active one first. Pick a look, then choose for each
   modification M0–M3 whether it changes and which skin it gets (its own, or another
   modification's), and even per item; a table shows every item and modification with what happens
-  and why one is skipped (no such skin, no such modification in the game, already on, incomplete).
+  and why one is skipped (no such skin, no such modification in the cache, already on, incomplete).
   The last step lists every change and what is skipped before anything is written. The run goes
   item by item off the window's thread, with a progress list and **Stop after this item**; every
   write is a transaction with a backup, and an item that fails is put back as it was while the

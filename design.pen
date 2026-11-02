@@ -106733,7 +106733,7 @@
 																	"id": "dO48L",
 																	"name": "No M0 in game",
 																	"fill": "$text-3",
-																	"content": "No M0 in game",
+																	"content": "No M0 in cache",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "600"
@@ -109998,7 +109998,7 @@
 																	"id": "f4VMR0",
 																	"name": "No M0 in game",
 																	"fill": "$text-3",
-																	"content": "No M0 in game",
+																	"content": "No M0 in cache",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "600"
@@ -113263,7 +113263,7 @@
 																	"id": "KilEI",
 																	"name": "Нет M0 в игре",
 																	"fill": "$text-3",
-																	"content": "Нет M0 в игре",
+																	"content": "Нет M0 в кэше",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "600"
@@ -116528,7 +116528,7 @@
 																	"id": "WrOl1",
 																	"name": "Нет M0 в игре",
 																	"fill": "$text-3",
-																	"content": "Нет M0 в игре",
+																	"content": "Нет M0 в кэше",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "600"
@@ -118844,7 +118844,7 @@
 																	"fill": "$text-3",
 																	"textGrowth": "fixed-width",
 																	"width": "fill_container",
-																	"content": "This item has no M0 in the game",
+																	"content": "This item has no M0 in the cache",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "normal"
@@ -120302,7 +120302,7 @@
 																	"fill": "$text-3",
 																	"textGrowth": "fixed-width",
 																	"width": "fill_container",
-																	"content": "This item has no M0 in the game",
+																	"content": "This item has no M0 in the cache",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "normal"
@@ -121760,7 +121760,7 @@
 																	"fill": "$text-3",
 																	"textGrowth": "fixed-width",
 																	"width": "fill_container",
-																	"content": "У этого предмета нет M0 в игре",
+																	"content": "У этого предмета нет M0 в кэше",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "normal"
@@ -123218,7 +123218,7 @@
 																	"fill": "$text-3",
 																	"textGrowth": "fixed-width",
 																	"width": "fill_container",
-																	"content": "У этого предмета нет M0 в игре",
+																	"content": "У этого предмета нет M0 в кэше",
 																	"fontFamily": "$font-body",
 																	"fontSize": 12,
 																	"fontWeight": "normal"
@@ -125504,7 +125504,7 @@
 													"fill": "$text-2",
 													"textGrowth": "fixed-width",
 													"width": "fill_container",
-													"content": "Skipped: Hornet M0 (no XT M3), Dictator M0 (no M0 in the game).",
+													"content": "Skipped: Hornet M0 (no XT M3), Dictator M0 (no M0 in the cache).",
 													"fontFamily": "$font-body",
 													"fontSize": 13,
 													"fontWeight": "normal"
@@ -125959,7 +125959,7 @@
 													"fill": "$text-2",
 													"textGrowth": "fixed-width",
 													"width": "fill_container",
-													"content": "Skipped: Hornet M0 (no XT M3), Dictator M0 (no M0 in the game).",
+													"content": "Skipped: Hornet M0 (no XT M3), Dictator M0 (no M0 in the cache).",
 													"fontFamily": "$font-body",
 													"fontSize": 13,
 													"fontWeight": "normal"
@@ -126414,7 +126414,7 @@
 													"fill": "$text-2",
 													"textGrowth": "fixed-width",
 													"width": "fill_container",
-													"content": "Пропущены: Hornet M0 (нет XT M3), Dictator M0 (нет M0 в игре).",
+													"content": "Пропущены: Hornet M0 (нет XT M3), Dictator M0 (нет M0 в кэше).",
 													"fontFamily": "$font-body",
 													"fontSize": 13,
 													"fontWeight": "normal"
@@ -126869,7 +126869,7 @@
 													"fill": "$text-2",
 													"textGrowth": "fixed-width",
 													"width": "fill_container",
-													"content": "Пропущены: Hornet M0 (нет XT M3), Dictator M0 (нет M0 в игре).",
+													"content": "Пропущены: Hornet M0 (нет XT M3), Dictator M0 (нет M0 в кэше).",
 													"fontFamily": "$font-body",
 													"fontSize": 13,
 													"fontWeight": "normal"

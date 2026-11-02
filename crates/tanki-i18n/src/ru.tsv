@@ -366,7 +366,7 @@ step	Check and apply	Проверьте и наденьте
 	No items here.	Здесь нет предметов.
 	No look matches “{query}”.	Ни один образ не подходит под «{query}».
 	No looks to apply yet	Пока нечего надевать
-	No {modification} in game	Нет {modification} в игре
+	No {modification} in cache	Нет {modification} в кэше
 	No {skin}	Нет {skin}
 	No {skin} in the packs, {modification} stays as it is	В паках нет {skin}, {modification} останется как есть
 	Not touched	Не трогаем
@@ -396,7 +396,7 @@ step	Check and apply	Проверьте и наденьте
 	The game was started ({names}), so the rest stopped: {items} not changed.	Игра запущена ({names}), поэтому остальное остановлено: {items} без изменений.
 	The file is in use.	Файл занят.
 	The skin has no {files}, so it is not put on	В скине нет {files}, поэтому он не надевается
-	This item has no {modification} in the game	У этого предмета нет {modification} в игре
+	This item has no {modification} in the cache	У этого предмета нет {modification} в кэше
 	This replaces the skins these items wear now	Это заменит скины, которые сейчас надеты на эти предметы
 	This skin is on it already	Этот скин уже надет
 	Undid “{look}”: {files} put back. Restart the game.	«{look}» отменён: возвращено {files}. Перезапустите игру.
@@ -417,7 +417,7 @@ step	Check and apply	Проверьте и наденьте
 	backup	бэкап
 	from {modification}	с {modification}
 	incomplete skin	неполный скин
-	no {modification} in the game	нет {modification} в игре
+	no {modification} in the cache	нет {modification} в кэше
 	no {skin}	нет {skin}
 	not applied	не удалось
 	nothing skipped	ничего не пропущено
