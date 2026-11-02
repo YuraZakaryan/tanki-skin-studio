@@ -26,6 +26,10 @@ pub fn item_name(kind: &str, id: &str, grade: &str) -> String {
 
 /// "wasp" -> "Wasp".
 pub fn target_title(id: &str) -> String {
+    // A paint the cache has and no pack names (`tanki_core::recognize::unnamed_paint`).
+    if let Some(number) = id.strip_prefix("unnamed-") {
+        return tanki_i18n::fmt(tanki_i18n::tl!("Paint #{n}"), &[("n", number)]);
+    }
     let mut chars = id.chars();
     let head = chars
         .next()

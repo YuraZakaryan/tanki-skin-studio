@@ -294,11 +294,18 @@ pub fn recognise_by_content(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Re
 }
 
 /// How far (mean absolute difference per channel, 0..255, of the pictures shrunk to
-/// [`LOOK_SIDE`]) a cache picture may be from a pack's paint and still be it, and how much farther
-/// the next paint must be. Measured on a real cache against a public pack: a paint saved again by
-/// the server differs from the pack's by under 1, other pictures of the same size by more than 4.
+/// [`LOOK_SIDE`]) a cache picture may be from a pack's paint of its size and still be it, and how
+/// much farther the next paint must be. Measured on a real cache against a public pack: a paint
+/// saved again by the server differs from the pack's by under 1, other pictures by more than 4.
 const SAME_PAINT: f32 = 2.5;
 const PAINT_MARGIN: f32 = 2.0;
+/// The same for a paint's garage preview, shrunk to [`PAINT_PREVIEW`]. Measured on the same cache:
+/// a paint's preview differs from the pack's by at most 1.1, any other paint's by 3.7 or more. The
+/// server saves some paints anew (a little brighter or darker), so the preview names them when the
+/// picture alone is too far.
+const SAME_PAINT_PREVIEW: f32 = 3.0;
+const PAINT_PREVIEW_MARGIN: f32 = 2.0;
+const PAINT_PREVIEW: (u32, u32) = (32, 20);
 
 /// The size of a picture, read from its header alone.
 fn picture_size(bytes: &[u8]) -> Option<(u32, u32)> {
@@ -309,14 +316,64 @@ fn picture_size(bytes: &[u8]) -> Option<(u32, u32)> {
         .ok()
 }
 
-/// The packs' paints by the size of their picture: each paint's id and its picture shrunk.
-type PaintsBySize = BTreeMap<(u32, u32), Vec<(String, Vec<u8>)>>;
+/// A garage preview shrunk to [`PAINT_PREVIEW`], black where it is transparent: its own alpha (a
+/// PNG) or the cache's alpha picture beside it. Previews come in a few sizes, so they are compared
+/// shrunk.
+fn preview_look(colour: &[u8], alpha: Option<&[u8]>) -> Option<Vec<u8>> {
+    let mut rgba = image::load_from_memory(colour).ok()?.to_rgba8();
+    if let Some(alpha) = alpha
+        .and_then(|bytes| image::load_from_memory(bytes).ok())
+        .map(|a| a.to_luma8())
+        .filter(|a| a.dimensions() == rgba.dimensions())
+    {
+        for (x, y, pixel) in rgba.enumerate_pixels_mut() {
+            pixel.0[3] = alpha.get_pixel(x, y).0[0];
+        }
+    }
+    let over_black = image::RgbImage::from_fn(rgba.width(), rgba.height(), |x, y| {
+        let [r, g, b, a] = rgba.get_pixel(x, y).0;
+        let scale = |c: u8| (u16::from(c) * u16::from(a) / 255) as u8;
+        image::Rgb([scale(r), scale(g), scale(b)])
+    });
+    Some(
+        image::DynamicImage::ImageRgb8(over_black)
+            .resize_exact(
+                PAINT_PREVIEW.0,
+                PAINT_PREVIEW.1,
+                image::imageops::FilterType::Triangle,
+            )
+            .to_rgb8()
+            .into_raw(),
+    )
+}
 
-/// Paints in the cache: each pack paint's picture against every picture alone on its id (see the
-/// module docs).
-fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
-    // The same paint in two packs counts once.
-    let mut paints = PaintsBySize::new();
+/// Whether a cache picture and its alpha are a paint's garage preview: a card about 164 × 106,
+/// opaque for the most part. Effects are stored the same way (a texture, then a picture with its
+/// alpha), but their pictures are glows: square or thin, and mostly transparent. Measured on a real
+/// cache: paint previews 163-166 × 97-106 and 59-69 % opaque, effects 128 × 128 or 14 × 311 and
+/// 10-28 % opaque.
+fn is_paint_preview(colour: &[u8], alpha: &[u8]) -> bool {
+    let shape = picture_size(colour)
+        .is_some_and(|(w, h)| (150..=180).contains(&w) && (90..=115).contains(&h));
+    shape
+        && image::load_from_memory(alpha).is_ok_and(|a| {
+            let gray = a.to_luma8();
+            let total: u64 = gray.pixels().map(|p| u64::from(p.0[0])).sum();
+            total as f64 / (255.0 * f64::from(gray.width() * gray.height()).max(1.0)) >= 0.45
+        })
+}
+
+/// A paint of the packs, as it is compared with the cache.
+struct PackPaint {
+    id: String,
+    /// The size of its picture and the picture shrunk.
+    picture: Option<((u32, u32), Vec<u8>)>,
+    preview: Option<Vec<u8>>,
+}
+
+/// The paints of the packs; the same paint in two packs counts once.
+fn pack_paints(packs: &[InstalledPack]) -> Vec<PackPaint> {
+    let mut out: Vec<PackPaint> = Vec::new();
     for pack in packs {
         for item in pack
             .manifest
@@ -324,29 +381,65 @@ fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognitio
             .iter()
             .filter(|i| i.target.kind == "paint")
         {
-            for resource in item
+            if out.iter().any(|p| p.id == item.target.id) {
+                continue;
+            }
+            let picture = item
                 .variants
                 .iter()
                 .flat_map(|v| &v.resources)
-                .filter(|r| r.role == "image")
-            {
-                let Ok(bytes) = read_pack_resource(pack, &resource.path) else {
-                    continue;
-                };
-                let (Some(size), Some(look)) = (picture_size(&bytes), tiny(&bytes, false)) else {
-                    continue;
-                };
-                let same = paints.entry(size).or_default();
-                if !same.iter().any(|(id, _)| *id == item.target.id) {
-                    same.push((item.target.id.clone(), look));
-                }
-            }
+                .find(|r| r.role == "image")
+                .and_then(|r| read_pack_resource(pack, &r.path).ok())
+                .and_then(|bytes| Some((picture_size(&bytes)?, tiny(&bytes, false)?)));
+            let preview = item
+                .variants
+                .iter()
+                .find_map(|v| v.preview.as_ref())
+                .and_then(|path| read_pack_resource(pack, path).ok())
+                .and_then(|bytes| preview_look(&bytes, None));
+            out.push(PackPaint {
+                id: item.target.id.clone(),
+                picture,
+                preview,
+            });
         }
     }
-    if paints.is_empty() {
-        return Vec::new();
-    }
-    // Pictures alone on their id, not yet recognised: every revision of a marker must agree.
+    out
+}
+
+/// The one paint clearly closest to `look` among `candidates` (id and look), if close enough.
+fn closest<'a>(
+    look: &[u8],
+    candidates: impl Iterator<Item = (&'a str, &'a [u8])>,
+    same: f32,
+    margin: f32,
+) -> Option<&'a str> {
+    let mut ranked: Vec<(&str, f32)> = candidates
+        .map(|(id, reference)| (id, preview_distance(look, reference)))
+        .collect();
+    ranked.sort_by(|a, b| a.1.total_cmp(&b.1));
+    let (id, distance) = *ranked.first()?;
+    let clear = ranked
+        .get(1)
+        .is_none_or(|(_, next)| next - distance >= margin);
+    (distance <= same && clear).then_some(id)
+}
+
+/// The id of a paint the cache has and no pack names: `unnamed-` and its resource id.
+pub fn unnamed_paint(number: u64) -> String {
+    format!("unnamed-{number}")
+}
+
+/// Paints in the cache (see the module docs). A paint is a picture alone on its id; when the game
+/// shows it in its garage, its preview sits on the next id. A paint is named by its picture (a
+/// pack's paint of the same size that looks the same) or by its preview (a pack's paint whose
+/// preview looks the same; the picture decides between paints whose previews are alike), and the
+/// two must not disagree. A paint with a preview that no pack names is still a paint: it is listed
+/// unnamed, and any paint can take its place.
+fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
+    let paints = pack_paints(packs);
+    // The cache's groups by resource id, every revision.
+    let mut ids: BTreeMap<u64, Vec<Vec<&tanki_cache::cache::CachedResource>>> = BTreeMap::new();
     let mut groups: BTreeMap<&str, Vec<&tanki_cache::cache::CachedResource>> = BTreeMap::new();
     for resource in &scan.resources {
         groups
@@ -354,55 +447,128 @@ fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognitio
             .or_default()
             .push(resource);
     }
-    let mut by_marker: BTreeMap<String, BTreeSet<Option<String>>> = BTreeMap::new();
     for (group, files) in groups {
-        let [picture] = files[..] else {
-            continue;
-        };
-        if picture.role != "image.jpg" || identify(&scan.game, group).is_some() {
-            continue;
+        if let Some(number) = marker_for_group(group).and_then(|m| marker_number(&m)) {
+            ids.entry(number).or_default().push(files);
         }
-        let Some(marker) = marker_for_group(group) else {
-            continue;
-        };
-        let Ok(bytes) = std::fs::read(&picture.path) else {
-            continue;
-        };
-        let Some(candidates) = picture_size(&bytes).and_then(|size| paints.get(&size)) else {
-            continue;
-        };
-        let paint = tiny(&bytes, false).and_then(|look| {
-            let mut ranked: Vec<(&str, f32)> = candidates
+    }
+    let alone = |files: &Vec<&tanki_cache::cache::CachedResource>| matches!(&files[..], [picture] if picture.role == "image.jpg");
+    let mut verdicts: BTreeMap<u64, (String, Option<String>, &'static str)> = BTreeMap::new();
+    for (number, revisions) in &ids {
+        if !revisions.iter().all(alone)
+            || revisions
                 .iter()
-                .map(|(id, reference)| (id.as_str(), preview_distance(&look, reference)))
-                .collect();
-            ranked.sort_by(|a, b| a.1.total_cmp(&b.1));
-            let (id, distance) = *ranked.first()?;
-            let clear = ranked
-                .get(1)
-                .is_none_or(|(_, next)| next - distance >= PAINT_MARGIN);
-            (distance <= SAME_PAINT && clear).then(|| id.to_owned())
+                .any(|files| identify(&scan.game, &files[0].group).is_some())
+        {
+            continue;
+        }
+        let Some(marker) = marker_for_group(&revisions[0][0].group) else {
+            continue;
+        };
+        // The preview on the next id: a colour picture and its alpha.
+        let preview = number
+            .checked_add(1)
+            .and_then(|next| ids.get(&next))
+            .and_then(|next| {
+                next.iter().find_map(|files| {
+                    let colour = files.iter().find(|r| r.role == "image.jpg")?;
+                    let alpha = files.iter().find(|r| r.role == "alpha.jpg")?;
+                    (files.len() == 2).then_some((colour.path.clone(), alpha.path.clone()))
+                })
+            })
+            .and_then(|(colour, alpha)| {
+                let (colour, alpha) = (std::fs::read(colour).ok()?, std::fs::read(alpha).ok()?);
+                is_paint_preview(&colour, &alpha)
+                    .then(|| preview_look(&colour, Some(&alpha)))
+                    .flatten()
+            });
+        // Every revision's picture must name the same paint (or none).
+        let mut by_picture = BTreeSet::new();
+        let mut first = None;
+        for files in revisions {
+            let Ok(bytes) = std::fs::read(&files[0].path) else {
+                continue;
+            };
+            let found = picture_size(&bytes)
+                .zip(tiny(&bytes, false))
+                .and_then(|(size, look)| {
+                    let same_size = paints.iter().filter_map(|p| {
+                        p.picture
+                            .as_ref()
+                            .filter(|(s, _)| *s == size)
+                            .map(|(_, l)| (p.id.as_str(), l.as_slice()))
+                    });
+                    closest(&look, same_size, SAME_PAINT, PAINT_MARGIN).map(str::to_owned)
+                });
+            if first.is_none() {
+                first = picture_size(&bytes).zip(tiny(&bytes, false));
+            }
+            by_picture.insert(found);
+        }
+        let by_picture = match &by_picture.into_iter().collect::<Vec<_>>()[..] {
+            [one] => one.clone(),
+            _ => continue,
+        };
+        let by_preview = preview.as_ref().and_then(|look| {
+            let with_preview = paints
+                .iter()
+                .filter_map(|p| p.preview.as_ref().map(|v| (p.id.as_str(), v.as_slice())));
+            closest(
+                look,
+                with_preview.clone(),
+                SAME_PAINT_PREVIEW,
+                PAINT_PREVIEW_MARGIN,
+            )
+            .map(str::to_owned)
+            .or_else(|| {
+                // Paints whose previews are alike: the picture decides among them, by look
+                // alone (the server may save it at another quality).
+                let (size, picture) = first.as_ref()?;
+                let alike: Vec<&PackPaint> = paints
+                    .iter()
+                    .filter(|p| {
+                        p.preview
+                            .as_ref()
+                            .is_some_and(|v| preview_distance(look, v) <= SAME_PAINT_PREVIEW)
+                    })
+                    .collect();
+                let same_size = alike.iter().filter_map(|p| {
+                    p.picture
+                        .as_ref()
+                        .filter(|(s, _)| s == size)
+                        .map(|(_, l)| (p.id.as_str(), l.as_slice()))
+                });
+                closest(picture, same_size, f32::MAX, PAINT_MARGIN).map(str::to_owned)
+            })
         });
-        by_marker.entry(marker).or_default().insert(paint);
+        let verdict = match (by_picture, by_preview) {
+            // The picture and the preview name two paints: a paint still, of no name.
+            (Some(a), Some(b)) if a != b => (marker, None, "preview"),
+            (Some(id), _) => (marker, Some(id), "picture"),
+            (None, Some(id)) => (marker, Some(id), "preview"),
+            (None, None) if preview.is_some() => (marker, None, "preview"),
+            (None, None) => continue,
+        };
+        verdicts.insert(*number, verdict);
     }
-    // A marker whose revisions agree on one paint; a paint found on one marker only.
-    let mut markers_of: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for (marker, verdicts) in by_marker {
-        if let [Some(id)] = &verdicts.into_iter().collect::<Vec<_>>()[..] {
-            markers_of.entry(id.clone()).or_default().push(marker);
+    // A pack's paint found on two ids names neither: both stay paints, unnamed.
+    let mut found_on: BTreeMap<String, usize> = BTreeMap::new();
+    for (_, id, _) in verdicts.values() {
+        if let Some(id) = id {
+            *found_on.entry(id.clone()).or_default() += 1;
         }
     }
-    markers_of
+    verdicts
         .into_iter()
-        .filter_map(|(id, markers)| match &markers[..] {
-            [marker] => Some(Recognition {
-                marker: marker.clone(),
+        .map(|(number, (marker, id, evidence))| {
+            let named = id.filter(|id| found_on.get(id) == Some(&1));
+            Recognition {
+                marker,
                 kind: "paint".to_owned(),
-                id,
+                evidence: if named.is_some() { evidence } else { "preview" },
+                id: named.unwrap_or_else(|| unnamed_paint(number)),
                 grade: "m0".to_owned(),
-                evidence: "picture",
-            }),
-            _ => None,
+            }
         })
         .collect()
 }

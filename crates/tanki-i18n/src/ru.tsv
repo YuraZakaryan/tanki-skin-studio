@@ -129,6 +129,7 @@
 	Packs	Паки
 	Page	Страница
 	Paint	Краска
+	Paint #{n}	Краска №{n}
 	Paints	Краски
 @plural	Animated · {n} frame|Animated · {n} frames	Анимированная · {n} кадр|Анимированная · {n} кадра|Анимированная · {n} кадров
 	Pick an item below to see its modifications.	Выберите предмет ниже, чтобы увидеть его модификации.

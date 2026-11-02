@@ -752,14 +752,19 @@ fn paints_are_imported_found_by_their_picture_and_take_each_others_place() -> Re
         .iter()
         .map(|r| (r.marker.as_str(), r.id.as_str(), r.grade.as_str()))
         .collect();
+    let other = tanki_core::recognize::unnamed_paint(fixture.other_id);
     assert_eq!(
         named,
         [
             (fixture.ember_marker.as_str(), "ember", "m0"),
             (fixture.moss_marker.as_str(), "moss", "m0"),
+            (fixture.other_marker.as_str(), other.as_str(), "m0"),
         ],
-        "the picture of another size is no paint"
+        "Ember by its picture, Moss by its preview, a paint no pack has unnamed; a lone picture \
+         and an effect are no paints"
     );
+    let evidence: Vec<&str> = found.iter().map(|r| r.evidence).collect();
+    assert_eq!(evidence, ["picture", "preview", "preview"]);
     let store = StateStore::open(&data.join("state.sqlite"))?;
     for r in &found {
         store.save_user_target(&scan.game, &r.marker, &r.kind, &r.id, &r.grade)?;

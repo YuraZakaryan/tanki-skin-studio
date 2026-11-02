@@ -91,7 +91,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | One Apply button only (yellow, full width) | it `dialogs`, ui `garage` |
 | A skin missing a file of the item (no model, no alpha): marked Incomplete, Apply off, reason shown, palette refused, nothing written | it `garage`, e2e `a_skin_missing_a_file…`, ui `incomplete` |
 | A skin's alpha goes only to an item that has one; an item with none takes the skin, alone and in Apply to all items, and undoes byte for byte | unit `apply`, it `bulk` |
-| Paints: imported from a paints folder, found in the cache by their picture, any paint in any paint's place, undone byte for byte; a paint is named without a modification and has no selector | e2e `paints_are_imported…`, ui `garage-paints` |
+| Paints: imported from a paints folder, found in the cache by their picture or their garage preview (a paint saved anew), one no pack has listed unnamed, effects left out; any paint in any paint's place, undone byte for byte; a paint is named without a modification and has no selector | e2e `paints_are_imported…`, ui `garage-paints` |
 | Animated paints: the frame found in the picture (square cells, peak against half a cell, row ends and far frames), the most typical frame over a still paint, retimed into the replaced sheet over an animated one; marked in the list | unit `sprite`, unit `paint`, ui `garage-paints` |
 | Confirm lists the files; Cancel changes nothing | it `dialogs`, ui `confirm` |
 | Game running: blocked until closed, Check again | it `dialogs`, ui `game-running`, ui `gui-game-running` |

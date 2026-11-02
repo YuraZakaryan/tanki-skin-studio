@@ -832,14 +832,18 @@ pub fn design_sample_worn() -> Vec<SampleWorn> {
 }
 
 /// The paints of [`build_paints`]: still Ember and Moss, animated Storm (a sheet of 16 frames of
-/// 32), and where the cache keeps Ember and Moss.
+/// 32), and where the cache keeps its paints.
 pub struct PaintsFixture {
     /// The asset folder: `Inventory/Paints/<name>/image.jpg` and `preview.png`.
     pub archive: PathBuf,
     pub cache: PathBuf,
-    /// The cache markers of Ember and Moss (`/a/b/c/d/`).
+    /// The cache markers (`/a/b/c/d/`) of Ember (its picture as the pack's), Moss (saved again,
+    /// brighter: only its preview names it) and a paint no pack has.
     pub ember_marker: String,
     pub moss_marker: String,
+    pub other_marker: String,
+    /// The resource id of the paint no pack has.
+    pub other_id: u64,
     /// Ember's picture in the cache.
     pub ember_file: PathBuf,
 }
@@ -883,39 +887,96 @@ pub fn build_paints(work: &Path) -> Result<PaintsFixture> {
             (y % 32) as f32 + 0.7 * t,
         ))
     });
+    // A garage preview of a paint: its pattern on a card, with a transparent rim.
+    let preview = |seed: f32, size: (u32, u32)| {
+        RgbaImage::from_fn(size.0, size.1, |x, y| {
+            let [r, g, b] = paint_pixel(seed, x as f32 * 0.7, y as f32 * 0.7);
+            let rim = x < 6 || y < 6 || x + 6 >= size.0 || y + 6 >= size.1;
+            Rgba([r, g, b, if rim { 0 } else { 255 }])
+        })
+    };
     let paints = [
-        ("Ember", still(1.0)),
-        ("Moss", still(3.0)),
-        ("Storm", storm),
+        ("Ember", still(1.0), 1.0),
+        ("Moss", still(3.0), 3.0),
+        ("Storm", storm, 5.0),
     ];
-    for (name, picture) in &paints {
+    for (name, picture, seed) in &paints {
         let dir = archive.join("Inventory").join("Paints").join(name);
         fs::create_dir_all(&dir)?;
         fs::write(dir.join("image.jpg"), paint_jpeg(picture, 95))?;
-        fs::write(dir.join("preview.png"), png(164, 106, [40, 60, 80, 255]))?;
+        let mut bytes = Cursor::new(Vec::new());
+        DynamicImage::ImageRgba8(preview(*seed, (164, 105)))
+            .write_to(&mut bytes, ImageFormat::Png)?;
+        fs::write(dir.join("preview.png"), bytes.into_inner())?;
     }
-    let ember_marker = id_marker(6000);
-    let moss_marker = id_marker(6002);
-    let ember_file = write_cache_file(
-        &cache,
-        &format!("http://cache.test{ember_marker}111/image.jpg"),
-        &paint_jpeg(&paints[0].1, 80),
-    )?;
-    write_cache_file(
-        &cache,
-        &format!("http://cache.test{moss_marker}111/image.jpg"),
-        &paint_jpeg(&paints[1].1, 80),
-    )?;
+    // A paint in the cache: its picture, and its garage preview on the next id, as the client
+    // keeps it (the colour and the alpha in two pictures).
+    let cached = |id: u64, picture: &image::RgbImage, seed: f32| -> Result<PathBuf> {
+        let file = write_cache_file(
+            &cache,
+            &format!("http://cache.test{}111/image.jpg", id_marker(id)),
+            &paint_jpeg(picture, 80),
+        )?;
+        // The pack's preview, scaled to the card the client keeps.
+        let card = DynamicImage::ImageRgba8(preview(seed, (164, 105)))
+            .resize_exact(166, 106, image::imageops::FilterType::Triangle)
+            .to_rgba8();
+        let colour = DynamicImage::ImageRgba8(card.clone()).to_rgb8();
+        let alpha =
+            image::GrayImage::from_fn(166, 106, |x, y| image::Luma([card.get_pixel(x, y).0[3]]));
+        let next = id_marker(id + 1);
+        write_cache_file(
+            &cache,
+            &format!("http://cache.test{next}111/image.jpg"),
+            &paint_jpeg(&colour, 85),
+        )?;
+        let mut alpha_jpeg = Vec::new();
+        JpegEncoder::new_with_quality(&mut alpha_jpeg, 85)
+            .encode_image(&DynamicImage::ImageLuma8(alpha))?;
+        write_cache_file(
+            &cache,
+            &format!("http://cache.test{next}111/alpha.jpg"),
+            &alpha_jpeg,
+        )?;
+        Ok(file)
+    };
+    let ember_file = cached(6000, &paints[0].1, 1.0)?;
+    // The server saved Moss again, brighter: too far for its picture, its preview names it.
+    let brighter = image::RgbImage::from_fn(64, 64, |x, y| {
+        image::Rgb(paints[1].1.get_pixel(x, y).0.map(|c| c.saturating_add(40)))
+    });
+    cached(6002, &brighter, 3.0)?;
+    // A paint no pack has.
+    cached(6006, &still(7.0), 7.0)?;
+    // A picture alone that is no paint, and an effect: a texture and a mostly clear glow beside it.
     write_cache_file(
         &cache,
         &format!("http://cache.test{}111/image.jpg", id_marker(6004)),
         &jpeg(100, 40, [200, 200, 200]),
     )?;
+    write_cache_file(
+        &cache,
+        &format!("http://cache.test{}111/image.jpg", id_marker(6010)),
+        &paint_jpeg(&still(9.0), 80),
+    )?;
+    let glow = id_marker(6011);
+    write_cache_file(
+        &cache,
+        &format!("http://cache.test{glow}111/image.jpg"),
+        &jpeg(128, 128, [250, 200, 120]),
+    )?;
+    write_cache_file(
+        &cache,
+        &format!("http://cache.test{glow}111/alpha.jpg"),
+        &jpeg(128, 128, [20, 20, 20]),
+    )?;
     Ok(PaintsFixture {
         archive,
         cache,
-        ember_marker,
-        moss_marker,
+        ember_marker: id_marker(6000),
+        moss_marker: id_marker(6002),
+        other_marker: id_marker(6006),
+        other_id: 6006,
         ember_file,
     })
 }

@@ -90,7 +90,10 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
   - its Garage preview picture;
   - the order of its modification blocks, anchored by items already known.
 
-  A paint is matched by its picture: the same size and the same 16 × 16 look as a pack's paint.
+  A paint is a picture alone on its id, its garage preview on the next one. It is named by its
+  picture (the same size and 16 × 16 look as a pack's paint) or by its preview, which still names a
+  paint the server saved anew; a paint no pack has is listed as **Paint #…**, and any paint can
+  take its place.
 - **Never guesses.** When two candidates are too close, the match is dropped, not picked. You can
   label any item by hand, and the label covers all of its modifications.
 
