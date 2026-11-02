@@ -18,7 +18,7 @@ use egui_kittest::{
     kittest::{NodeT, Queryable},
 };
 use tanki_core::apply::{list_backups, restore_transaction};
-use tanki_studio::app::{Page, Studio};
+use tanki_studio::app::{Dialog, Page, Studio};
 use tanki_testkit::{PackOptions, build_pack_dir};
 
 use crate::common::{Env, contents, env, harness};
@@ -185,7 +185,9 @@ fn check(h: &Harness<'static, Studio>, size: (f32, f32), at: &str) {
         let label = node.accesskit_node().label().unwrap_or_default();
         assert!(
             rect.min.x >= -1.0 && rect.max.x <= width + 1.0,
-            "{at}: {label:?} at {rect:?} is cut off by a {width}-point wide window ({size:?} px)"
+            "{at}: {label:?} ({role:?}) at {rect:?} on {page} is cut off by a {width}-point wide window ({size:?} px)",
+            role = node.accesskit_node().role(),
+            page = state.page.code(),
         );
     }
 }
@@ -222,6 +224,9 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
     let mut size = (1440.0, 900.0);
     let mut cache_gone = false;
     let mut pages = std::collections::BTreeSet::new();
+    // Every replacement made on the way: old backups may be deleted (Delete old, the limit), so
+    // the ones left at the end are not all there were.
+    let mut made = std::collections::BTreeSet::new();
     for step in 0..steps {
         let at = format!("seed {seed}, step {step}");
         match rng.below(40) {
@@ -267,6 +272,16 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
                 h = open(&env);
                 h.state_mut().game_processes_override = Some(Vec::new());
             }
+            // With a confirmation open, a key action answers it: its own Apply is the last one
+            // (the page behind has Apply buttons too), as a user's next click would be.
+            9..=14 if matches!(h.state().dialog, Some(Dialog::Confirm(_))) => {
+                for label in ["Apply", "Применить"] {
+                    if let Some(node) = h.query_all_by_label(label).last() {
+                        node.click();
+                        break;
+                    }
+                }
+            }
             9..=14 => {
                 let keys: Vec<String> = buttons(&h)
                     .into_iter()
@@ -286,6 +301,9 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
         h.run_steps(3);
         check(&h, size, &at);
         pages.insert(h.state().page.code());
+        for backup in list_backups(&env.work.join("data/backups")).unwrap_or_default() {
+            made.insert(backup.tx.id);
+        }
     }
     if cache_gone {
         hide_cache(&root, &hidden, &mut cache_gone);
@@ -302,7 +320,7 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
         "seed {seed}: after {} replacements the cache is the original again",
         backups.len()
     );
-    (pages.len(), backups.len())
+    (pages.len(), made.len())
 }
 
 /// `TANKI_CHAOS_SEEDS=40 TANKI_CHAOS_STEPS=800` runs a deeper search than the default; a failing

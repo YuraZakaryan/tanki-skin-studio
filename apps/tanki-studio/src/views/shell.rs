@@ -75,30 +75,24 @@ pub fn sidebar(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         (!app.items.is_empty()).then(|| thousands(app.items.len())),
         app.scan.as_ref().map(|s| thousands(s.resources.len())),
         Some(thousands(app.packs.len())),
-        None,
     ];
     // The skins that went on by themselves ask for a look at the Garage.
     let badge = app
         .later_done
         .as_ref()
         .map(|done| done.items.len().to_string());
-    let pages = [
-        Page::Overview,
-        Page::Garage,
-        Page::Resources,
-        Page::Packs,
-        Page::Info,
-    ];
+    let pages = [Page::Overview, Page::Garage, Page::Resources, Page::Packs];
+    let lit = app.page.section();
     let nav = Rect::from_min_size(
         Pos2::new(rect.min.x + 12.0, rect.min.y + 85.0 + 8.0),
-        Vec2::new(rect.width() - 24.0 - 1.0, 5.0 * 42.0 + 4.0 * 4.0),
+        Vec2::new(rect.width() - 24.0 - 1.0, 4.0 * 42.0 + 3.0 * 4.0),
     );
     in_rect(ui, nav, |ui| {
         ui.spacing_mut().item_spacing.y = 4.0;
         for (page, count) in pages.into_iter().zip(counts) {
             let (icon, label) = page_entry(page);
             let badge = (page == Page::Garage).then_some(badge.as_deref()).flatten();
-            if widgets::nav_item_badged(ui, icon, label, count.as_deref(), badge, app.page == page)
+            if widgets::nav_item_badged(ui, icon, label, count.as_deref(), badge, lit == page)
                 .clicked()
             {
                 app.go(page);
@@ -112,15 +106,18 @@ pub fn sidebar(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let theme_y = rect.max.y - 16.0 - 36.0;
     let lang_y = theme_y - 12.0 - 36.0;
     let card_y = lang_y - 12.0 - 99.0;
-    // Settings sit apart, at the bottom of the navigation (as Windows apps keep them).
-    let settings = Rect::from_min_size(
-        Pos2::new(rect.min.x + 12.0, card_y - 24.0 - 42.0),
-        Vec2::new(rect.width() - 24.0 - 1.0, 42.0),
+    // Settings and About sit apart, at the bottom of the navigation (as Windows apps keep them).
+    let bottom = Rect::from_min_size(
+        Pos2::new(rect.min.x + 12.0, card_y - 24.0 - 2.0 * 42.0 - 4.0),
+        Vec2::new(rect.width() - 24.0 - 1.0, 2.0 * 42.0 + 4.0),
     );
-    in_rect(ui, settings, |ui| {
-        let (icon, label) = page_entry(Page::Settings);
-        if widgets::nav_item(ui, icon, label, None, app.page == Page::Settings).clicked() {
-            app.go(Page::Settings);
+    in_rect(ui, bottom, |ui| {
+        ui.spacing_mut().item_spacing.y = 4.0;
+        for page in [Page::Settings, Page::About] {
+            let (icon, label) = page_entry(page);
+            if widgets::nav_item(ui, icon, label, None, lit == page).clicked() {
+                app.go(page);
+            }
         }
     });
     cache_card(
@@ -216,13 +213,13 @@ fn rail(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .on_hover_cursor(egui::CursorIcon::PointingHand)
             .on_hover_text(tip)
     };
-    for (index, page) in Page::ALL.into_iter().enumerate() {
+    for (index, page) in Page::SIDEBAR.into_iter().enumerate() {
         let (icon, label) = page_entry(page);
         let slot = Rect::from_center_size(
             Pos2::new(cx, rect.min.y + 85.0 + 8.0 + 21.0 + index as f32 * 46.0),
             Vec2::new(48.0, 42.0),
         );
-        if button(ui, slot, label, icon, app.page == page, label).clicked() {
+        if button(ui, slot, label, icon, app.page.section() == page, label).clicked() {
             app.go(page);
         }
     }
@@ -321,6 +318,8 @@ fn page_entry(page: Page) -> (char, &'static str) {
         Page::Packs => (icons::PACKAGE, tl!("Packs")),
         Page::Info => (icons::SCAN_SEARCH, tl!("Item")),
         Page::Settings => (icons::SETTINGS, tl!("Settings")),
+        Page::Backups => (icons::ARCHIVE, tl!("Backups")),
+        Page::About => (icons::INFO, tl!("About")),
     }
 }
 
@@ -427,6 +426,8 @@ pub fn page(app: &mut Studio, ui: &mut Ui, main: Rect) {
         Page::Packs => super::packs::draw(app, ui, main),
         Page::Info => super::info::draw(app, ui, main),
         Page::Settings => super::settings::draw(app, ui, main),
+        Page::Backups => super::backups::draw(app, ui, main),
+        Page::About => super::about::draw(app, ui, main),
     }
 }
 

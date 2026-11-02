@@ -152,6 +152,9 @@ pub struct ItemCard<'a> {
     pub kind: &'a str,
     pub cover: Cover,
     pub selected: bool,
+    /// A small chip at the right of the kind line: what the item wears (a skin, one that waits,
+    /// one a game update removed), with an optional icon in place of the dot.
+    pub state: Option<(ChipKind, &'a str, Option<char>)>,
 }
 
 /// A garage card: stage, item name and kind.
@@ -161,6 +164,7 @@ pub fn item_card(ui: &mut Ui, rect: Rect, card: &ItemCard<'_>) -> ItemCardRespon
         kind,
         cover,
         selected,
+        state,
     } = *card;
     let tokens = Tokens::get(ui.ctx());
     let card = interact(ui, rect, ("item-card", name, kind), Sense::click());
@@ -209,6 +213,34 @@ pub fn item_card(ui: &mut Ui, rect: Rect, card: &ItemCard<'_>) -> ItemCardRespon
         kind,
         Text::body(12.0, 400, tokens.text_3),
     );
+    if let Some((chip, label, icon)) = state {
+        let (fill, ink) = super::chips::chip_colors(&tokens, chip);
+        let style = Text::body(11.0, 600, ink);
+        let width = 7.0 + 10.0 + fonts::width(ui.painter(), label, style) + 7.0;
+        let pill = Rect::from_min_size(
+            Pos2::new(rect.max.x - 14.0 - width, y + 24.0 - 1.0),
+            Vec2::new(width, 18.0),
+        );
+        draw::rounded(ui.painter(), pill, CornerRadius::same(9), fill, None);
+        let mark = Pos2::new(pill.min.x + 7.0 + 3.0, pill.center().y);
+        match icon {
+            Some(icon) => fonts::icon(
+                ui.painter(),
+                Pos2::new(mark.x + 1.5, mark.y),
+                icon,
+                11.0,
+                ink,
+            ),
+            None => draw::dot(ui.painter(), mark, 6.0, ink),
+        }
+        fonts::draw_left(
+            ui.painter(),
+            pill.min.x + 7.0 + 10.0,
+            pill.center().y,
+            label,
+            style,
+        );
+    }
     ItemCardResponse {
         card: card.on_hover_cursor(egui::CursorIcon::PointingHand),
     }

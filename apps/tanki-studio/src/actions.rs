@@ -576,7 +576,7 @@ impl Studio {
     }
 
     /// The game's processes running now (none when it is closed).
-    fn running_game(&self) -> Vec<String> {
+    pub(crate) fn running_game(&self) -> Vec<String> {
         self.game_processes_override.clone().unwrap_or_else(|| {
             self.scan
                 .as_ref()
@@ -629,6 +629,15 @@ impl Studio {
             );
             return;
         };
+        // The backup comes first: with no room for it nothing is written, and the user chooses
+        // what may go to make room.
+        let need = tanki_core::backups::backup_need(&scan, &pending.cache_target);
+        if let Some(dialog) =
+            self.room_for(need, crate::app::Retry::Apply(Box::new(pending.clone())))
+        {
+            self.dialog = Some(dialog);
+            return;
+        }
         let note = ApplyNote {
             batch: None,
             skin_grade: Some(grade),
@@ -648,12 +657,13 @@ impl Studio {
                 });
                 self.rescan_quietly();
                 self.reload_backups();
+                self.keep_backups_under_limit();
             }
             Err(error) => self.toast(crate::errors::user_message(&error), None),
         }
     }
 
-    fn rescan_quietly(&mut self) {
+    pub(crate) fn rescan_quietly(&mut self) {
         if let Some(scan) = &self.scan {
             let (game, root) = (scan.game.clone(), scan.root.clone());
             if let Ok(scan) = scan_cache(&root, Some(&game)) {
@@ -1264,11 +1274,19 @@ impl Studio {
             return;
         }
         let running = self.running_game();
-        if running.is_empty() {
-            self.start_bulk();
-        } else {
+        if !running.is_empty() {
             self.dialog = Some(Dialog::BulkGameRunning(running));
+            return;
         }
+        let need = match (&self.scan, self.bulk.as_ref().and_then(|w| w.plan.as_ref())) {
+            (Some(scan), Some(plan)) => crate::backups::tasks_need(scan, &bulk::tasks(plan)),
+            _ => 0,
+        };
+        if let Some(dialog) = self.room_for(need, crate::app::Retry::Bulk) {
+            self.dialog = Some(dialog);
+            return;
+        }
+        self.start_bulk();
     }
 
     /// The game-is-running warning's Check again.
@@ -1457,6 +1475,7 @@ impl Studio {
         self.remember_picks(&applied);
         self.rescan_quietly();
         self.reload_backups();
+        self.keep_backups_under_limit();
         false
     }
 
@@ -1724,6 +1743,25 @@ impl Studio {
         }
         let refs: Vec<&LaterSkin> = due.iter().collect();
         let tasks = later::tasks(&refs);
+        // Nobody is asked here: with no room for the backups the skins keep waiting, and the
+        // user hears it once.
+        let need = crate::backups::tasks_need(&scan, &tasks);
+        if self
+            .free_space()
+            .is_some_and(|free| tanki_core::backups::shortfall(need, free) > 0)
+        {
+            if !self.later_space_warned {
+                self.later_space_warned = true;
+                self.toast(
+                    tl!(
+                        "Not enough disk space to put on the waiting skins. Free up space or delete old backups in Settings."
+                    ),
+                    None,
+                );
+            }
+            return;
+        }
+        self.later_space_warned = false;
         let mut looks: Vec<&str> = Vec::new();
         for skin in &due {
             if !looks.contains(&skin.look.as_str()) {
@@ -1811,6 +1849,7 @@ impl Studio {
         });
         self.rescan_quietly();
         self.reload_backups();
+        self.keep_backups_under_limit();
     }
 
     /// The Garage bar's Undo: put back what the skins that went on by themselves replaced.

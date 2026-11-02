@@ -963,8 +963,8 @@ const SCENES: &[Scene] = &[
     },
     Scene {
         name: "design-7-backups-en-dark",
-        page: "packs",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        page: "backups",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups",
         lang: "en",
         theme: "dark",
         size: "1440x900",
@@ -973,8 +973,8 @@ const SCENES: &[Scene] = &[
     },
     Scene {
         name: "design-7-backups-en-light",
-        page: "packs",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        page: "backups",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups",
         lang: "en",
         theme: "light",
         size: "1440x900",
@@ -983,8 +983,8 @@ const SCENES: &[Scene] = &[
     },
     Scene {
         name: "design-7-backups-ru-dark",
-        page: "packs",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        page: "backups",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups",
         lang: "ru",
         theme: "dark",
         size: "1440x900",
@@ -993,8 +993,8 @@ const SCENES: &[Scene] = &[
     },
     Scene {
         name: "design-7-backups-ru-light",
-        page: "packs",
-        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:packs",
+        page: "backups",
+        actions: "dismiss;select:/0/0/120/6/;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups",
         lang: "ru",
         theme: "light",
         size: "1440x900",
@@ -1117,6 +1117,287 @@ const SCENES: &[Scene] = &[
         name: "design-10-settings-ru-light",
         page: "settings",
         actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:settings;last-check:1792479840:0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    // The pages and dialogs around backups, About and the Garage's states.
+    Scene {
+        name: "design-11-about-en-dark",
+        page: "about",
+        actions: "dismiss;latest:current",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-11-about-en-light",
+        page: "about",
+        actions: "dismiss;latest:current",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-11-about-ru-dark",
+        page: "about",
+        actions: "dismiss;latest:current",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-11-about-ru-light",
+        page: "about",
+        actions: "dismiss;latest:current",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-12-states-en-dark",
+        page: "garage",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/6/;game-update:hull:viking:m0",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-12-states-en-light",
+        page: "garage",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/6/;game-update:hull:viking:m0",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-12-states-ru-dark",
+        page: "garage",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/6/;game-update:hull:viking:m0",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-12-states-ru-light",
+        page: "garage",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/6/;game-update:hull:viking:m0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-13-delete-old-en-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-old",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-13-delete-old-en-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-old",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-13-delete-old-ru-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-old",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-13-delete-old-ru-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-old",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-14-low-space-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;pick:0;free-space:67000000;begin-picked;confirm",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-14-low-space-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;pick:0;free-space:67000000;begin-picked;confirm",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-14-low-space-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;pick:0;free-space:67000000;begin-picked;confirm",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-14-low-space-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;pick:0;free-space:67000000;begin-picked;confirm",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-15-delete-line-en-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-line:1",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-15-delete-line-en-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-line:1",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-15-delete-line-ru-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-line:1",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-15-delete-line-ru-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-line:1",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-16-delete-day-en-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-day:0",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-16-delete-day-en-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-day:0",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-16-delete-day-ru-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-day:0",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-16-delete-day-ru-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-day:0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-17-delete-all-en-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-all",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-17-delete-all-en-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-all",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-17-delete-all-ru-dark",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-all",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-17-delete-all-ru-light",
+        page: "backups",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:backups;delete-all",
         lang: "ru",
         theme: "light",
         size: "1440x900",

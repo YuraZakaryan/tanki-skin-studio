@@ -6,6 +6,47 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Backups page** (Settings → Backups): what the backups take against a limit, and every backup
+  by day, newest first, each marked **Needed to undo**, **Old · taken off** or **Old · removed by a
+  game update**, with **Undo** or delete. A run of Apply to all items is one line. **Delete old**
+  frees the old ones and never touches a backup that takes a skin on now off. **Delete all** and
+  **Delete day** delete many at once. Every delete asks first, and names the skins on now whose
+  backups would go: they could no longer be taken off.
+- **A limit for backups** (1, 2, 5, 10 GB or none; 2 GB to start): over it, the oldest old backups
+  go by themselves, as Windows does with restore points. Backups of skins on now are never deleted
+  by it.
+- **Not enough disk space** is handled before anything is written: a backup is checked to fit
+  first, and with no room the app says how much is needed, offers to delete old backups (safe),
+  and only then the oldest backups of skins on now, naming the skins that could no longer be taken
+  off. Nothing is ever written without its backup; a half-written backup is removed. Skins that
+  go on later wait instead, and the user is told once.
+- **The Garage shows what each item wears:** a filter (All, Skin on, Original, Waiting, Lost, with
+  counts; only the states that occur, and only when something is not original) and a chip on each
+  card. **Lost** is a skin a game update removed: My tank says so, the skin it lost is picked again,
+  and one click on the yellow Apply puts it back.
+- **About page** in the sidebar: version and whether it is up to date, the source code, what's new
+  in every version (from the changelog built into the app, in the interface language, one version
+  open at a time, scrolling when there are many) and the community: the Telegram channel, the
+  Telegram chat and the YouTube video guides.
+
+### Changed
+
+- **Settings** are one column of grouped rows, as Windows 11 and GNOME lay them out: the cache in
+  use (with **Switch** when several were found), the last check with **Rescan now**, how often to
+  look for new game files (in the cache in use), the backups with their usage bar (opens the
+  Backups page) and the appearance: theme, language and the interface size, now with − and +.
+- **The Item page leaves the sidebar**: it is the Garage's **Details** (in My tank), with a back
+  arrow and the item's name as its title.
+- **Packs** no longer list the backups: they have their own page.
+
+### Fixed
+
+- Links open in the browser again (Source code, the releases, the community, a release page from
+  the update offer): the app had been built without the part of its UI library that opens them,
+  so a click did nothing.
+
 ## [0.5.0] - 2026-11-02
 
 ### Added

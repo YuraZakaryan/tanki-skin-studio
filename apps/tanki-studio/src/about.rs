@@ -10,6 +10,10 @@ use tanki_i18n::{fmt, tl};
 pub const LICENSE: &str = "GPL-3.0-or-later";
 /// Where the source of every version is.
 pub const SOURCE: &str = "github.com/YuraZakaryan/tanki-skin-studio";
+/// The community: news, the players' chat and the video guides.
+pub const TELEGRAM_CHANNEL: &str = "https://t.me/tankiskinstudio";
+pub const TELEGRAM_CHAT: &str = "https://t.me/tankiskinstudio_chat";
+pub const YOUTUBE: &str = "https://www.youtube.com/watch?v=mR8Rx5goiGw&list=PLEF5RyTx9dnw";
 
 /// The legal notice, in the interface language.
 pub fn notice() -> String {

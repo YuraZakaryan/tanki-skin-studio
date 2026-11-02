@@ -15,9 +15,10 @@ use tanki_ui::{
 };
 
 use crate::{
-    app::{CacheChoice, Dialog, PendingApply, Studio},
-    model::{format_bytes, home_path},
+    app::{CacheChoice, DeleteWhat, Dialog, PendingApply, Retry, Studio},
+    model::{format_bytes, home_path, target_name},
 };
+use tanki_core::backups::RoomPlan;
 
 fn issue_text(kind: PackIssueKind) -> &'static str {
     match kind {
@@ -62,6 +63,20 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
             selected,
             switching,
         } => choose_cache(app, ctx, &choices, selected, switching),
+        Dialog::LowSpace {
+            retry,
+            need,
+            free,
+            plan,
+        } => low_space(app, ctx, retry, need, free, plan),
+        Dialog::DeleteOld { backups, bytes } => delete_old(app, ctx, backups, bytes),
+        Dialog::DeleteBackups {
+            what,
+            dirs,
+            backups,
+            bytes,
+            worn,
+        } => delete_backups(app, ctx, &what, &dirs, backups, bytes, &worn),
     }
 }
 
@@ -928,5 +943,393 @@ fn choose_cache(
         app.choose_cache_folder_instead();
     } else if close || event == ModalEvent::Dismissed {
         app.keep_cache();
+    }
+}
+
+/// A box of soft colour with an icon and wrapped text (what stays, in the delete dialogs).
+fn note_box(ui: &mut Ui, icon: char, text: &str) {
+    let tokens = Tokens::get(ui.ctx());
+    let width = ui.available_width();
+    let height = warning_height(ui.ctx(), text, width);
+    let (rect, _) = ui.allocate_exact_size(Vec2::new(width, height), Sense::hover());
+    draw::rounded(
+        ui.painter(),
+        rect,
+        CornerRadius::same(10),
+        tokens.primary_soft,
+        None,
+    );
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(rect.min.x + 14.0 + 9.0, rect.min.y + 19.0),
+        icon,
+        16.0,
+        tokens.primary,
+    );
+    let galley = fonts::paragraph(
+        ui.painter(),
+        text,
+        Text::body(13.0, 400, tokens.text),
+        warning_text_width(width),
+        Some(19.0),
+    );
+    ui.painter().galley(
+        Pos2::new(rect.min.x + 14.0 + 18.0 + 10.0, rect.min.y + 9.5),
+        galley,
+        tokens.text,
+    );
+}
+
+fn delete_old(app: &mut Studio, ctx: &eframe::egui::Context, backups: usize, bytes: u64) {
+    let tokens = Tokens::get(ctx);
+    let text = fmt(
+        tl!(
+            "{backups} · {size}. They are copies of skins you already took off or that a game update removed. Nothing changes in the game."
+        ),
+        &[
+            ("size", &format_bytes(bytes)),
+            ("backups", &tn(backups as u64, "{n} backup", "{n} backups")),
+        ],
+    );
+    let keep = tl!("Skins on now keep their backups and can still be taken off.");
+    let spec = ModalSpec {
+        id: "delete-old-backups",
+        title: tl!("Delete old backups?"),
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: text_height(ctx, &text, 14.0, 21.0, BODY_WIDTH)
+            + 14.0
+            + warning_height(ctx, keep, BODY_WIDTH)
+            + 20.0,
+    };
+    let mut delete = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(ui, &text, tokens.text_2, 14.0, 21.0);
+            ui.add_space(14.0);
+            note_box(ui, icons::SHIELD_CHECK, keep);
+        },
+        |ui| {
+            delete = Button::new(ButtonKind::Danger, tl!("Delete old backups"))
+                .icon(icons::TRASH_2)
+                .show(ui)
+                .clicked();
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if delete {
+        app.delete_old_confirmed();
+    } else if cancel || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+/// The skins a plan's needed backups belong to, a few by name.
+fn plan_skins(plan: &RoomPlan) -> String {
+    let mut names: Vec<String> = Vec::new();
+    for entry in &plan.needed {
+        let name = entry.tx.target.as_ref().map_or_else(
+            || entry.tx.variant_name.clone(),
+            |t| target_name(&t.id, &t.grade),
+        );
+        if !names.contains(&name) {
+            names.push(name);
+        }
+    }
+    let shown = names.len().min(3);
+    let mut text = names[..shown].join(", ");
+    if names.len() > shown {
+        text = fmt(
+            tl!("{names} and {n} more"),
+            &[("names", &text), ("n", &(names.len() - shown).to_string())],
+        );
+    }
+    text
+}
+
+/// One thing that would go to make room: an icon in its box, a title, a line, the size.
+fn room_line(ui: &mut Ui, safe: bool, title: &str, line: &str, bytes: u64) {
+    let tokens = Tokens::get(ui.ctx());
+    let width = ui.available_width();
+    let text_width = width - 14.0 - 32.0 - 12.0 - 70.0 - 14.0;
+    let galley = fonts::paragraph(
+        ui.painter(),
+        line,
+        Text::body(12.0, 400, if safe { tokens.text_3 } else { tokens.accent }),
+        text_width,
+        Some(17.0),
+    );
+    let height = (12.0 + 19.0 + galley.size().y + 12.0).max(56.0);
+    let (rect, _) = ui.allocate_exact_size(Vec2::new(width, height), Sense::hover());
+    let (fill, ink, icon) = if safe {
+        (tokens.primary_soft, tokens.primary, icons::ARCHIVE_X)
+    } else {
+        (tokens.accent_soft, tokens.accent, icons::TRIANGLE_ALERT)
+    };
+    let icon_box = Rect::from_min_size(
+        Pos2::new(rect.min.x + 14.0, rect.center().y - 16.0),
+        Vec2::splat(32.0),
+    );
+    draw::rounded(ui.painter(), icon_box, CornerRadius::same(8), fill, None);
+    fonts::icon(ui.painter(), icon_box.center(), icon, 15.0, ink);
+    let x = icon_box.max.x + 12.0;
+    let top = rect.center().y - (19.0 + galley.size().y) / 2.0;
+    fonts::draw(
+        ui.painter(),
+        Pos2::new(x, top),
+        title,
+        Text::body(13.0, 600, tokens.text),
+    );
+    let color = if safe { tokens.text_3 } else { tokens.accent };
+    ui.painter().galley(Pos2::new(x, top + 19.0), galley, color);
+    fonts::draw_right(
+        ui.painter(),
+        rect.max.x - 14.0,
+        rect.center().y,
+        &format_bytes(bytes),
+        Text::mono(13.0, 400, tokens.text_2),
+    );
+}
+
+fn low_space(
+    app: &mut Studio,
+    ctx: &eframe::egui::Context,
+    retry: Retry,
+    need: u64,
+    free: u64,
+    plan: RoomPlan,
+) {
+    let tokens = Tokens::get(ctx);
+    let text = fmt(
+        tl!("The backup needs {need}, and the disk has {free} free."),
+        &[("need", &format_bytes(need)), ("free", &format_bytes(free))],
+    );
+    let skins = plan_skins(&plan);
+    let old_title = fmt(
+        tl!("Old backups · {n}"),
+        &[("n", &plan.old.len().to_string())],
+    );
+    let needed_title = fmt(
+        tl!("Oldest backups of skins on now · {n}"),
+        &[("n", &plan.needed.len().to_string())],
+    );
+    let needed_line = fmt(
+        tl!("{skins}: can no longer be taken off"),
+        &[("skins", &skins)],
+    );
+    let hint = if plan.enough {
+        tl!("Or free up disk space and try again.")
+    } else {
+        tl!("Even deleting every backup is not enough. Free up disk space and try again.")
+    };
+    let lines = usize::from(!plan.old.is_empty()) + usize::from(!plan.needed.is_empty());
+    let list_height = if lines == 0 {
+        0.0
+    } else {
+        let needed = if plan.needed.is_empty() {
+            0.0
+        } else {
+            (12.0 + 19.0 + text_height(ctx, &needed_line, 12.0, 17.0, BODY_WIDTH - 142.0) + 12.0)
+                .max(56.0)
+        };
+        let old = if plan.old.is_empty() { 0.0 } else { 56.0 };
+        old + needed + 14.0
+    };
+    let spec = ModalSpec {
+        id: "low-space",
+        title: tl!("Not enough disk space"),
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: text_height(ctx, &text, 14.0, 21.0, BODY_WIDTH)
+            + 14.0
+            + list_height
+            + text_height(ctx, hint, 12.0, 17.0, BODY_WIDTH)
+            + 20.0,
+    };
+    let mut go = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(ui, &text, tokens.text_2, 14.0, 21.0);
+            ui.add_space(14.0);
+            if lines > 0 {
+                let top = ui.cursor().min;
+                if !plan.old.is_empty() {
+                    room_line(ui, true, &old_title, tl!("Safe"), plan.old_bytes);
+                }
+                if !plan.needed.is_empty() {
+                    room_line(ui, false, &needed_title, &needed_line, plan.needed_bytes);
+                }
+                let frame =
+                    Rect::from_min_max(top, Pos2::new(top.x + BODY_WIDTH, ui.cursor().min.y));
+                ui.painter().rect_stroke(
+                    frame,
+                    CornerRadius::same(10),
+                    eframe::egui::Stroke::new(1.0, tokens.border),
+                    eframe::egui::StrokeKind::Inside,
+                );
+                ui.add_space(14.0);
+            }
+            paragraph(ui, hint, tokens.text_3, 12.0, 17.0);
+        },
+        |ui| {
+            if plan.enough {
+                let kind = if plan.needed.is_empty() {
+                    ButtonKind::Primary
+                } else {
+                    ButtonKind::Danger
+                };
+                go = Button::new(kind, tl!("Delete and put on"))
+                    .icon(icons::TRASH_2)
+                    .show(ui)
+                    .clicked();
+            }
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if go {
+        app.make_room_and_retry(retry, plan);
+    } else if cancel || event == ModalEvent::Dismissed {
+        app.dialog = None;
+    }
+}
+
+/// "A, B and C", or "A, B, C and 4 more" past three.
+fn names(list: &[String]) -> String {
+    match list {
+        [] => String::new(),
+        [one] => one.clone(),
+        _ if list.len() <= 3 => fmt(
+            tl!("{names} and {last}"),
+            &[
+                ("names", &list[..list.len() - 1].join(", ")),
+                ("last", &list[list.len() - 1]),
+            ],
+        ),
+        _ => fmt(
+            tl!("{names} and {n} more"),
+            &[
+                ("names", &list[..3].join(", ")),
+                ("n", &(list.len() - 3).to_string()),
+            ],
+        ),
+    }
+}
+
+/// Every delete of the Backups page asks first: one backup, a day's or all of them.
+fn delete_backups(
+    app: &mut Studio,
+    ctx: &eframe::egui::Context,
+    what: &DeleteWhat,
+    dirs: &[std::path::PathBuf],
+    backups: usize,
+    bytes: u64,
+    worn: &[crate::app::Worn],
+) {
+    let tokens = Tokens::get(ctx);
+    let (title, button, note) = match what {
+        DeleteWhat::One { old, .. } => (
+            tl!("Delete this backup?").to_owned(),
+            tl!("Delete"),
+            if *old {
+                tl!("It is an old backup: nothing changes in the game.")
+            } else {
+                ""
+            },
+        ),
+        DeleteWhat::Day(day) => (
+            match day {
+                crate::model::Day::Today => tl!("Delete today's backups?").to_owned(),
+                crate::model::Day::Yesterday => tl!("Delete yesterday's backups?").to_owned(),
+                crate::model::Day::Date(date) => {
+                    fmt(tl!("Delete the backups of {date}?"), &[("date", date)])
+                }
+            },
+            tl!("Delete"),
+            tl!("Old backups among them change nothing in the game."),
+        ),
+        DeleteWhat::All => (
+            tl!("Delete all backups?").to_owned(),
+            tl!("Delete all"),
+            tl!("To keep a way back, use Restore original files first."),
+        ),
+    };
+    let body = match what {
+        DeleteWhat::One { title, .. } => format!("{title} · {}.", format_bytes(bytes)),
+        _ => format!(
+            "{} · {}.",
+            tn(backups as u64, "{n} backup", "{n} backups"),
+            format_bytes(bytes)
+        ),
+    };
+    let warn = (!worn.is_empty()).then(|| {
+        fmt(
+            tl!("{skins} are on now: they can no longer be taken off."),
+            &[(
+                "skins",
+                &names(&worn.iter().map(|w| w.label()).collect::<Vec<_>>()),
+            )],
+        )
+    });
+    let note = if warn.is_none() && matches!(what, DeleteWhat::All) {
+        tl!("Old backups change nothing in the game.")
+    } else {
+        note
+    };
+    let spec = ModalSpec {
+        id: "delete-backups",
+        title: &title,
+        close_label: tl!("Close"),
+        width: 520.0,
+        body_height: text_height(ctx, &body, 14.0, 21.0, BODY_WIDTH)
+            + warn
+                .as_ref()
+                .map_or(0.0, |w| 14.0 + warning_height(ctx, w, BODY_WIDTH))
+            + if note.is_empty() {
+                0.0
+            } else {
+                14.0 + text_height(ctx, note, 12.0, 17.0, BODY_WIDTH)
+            }
+            + 20.0,
+    };
+    let mut delete = false;
+    let mut cancel = false;
+    let event = widgets::modal(
+        ctx,
+        &spec,
+        |ui| {
+            paragraph(ui, &body, tokens.text_2, 14.0, 21.0);
+            if let Some(warn) = &warn {
+                ui.add_space(14.0);
+                warning(ui, warn);
+            }
+            if !note.is_empty() {
+                ui.add_space(14.0);
+                paragraph(ui, note, tokens.text_3, 12.0, 17.0);
+            }
+        },
+        |ui| {
+            delete = Button::new(ButtonKind::Danger, button)
+                .icon(icons::TRASH_2)
+                .show(ui)
+                .clicked();
+            cancel = Button::new(ButtonKind::Ghost, tl!("Cancel"))
+                .show(ui)
+                .clicked();
+        },
+    );
+    if delete {
+        app.delete_backups_confirmed(dirs);
+    } else if cancel || event == ModalEvent::Dismissed {
+        app.dialog = None;
     }
 }

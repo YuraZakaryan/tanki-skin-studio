@@ -179,6 +179,30 @@ pub fn top_bar(
     subtitle: &str,
     actions: impl FnOnce(&mut Ui),
 ) {
+    top_bar_with(ui, rect, title, subtitle, None, actions);
+}
+
+/// [`top_bar`] of a page opened from another one: a back arrow before the title. Returns whether
+/// it was clicked. `back` is its accessible name ("Back to Garage").
+pub fn top_bar_back(
+    ui: &mut Ui,
+    rect: Rect,
+    title: &str,
+    subtitle: &str,
+    back: &str,
+    actions: impl FnOnce(&mut Ui),
+) -> bool {
+    top_bar_with(ui, rect, title, subtitle, Some(back), actions)
+}
+
+fn top_bar_with(
+    ui: &mut Ui,
+    rect: Rect,
+    title: &str,
+    subtitle: &str,
+    back: Option<&str>,
+    actions: impl FnOnce(&mut Ui),
+) -> bool {
     let tokens = Tokens::get(ui.ctx());
     draw::rounded(ui.painter(), rect, 0.0, tokens.bg, None);
     draw::hrule(
@@ -204,6 +228,17 @@ pub fn top_bar(
         )
         .response
         .rect;
+    let mut clicked = false;
+    let mut left = rect.min.x + 32.0;
+    if let Some(label) = back {
+        let place = Rect::from_min_size(Pos2::new(left, rect.min.y + 17.0), Vec2::splat(38.0));
+        clicked = ui
+            .scope_builder(egui::UiBuilder::new().max_rect(place), |ui| {
+                super::icon_button(ui, crate::icons::ARROW_LEFT, label).clicked()
+            })
+            .inner;
+        left += 38.0 + 12.0;
+    }
     // Actions are right-aligned: the room for the titles ends where the leftmost action starts.
     let right = if used.width() > 0.0 {
         used.min.x - 16.0
@@ -212,24 +247,38 @@ pub fn top_bar(
     };
     let painter = ui.painter().with_clip_rect(Rect::from_min_max(
         Pos2::new(rect.min.x, rect.min.y),
-        Pos2::new(right.max(rect.min.x + 64.0), rect.max.y),
+        Pos2::new(right.max(left + 32.0), rect.max.y),
     ));
     fonts::draw(
         &painter,
-        Pos2::new(rect.min.x + 32.0, rect.min.y + 12.0),
+        Pos2::new(left, rect.min.y + 12.0),
         title,
         Text::display(24.0, 700, tokens.text),
     );
     fonts::draw(
         &painter,
-        Pos2::new(rect.min.x + 32.0, rect.min.y + 45.0),
+        Pos2::new(left, rect.min.y + 45.0),
         subtitle,
         Text::body(13.0, 400, tokens.text_3),
     );
+    clicked
 }
 
-/// The width [`choice_segments`] takes for `items`.
 pub fn choice_segments_width(ui: &Ui, items: &[(&str, Option<String>)], active: usize) -> f32 {
+    dotted_segments_width(ui, items, 0, active)
+}
+
+/// The width of [`dotted_segments`] with `dots` of its items dotted.
+pub fn dotted_segments_width(
+    ui: &Ui,
+    items: &[(&str, Option<String>)],
+    dots: usize,
+    active: usize,
+) -> f32 {
+    12.0 * dots as f32 + segments_width(ui, items, active)
+}
+
+fn segments_width(ui: &Ui, items: &[(&str, Option<String>)], active: usize) -> f32 {
     let tokens = Tokens::get(ui.ctx());
     let widths: f32 = items
         .iter()
@@ -264,7 +313,21 @@ pub fn choice_segments(
     active: usize,
     salt: &str,
 ) -> (Rect, Option<usize>) {
+    dotted_segments(ui, origin, height, items, &[], active, salt)
+}
+
+/// [`choice_segments`] with a coloured dot before some labels (`dots[i]`, a state's colour).
+pub fn dotted_segments(
+    ui: &mut Ui,
+    origin: Pos2,
+    height: f32,
+    items: &[(&str, Option<String>)],
+    dots: &[Option<egui::Color32>],
+    active: usize,
+    salt: &str,
+) -> (Rect, Option<usize>) {
     let tokens = Tokens::get(ui.ctx());
+    let dot = |index: usize| dots.get(index).copied().flatten();
     let label_style =
         |on: bool| Text::body(13.0, 600, if on { tokens.text } else { tokens.text_2 });
     let count_style = Text::mono(12.0, 400, tokens.text_3);
@@ -275,7 +338,11 @@ pub fn choice_segments(
             let count = count
                 .as_deref()
                 .map_or(0.0, |c| 6.0 + fonts::width(ui.painter(), c, count_style));
-            12.0 + fonts::width(ui.painter(), label, label_style(index == active)) + count + 12.0
+            let dot = if dot(index).is_some() { 12.0 } else { 0.0 };
+            12.0 + dot
+                + fonts::width(ui.painter(), label, label_style(index == active))
+                + count
+                + 12.0
         })
         .collect();
     let total: f32 = widths.iter().sum::<f32>() + 4.0 * items.len().saturating_sub(1) as f32 + 6.0;
@@ -316,9 +383,19 @@ pub fn choice_segments(
                 None,
             );
         }
+        let mut left = segment.min.x + 12.0;
+        if let Some(color) = dot(index) {
+            draw::dot(
+                ui.painter(),
+                Pos2::new(left + 3.0, segment.center().y),
+                6.0,
+                color,
+            );
+            left += 12.0;
+        }
         let used = fonts::draw_left(
             ui.painter(),
-            segment.min.x + 12.0,
+            left,
             segment.center().y,
             label,
             label_style(on),

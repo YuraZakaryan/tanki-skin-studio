@@ -1,223 +1,111 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Settings: how often the cache is read again, the skins that go on later, appearance and what
-//! the app is.
+//! Settings, one column of grouped rows (as Windows 11 and GNOME lay them out): the game cache
+//! (which one, when it was last read, how often it is read again, what the backups take) and the
+//! appearance (theme, language, interface size). The backups have their own page.
 
-use eframe::egui::{self, Align, CornerRadius, Layout, Pos2, Rect, Ui, Vec2};
+use eframe::egui::{CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
 use tanki_i18n::{Lang, fmt, tl, tn};
 use tanki_ui::{
     draw, fonts,
     fonts::Text,
     icons,
-    layout::{Size, columns, in_rect},
+    layout::in_rect,
     theme::{ThemePreference, Tokens},
-    widgets::{self, Button, ButtonKind, Width},
+    widgets::{self, Button, ButtonKind, GroupRow, Tint},
 };
 
 use super::{scroll_page, shell};
-use crate::{about, app::Page, app::Studio, later::RescanMode};
+use crate::{
+    app::{Page, Studio},
+    later::RescanMode,
+    model::format_bytes,
+};
 
-const ROW: f32 = 36.0;
+/// The column is at most this wide; a wider window leaves the rest empty (as settings pages do).
+const COLUMN: f32 = 800.0;
+const SEGMENTS: f32 = 32.0;
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     widgets::top_bar(
         ui,
         shell::top_bar_rect(main),
         tl!("Settings"),
-        tl!("Cache, skins that go on later, appearance and about"),
+        tl!("Game cache, backups and appearance"),
         |_| {},
     );
     let body = Rect::from_min_max(
         Pos2::new(main.min.x, main.min.y + shell::TOP_BAR_HEIGHT),
         main.max,
     );
-    // Stacked, the four panels need more room than side by side.
-    let wide = super::is_wide(body.shrink2(Vec2::new(32.0, 0.0)));
-    let min_height = if wide { 764.0 + 64.0 } else { 1100.0 };
-    scroll_page(ui, body, min_height, |ui, rect| {
-        let content = rect.shrink(32.0);
-        // Two columns when the page is wide, one under the other when it is not.
-        if super::is_wide(content) {
-            let cols = columns(content, 24.0, &[Size::Fill(1.0), Size::Fill(1.0)]);
-            let (left, right) = (cols[0], cols[1]);
-            let cache = cache_panel(app, ui, left);
-            later_panel(app, ui, left, cache.max.y + 24.0);
-            let look = appearance_panel(app, ui, right);
-            about_panel(app, ui, right, look.max.y + 24.0);
-        } else {
-            let cache = cache_panel(app, ui, content);
-            let later = later_panel(app, ui, content, cache.max.y + 24.0);
-            let look = appearance_panel(
-                app,
-                ui,
-                Rect::from_min_max(Pos2::new(content.min.x, later.max.y + 24.0), content.max),
-            );
-            about_panel(app, ui, content, look.max.y + 24.0);
-        }
+    let width = (body.width() - 64.0).clamp(240.0, COLUMN);
+    let cache = cache_rows(app, ui);
+    let look = look_rows(app, ui);
+    let height = 32.0
+        + 29.0
+        + widgets::group_height(ui, width, &cache.rows())
+        + 28.0
+        + 29.0
+        + widgets::group_height(ui, width, &look.rows())
+        + 32.0;
+    scroll_page(ui, body, height, |ui, rect| {
+        let x = rect.min.x + 32.0;
+        let mut y = widgets::group_heading(ui, Pos2::new(x, rect.min.y + 32.0), tl!("Game cache"));
+        y = cache.draw(app, ui, Pos2::new(x, y), width) + 28.0;
+        y = widgets::group_heading(ui, Pos2::new(x, y), tl!("Appearance"));
+        look.draw(app, ui, Pos2::new(x, y), width);
     });
 }
 
-/// A panel `content` tall (under its header) at the top of `column` from `top`.
-fn panel_rect(column: Rect, top: f32, content: f32) -> Rect {
-    Rect::from_min_size(
-        Pos2::new(column.min.x, top),
-        Vec2::new(column.width(), 45.0 + 18.0 + content + 18.0),
-    )
-}
-
-/// A row's icon in its 36 px box, the title and a description under it (wrapped to `width`).
-/// Returns the row's height.
-fn row_text(
-    ui: &Ui,
-    origin: Pos2,
-    icon: char,
-    info: bool,
-    title: &str,
-    desc: Option<&str>,
-    width: f32,
-) -> f32 {
-    let tokens = Tokens::get(ui.ctx());
-    let painter = ui.painter();
-    let (fill, ink) = if info {
-        (tokens.info_soft, tokens.info)
-    } else {
-        (tokens.surface_3, tokens.text_2)
-    };
-    let text_x = origin.x + 36.0 + 14.0;
-    let desc = desc.map(|desc| {
-        fonts::paragraph(
-            painter,
-            desc,
-            Text::body(12.0, 400, tokens.text_3),
-            width - 50.0,
-            None,
-        )
-    });
-    let title_height = 19.0;
-    let text_height = title_height + desc.as_ref().map_or(0.0, |g| 2.0 + g.size().y);
-    let height = text_height.max(ROW);
-    let icon_box = Rect::from_min_size(
-        Pos2::new(origin.x, origin.y + (height - ROW) / 2.0),
-        Vec2::splat(ROW),
-    );
-    draw::rounded(painter, icon_box, CornerRadius::same(8), fill, None);
-    fonts::icon(painter, icon_box.center(), icon, 16.0, ink);
-    let text_top = origin.y + (height - text_height) / 2.0;
-    fonts::draw(
-        painter,
-        Pos2::new(text_x, text_top),
-        title,
-        Text::body(14.0, 600, tokens.text),
-    );
-    if let Some(desc) = desc {
-        painter.galley(
-            Pos2::new(text_x, text_top + title_height + 2.0),
-            desc,
-            tokens.text_3,
-        );
-    }
-    height
-}
-
-/// A button against the right edge of `row`, vertically centred.
-fn right_button(ui: &mut Ui, row: Rect, button: Button<'_>) -> bool {
-    let width = button.measure(ui);
-    let place = Rect::from_min_size(
-        Pos2::new(row.max.x - width, row.center().y - 20.0),
-        Vec2::new(width, 40.0),
-    );
-    in_rect(ui, place, |ui| {
-        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            button.show(ui).clicked()
-        })
-        .inner
+/// "Today, 11:04" for a moment of the last two days, else the date.
+fn when(unix: u64) -> String {
+    let text = shell::describe_time(unix);
+    let mut chars = text.chars();
+    chars.next().map_or(text.clone(), |first| {
+        first.to_uppercase().collect::<String>() + chars.as_str()
     })
 }
 
-fn cache_panel(app: &mut Studio, ui: &mut Ui, column: Rect) -> Rect {
+struct CacheRows {
+    cache_desc: String,
+    last_desc: String,
+    scan_desc: &'static str,
+    usage_text: String,
+    switch: Vec2,
+    rescan: Vec2,
+    modes: Vec2,
+    usage: Vec2,
+}
+
+const USAGE_EXTRA: f32 = 8.0 + 10.0 + 18.0;
+
+fn cache_rows(app: &Studio, ui: &Ui) -> CacheRows {
     let tokens = Tokens::get(ui.ctx());
-    let width = column.width() - 36.0;
-    let note = fonts::paragraph(
-        ui.painter(),
-        tl!(
-            "Automatic: at launch, when you come back to the window and every 5 minutes. A check barely loads the computer."
-        ),
-        Text::body(12.0, 400, tokens.text_2),
-        width - 24.0 - 14.0 - 10.0,
-        None,
-    );
-    let note_height = note.size().y + 20.0;
-    let content = ROW + 12.0 + 32.0 + 12.0 + note_height + 12.0 + 40.0;
-    let rect = panel_rect(column, column.min.y, content);
-    let meta = app.scan.as_ref().map(|scan| {
-        fmt(
-            tl!("{os} · {n} files"),
-            &[
-                ("os", shell::os_name()),
-                ("n", &crate::model::thousands(scan.resources.len())),
-            ],
-        )
-    });
-    let body = widgets::panel(ui, rect, tl!("Game cache"), meta.as_deref());
-    let inner = body.shrink(18.0);
-    let mut y = inner.min.y;
-    row_text(
-        ui,
-        Pos2::new(inner.min.x, y),
-        icons::REFRESH_CW,
-        false,
-        tl!("Rescan the cache"),
-        Some(tl!("The Studio notices new game files by itself.")),
-        width,
-    );
-    y += ROW + 12.0;
-    let modes = [
-        (tl!("Automatic"), None),
-        (tl!("Every hour"), None),
-        (tl!("Manual"), None),
-    ];
-    let active = RescanMode::ALL
-        .iter()
-        .position(|m| *m == app.rescan_mode)
-        .unwrap_or(0);
-    let (_, clicked) = widgets::choice_segments(
-        ui,
-        Pos2::new(inner.min.x, y),
-        32.0,
-        &modes,
-        active,
-        "rescan-mode",
-    );
-    if let Some(mode) = clicked.and_then(|i| RescanMode::ALL.get(i)) {
-        app.set_rescan_mode(*mode);
-    }
-    y += 32.0 + 12.0;
-    let note_rect = Rect::from_min_size(Pos2::new(inner.min.x, y), Vec2::new(width, note_height));
-    draw::rounded(
-        ui.painter(),
-        note_rect,
-        CornerRadius::same(10),
-        tokens.surface_2,
-        None,
-    );
-    fonts::icon(
-        ui.painter(),
-        Pos2::new(note_rect.min.x + 12.0 + 7.0, note_rect.center().y),
-        icons::INFO,
-        14.0,
-        tokens.text_3,
-    );
-    ui.painter().galley(
-        Pos2::new(note_rect.min.x + 12.0 + 14.0 + 10.0, note_rect.min.y + 10.0),
-        note,
-        tokens.text_2,
-    );
-    y += note_height + 12.0;
-    let last = match app.last_check {
+    let caches = app.roots.len();
+    let cache_desc = match &app.scan {
+        Some(scan) => {
+            let mut text = fmt(
+                tl!("{os} · {n} files"),
+                &[
+                    ("os", shell::os_name()),
+                    ("n", &crate::model::thousands(scan.resources.len())),
+                ],
+            );
+            if caches > 1 {
+                text = format!(
+                    "{text} · {}",
+                    tn(caches as u64, "{n} cache found", "{n} caches found")
+                );
+            }
+            text
+        }
+        None => tl!("No game cache found").to_owned(),
+    };
+    let last_desc = match app.last_check {
         Some(check) => fmt(
             tl!("{when} · {what}"),
             &[
-                ("when", &shell::describe_time(check.at)),
+                ("when", &when(check.at)),
                 (
                     "what",
                     if check.changed {
@@ -230,259 +118,375 @@ fn cache_panel(app: &mut Studio, ui: &mut Ui, column: Rect) -> Rect {
         ),
         None => tl!("Not yet").to_owned(),
     };
-    let row = Rect::from_min_size(Pos2::new(inner.min.x, y), Vec2::new(width, 40.0));
-    let button = Button::new(ButtonKind::Secondary, tl!("Rescan now")).icon(icons::REFRESH_CW);
-    let button_width = button.measure(ui);
-    row_text(
-        ui,
-        Pos2::new(row.min.x, row.min.y + 2.0),
-        icons::HISTORY,
-        false,
-        tl!("Last check"),
-        Some(&last),
-        width - button_width - 12.0,
-    );
-    if right_button(ui, row, button) {
-        app.rescan();
-    }
-    rect
-}
-
-fn later_panel(app: &mut Studio, ui: &mut Ui, column: Rect, top: f32) -> Rect {
-    let root = app
-        .scan
-        .as_ref()
-        .map(|s| s.root.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    let count = crate::later::of_cache(&app.later, &root).len();
-    let width = column.width() - 36.0;
-    let button = Button::new(ButtonKind::Ghost, tl!("Open the list")).icon(icons::ARROW_RIGHT);
-    let button_width = button.measure(ui);
-    let (title, desc) = if count == 0 {
-        (
-            tl!("Nothing waits").to_owned(),
-            tl!(
-                "A modification the game has not downloaded yet waits here, then goes on by itself."
-            ),
-        )
-    } else {
-        (
-            tn(
-                count as u64,
-                "{n} modification goes on later",
-                "{n} modifications go on later",
-            ),
-            tl!("The Studio puts it on by itself once the game downloads it."),
-        )
+    let scan_desc = match app.rescan_mode {
+        RescanMode::Auto => {
+            tl!("In the cache in use: at launch, on return to the window and every 5 minutes")
+        }
+        RescanMode::Hourly => tl!("In the cache in use: at launch and every hour"),
+        RescanMode::Manual => tl!("In the cache in use: only with Rescan now"),
     };
-    // Measure first: the description wraps beside the button.
-    let text_width = if count > 0 {
-        width - button_width - 12.0
-    } else {
-        width
+    let usage = app.usage;
+    let usage_text = match app.backup_limit {
+        Some(limit) => fmt(
+            tl!("{used} of {limit}"),
+            &[
+                ("used", &format_bytes(usage.total())),
+                ("limit", &crate::backups::limit_label(Some(limit))),
+            ],
+        ),
+        None => format_bytes(usage.total()),
     };
-    let tokens = Tokens::get(ui.ctx());
-    let measured = fonts::paragraph(
+    let usage_width = fonts::width(
         ui.painter(),
-        desc,
-        Text::body(12.0, 400, tokens.text_3),
-        text_width - 50.0,
-        None,
-    )
-    .size()
-    .y;
-    let row_height = (19.0 + 2.0 + measured).max(ROW);
-    let rect = panel_rect(column, top, row_height);
-    let meta = count.to_string();
-    let body = widgets::panel(ui, rect, tl!("Go on later"), Some(&meta));
-    let inner = body.shrink(18.0);
-    row_text(
-        ui,
-        inner.min,
-        icons::CLOCK_3,
-        true,
-        &title,
-        Some(desc),
-        text_width,
-    );
-    let row = Rect::from_min_size(inner.min, Vec2::new(width, row_height));
-    if count > 0 && right_button(ui, row, button) {
-        app.go(Page::Packs);
+        &usage_text,
+        Text::mono(13.0, 600, tokens.text_2),
+    ) + 8.0
+        + 16.0;
+    let mode_items = mode_items();
+    CacheRows {
+        cache_desc,
+        last_desc,
+        scan_desc,
+        switch: Vec2::new(switch_button().measure(ui), 40.0),
+        rescan: Vec2::new(rescan_button().measure(ui), 40.0),
+        modes: Vec2::new(
+            widgets::choice_segments_width(ui, &mode_items, mode_index(app)),
+            SEGMENTS,
+        ),
+        usage: Vec2::new(usage_width, 20.0),
+        usage_text,
     }
-    rect
 }
 
-fn appearance_panel(app: &mut Studio, ui: &mut Ui, column: Rect) -> Rect {
+fn switch_button() -> Button<'static> {
+    Button::new(ButtonKind::Secondary, tl!("Switch")).icon(icons::ARROW_LEFT_RIGHT)
+}
+
+fn rescan_button() -> Button<'static> {
+    Button::new(ButtonKind::Secondary, tl!("Rescan now")).icon(icons::REFRESH_CW)
+}
+
+fn mode_items() -> [(&'static str, Option<String>); 3] {
+    [
+        (tl!("Automatic"), None),
+        (tl!("Every hour"), None),
+        (tl!("Manual"), None),
+    ]
+}
+
+fn mode_index(app: &Studio) -> usize {
+    RescanMode::ALL
+        .iter()
+        .position(|m| *m == app.rescan_mode)
+        .unwrap_or(0)
+}
+
+impl CacheRows {
+    fn rows(&self) -> [GroupRow<'_>; 4] {
+        [
+            GroupRow {
+                icon: icons::HARD_DRIVE,
+                tint: Tint::Plain,
+                title: tl!("Cache in use"),
+                desc: Some(&self.cache_desc),
+                control: self.switch,
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::HISTORY,
+                tint: Tint::Plain,
+                title: tl!("Last check"),
+                desc: Some(&self.last_desc),
+                control: self.rescan,
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::REFRESH_CW,
+                tint: Tint::Plain,
+                title: tl!("Look for new game files"),
+                desc: Some(self.scan_desc),
+                control: self.modes,
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::ARCHIVE,
+                tint: Tint::Plain,
+                title: tl!("Backups"),
+                desc: Some(tl!("Original files, so any skin can be taken off")),
+                control: self.usage,
+                extra: USAGE_EXTRA,
+                click: true,
+            },
+        ]
+    }
+
+    fn draw(&self, app: &mut Studio, ui: &mut Ui, origin: Pos2, width: f32) -> f32 {
+        let rows = self.rows();
+        let height = widgets::group_height(ui, width, &rows);
+        let places = widgets::group(ui, origin, width, &rows, "settings-cache");
+        // The same list of caches as the sidebar's cache card, with Choose folder… in it.
+        if in_rect(ui, places[0].control, |ui| {
+            switch_button().show(ui).clicked()
+        }) {
+            app.open_cache_switcher();
+        }
+        if in_rect(ui, places[1].control, |ui| {
+            rescan_button().show(ui).clicked()
+        }) {
+            app.rescan();
+        }
+        let (_, clicked) = widgets::choice_segments(
+            ui,
+            places[2].control.min,
+            SEGMENTS,
+            &mode_items(),
+            mode_index(app),
+            "rescan-mode",
+        );
+        if let Some(mode) = clicked.and_then(|i| RescanMode::ALL.get(i)) {
+            app.set_rescan_mode(*mode);
+        }
+        let tokens = Tokens::get(ui.ctx());
+        let usage = places[3].control;
+        fonts::draw_left(
+            ui.painter(),
+            usage.min.x,
+            usage.center().y,
+            &self.usage_text,
+            Text::mono(13.0, 600, tokens.text_2),
+        );
+        fonts::icon(
+            ui.painter(),
+            Pos2::new(usage.max.x - 8.0, usage.center().y),
+            icons::CHEVRON_RIGHT,
+            16.0,
+            tokens.text_3,
+        );
+        usage_bar(app, ui, places[3].extra);
+        if places[3].clicked {
+            app.go(Page::Backups);
+        }
+        origin.y + height
+    }
+}
+
+/// The backups against the limit: needed ones in green, old ones in grey, and a legend.
+pub(crate) fn usage_bar(app: &Studio, ui: &Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
-    let width = column.width() - 36.0;
-    let themes = [
+    let usage = app.usage;
+    let scale = app.backup_limit.unwrap_or(0).max(usage.total()).max(1) as f32;
+    let bar = Rect::from_min_size(rect.min, Vec2::new(rect.width(), 8.0));
+    draw::rounded(
+        ui.painter(),
+        bar,
+        CornerRadius::same(4),
+        tokens.surface_3,
+        None,
+    );
+    let part = |bytes: u64| bar.width() * (bytes as f32 / scale).min(1.0);
+    let old = part(usage.total());
+    if old > 0.0 {
+        draw::rounded(
+            ui.painter(),
+            Rect::from_min_size(bar.min, Vec2::new(old.max(8.0), 8.0)),
+            CornerRadius::same(4),
+            tokens.text_3,
+            None,
+        );
+    }
+    let needed = part(usage.needed_bytes);
+    if needed > 0.0 {
+        draw::rounded(
+            ui.painter(),
+            Rect::from_min_size(bar.min, Vec2::new(needed.max(8.0), 8.0)),
+            CornerRadius::same(4),
+            tokens.primary,
+            None,
+        );
+    }
+    let y = bar.max.y + 10.0 + 9.0;
+    let mut x = rect.min.x;
+    for (color, label, bytes) in [
+        (tokens.primary, tl!("Needed to undo"), usage.needed_bytes),
+        (tokens.text_3, tl!("Old"), usage.old_bytes),
+    ] {
+        draw::dot(ui.painter(), Pos2::new(x + 4.0, y), 8.0, color);
+        let used = fonts::draw_left(
+            ui.painter(),
+            x + 16.0,
+            y,
+            label,
+            Text::body(13.0, 400, tokens.text_2),
+        );
+        let size = fonts::draw_left(
+            ui.painter(),
+            used.max.x + 8.0,
+            y,
+            &format_bytes(bytes),
+            Text::mono(12.0, 400, tokens.text_3),
+        );
+        x = size.max.x + 20.0;
+    }
+}
+
+struct LookRows {
+    themes: Vec2,
+    langs: Vec2,
+    size: Vec2,
+}
+
+fn theme_items() -> [(&'static str, Option<String>); 3] {
+    [
         (tl!("System"), None),
         (tl!("Light"), None),
         (tl!("Dark"), None),
-    ];
-    let active = ThemePreference::ALL
-        .iter()
-        .position(|p| *p == app.theme_pref)
-        .unwrap_or(0);
-    let seg_width = widgets::choice_segments_width(ui, &themes, active);
-    let theme_desc = tl!("Like the system, or always light or dark");
-    // The description wraps beside the switch: the row is as tall as it needs.
-    let desc_height = fonts::paragraph(
-        ui.painter(),
-        theme_desc,
-        Text::body(12.0, 400, tokens.text_3),
-        width - seg_width - 12.0 - 50.0,
-        None,
-    )
-    .size()
-    .y;
-    let theme_height = (19.0 + 2.0 + desc_height).max(ROW);
-    let content = theme_height + 12.0 + ROW;
-    let rect = panel_rect(column, column.min.y, content);
-    let body = widgets::panel(ui, rect, tl!("Appearance"), None);
-    let inner = body.shrink(18.0);
-    row_text(
-        ui,
-        inner.min,
-        icons::SUN_MOON,
-        false,
-        tl!("Theme"),
-        Some(theme_desc),
-        width - seg_width - 12.0,
-    );
-    let (_, clicked) = widgets::choice_segments(
-        ui,
-        Pos2::new(
-            inner.max.x - seg_width,
-            inner.min.y + (theme_height - 32.0) / 2.0,
-        ),
-        32.0,
-        &themes,
-        active,
-        "theme",
-    );
-    if let Some(pref) = clicked.and_then(|i| ThemePreference::ALL.get(i)) {
-        app.set_theme_preference(*pref);
-    }
-    let y = inner.min.y + theme_height + 12.0;
-    let langs = [("English", None), ("Русский", None)];
-    let active = usize::from(app.lang != Lang::EN);
-    let seg_width = widgets::choice_segments_width(ui, &langs, active);
-    row_text(
-        ui,
-        Pos2::new(inner.min.x, y),
-        icons::LANGUAGES,
-        false,
-        tl!("Language"),
-        None,
-        width - seg_width - 12.0,
-    );
-    let (_, clicked) = widgets::choice_segments(
-        ui,
-        Pos2::new(inner.max.x - seg_width, y + 2.0),
-        32.0,
-        &langs,
-        active,
-        "language",
-    );
-    if let Some(lang) = clicked.and_then(|i| Lang::all().nth(i)) {
-        app.set_language(lang);
-    }
-    rect
+    ]
 }
 
-fn about_panel(app: &mut Studio, ui: &mut Ui, column: Rect, top: f32) {
-    let tokens = Tokens::get(ui.ctx());
-    let links = [
-        (icons::CODE, tl!("Source code"), ""),
-        (icons::FILE_TEXT, tl!("What's new"), "/releases"),
-        (icons::BUG, tl!("Report a problem"), "/issues"),
-    ];
-    // The links wrap when the column is narrow: each keeps its own width, 8 apart. A link has no
-    // fill until hovered, so it is padded less than a button.
-    let room = column.width() - 36.0;
-    let mut places = Vec::new();
-    let (mut x, mut line) = (0.0, 0usize);
-    for (icon, label, _) in &links {
-        let width = Button::new(ButtonKind::Ghost, label)
-            .icon(*icon)
-            .measure(ui)
-            - 12.0;
-        if x > 0.0 && x + width > room {
-            x = 0.0;
-            line += 1;
-        }
-        places.push((x, line, width));
-        x += width + 8.0;
+const LANGS: [(&str, Option<String>); 2] = [("English", None), ("Русский", None)];
+const STEPPER: Vec2 = Vec2::new(3.0 + 30.0 + 2.0 + 56.0 + 2.0 + 30.0 + 3.0, 34.0);
+
+fn look_rows(app: &Studio, ui: &Ui) -> LookRows {
+    LookRows {
+        themes: Vec2::new(
+            widgets::choice_segments_width(ui, &theme_items(), theme_index(app)),
+            SEGMENTS,
+        ),
+        langs: Vec2::new(
+            widgets::choice_segments_width(ui, &LANGS, usize::from(app.lang != Lang::EN)),
+            SEGMENTS,
+        ),
+        size: STEPPER,
     }
-    let lines = line + 1;
-    let content = 48.0 + 12.0 + lines as f32 * 40.0 + line as f32 * 8.0;
-    let rect = panel_rect(column, top, content);
-    let body = widgets::panel(ui, rect, tl!("About"), None);
-    let inner = body.shrink(18.0);
-    let logo = Rect::from_min_size(inner.min, Vec2::splat(48.0));
+}
+
+fn theme_index(app: &Studio) -> usize {
+    ThemePreference::ALL
+        .iter()
+        .position(|p| *p == app.theme_pref)
+        .unwrap_or(0)
+}
+
+impl LookRows {
+    fn rows(&self) -> [GroupRow<'_>; 3] {
+        [
+            GroupRow {
+                icon: icons::SUN_MOON,
+                tint: Tint::Plain,
+                title: tl!("Theme"),
+                desc: Some(tl!("Like the system, or always light or dark")),
+                control: self.themes,
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::LANGUAGES,
+                tint: Tint::Plain,
+                title: tl!("Language"),
+                desc: None,
+                control: self.langs,
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::ZOOM_IN,
+                tint: Tint::Plain,
+                title: tl!("Interface size"),
+                desc: Some(if cfg!(target_os = "macos") {
+                    tl!("Also ⌘ and + or −")
+                } else {
+                    tl!("Also Ctrl and + or −")
+                }),
+                control: self.size,
+                extra: 0.0,
+                click: false,
+            },
+        ]
+    }
+
+    fn draw(&self, app: &mut Studio, ui: &mut Ui, origin: Pos2, width: f32) {
+        let rows = self.rows();
+        let places = widgets::group(ui, origin, width, &rows, "settings-look");
+        let (_, clicked) = widgets::choice_segments(
+            ui,
+            places[0].control.min,
+            SEGMENTS,
+            &theme_items(),
+            theme_index(app),
+            "theme",
+        );
+        if let Some(pref) = clicked.and_then(|i| ThemePreference::ALL.get(i)) {
+            app.set_theme_preference(*pref);
+        }
+        let (_, clicked) = widgets::choice_segments(
+            ui,
+            places[1].control.min,
+            SEGMENTS,
+            &LANGS,
+            usize::from(app.lang != Lang::EN),
+            "language",
+        );
+        if let Some(lang) = clicked.and_then(|i| Lang::all().nth(i)) {
+            app.set_language(lang);
+        }
+        if let Some(step) = stepper(ui, places[2].control, app.ui_scale) {
+            app.zoom(step);
+        }
+    }
+}
+
+/// − 100% +: the interface size, a step down or up per click. Returns the step clicked.
+fn stepper(ui: &mut Ui, rect: Rect, scale: f32) -> Option<i32> {
+    let tokens = Tokens::get(ui.ctx());
     draw::rounded(
         ui.painter(),
-        logo,
-        CornerRadius::same(12),
-        tokens.primary_soft,
-        None,
+        rect,
+        CornerRadius::same(9),
+        tokens.surface,
+        Some((1.0, tokens.border)),
     );
-    fonts::icon(
-        ui.painter(),
-        logo.center(),
-        icons::PAINTBRUSH,
-        22.0,
-        tokens.primary,
-    );
-    let text_x = logo.max.x + 14.0;
-    fonts::draw(
-        ui.painter(),
-        Pos2::new(text_x, logo.min.y + 4.0),
-        "Tanki Skin Studio",
-        Text::display(18.0, 700, tokens.text),
-    );
-    let version = fmt(
-        tl!("Version {version} · {license}"),
-        &[
-            ("version", env!("CARGO_PKG_VERSION")),
-            ("license", about::LICENSE),
-        ],
-    );
-    fonts::draw(
-        ui.painter(),
-        Pos2::new(text_x, logo.min.y + 28.0),
-        &version,
-        Text::body(12.0, 400, tokens.text_3),
-    );
-    let head = Rect::from_min_size(inner.min, Vec2::new(inner.width(), 48.0));
-    let check = Button::new(ButtonKind::Secondary, tl!("Check for updates"))
-        .icon(icons::REFRESH_CW)
-        .enabled(!app.updates.checking());
-    if right_button(ui, head, check) {
-        app.check_for_updates();
-    }
-    let source = format!("https://{}", about::SOURCE);
-    let mut open = None;
-    for ((icon, label, path), (x, line, width)) in links.iter().zip(places) {
-        let place = Rect::from_min_size(
-            Pos2::new(
-                inner.min.x + x,
-                head.max.y + 12.0 + line as f32 * (40.0 + 8.0),
-            ),
-            Vec2::new(width, 40.0),
+    let mut step = None;
+    for (offset, icon, direction, label) in [
+        (3.0, icons::MINUS, -1, tl!("Smaller")),
+        (rect.width() - 3.0 - 30.0, icons::PLUS, 1, tl!("Larger")),
+    ] {
+        let button = Rect::from_min_size(
+            Pos2::new(rect.min.x + offset, rect.min.y + 3.0),
+            Vec2::new(30.0, rect.height() - 6.0),
         );
-        if in_rect(ui, place, |ui| {
-            Button::new(ButtonKind::Ghost, label)
-                .icon(*icon)
-                .width(Width::Exact(width))
-                .show(ui)
-                .clicked()
-        }) {
-            open = Some(format!("{source}{path}"));
+        let response = ui.interact(
+            button,
+            ui.make_persistent_id(("zoom", direction)),
+            Sense::click(),
+        );
+        response.widget_info(|| {
+            eframe::egui::WidgetInfo::labeled(eframe::egui::Role::Button, true, label)
+        });
+        if response.hovered() {
+            draw::rounded(
+                ui.painter(),
+                button,
+                CornerRadius::same(7),
+                tokens.surface_2,
+                None,
+            );
+        }
+        fonts::icon(ui.painter(), button.center(), icon, 14.0, tokens.text_2);
+        if response
+            .on_hover_cursor(eframe::egui::CursorIcon::PointingHand)
+            .clicked()
+        {
+            step = Some(direction);
         }
     }
-    if let Some(url) = open {
-        ui.ctx().open_url(egui::OpenUrl::new_tab(url));
-    }
+    fonts::draw_centered(
+        ui.painter(),
+        rect,
+        &format!("{}%", (scale * 100.0).round() as u32),
+        Text::mono(13.0, 600, tokens.text),
+    );
+    step
 }

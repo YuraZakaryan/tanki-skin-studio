@@ -10,7 +10,7 @@ of a **lower** layer, and `cargo xtask layers` (part of `cargo xtask ci`) enforc
 | 1 | `tanki-cache` | Find and scan a game cache; recognise which resource groups are which item (`targets`: built-in table, hand labels, consecutive-id modifications). |
 | 1 | `tanki-pack` | The `.tankipack` format: validation, checksums, safe import from zip or folder. |
 | 1 | `tanki-update` | Updates from the project's GitHub releases: check, download checked against the release's `SHA256SUMS.txt`, install (the macOS bundle from the `.dmg`, the Windows `.msi` after exit), restart. |
-| 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; backup history; "is the game running" check. |
+| 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; backup history; backup housekeeping (`backups`: which backups are still needed, deleting old ones, a size limit, free disk space and a plan to make room); "is the game running" check. |
 | 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the saved session) and the app data folder. |
 | 3 | `tanki-core` | Thin facade re-exporting the layers above, plus the end-to-end tests that cross all of them. |
 | — | `tanki-studio`, `tanki-cli`, `xtask` | Binaries and tooling; they may use any layer. |
@@ -37,7 +37,7 @@ design pixel by pixel.
 ## Screens
 
 `apps/tanki-studio/src/views/` holds one file per screen (overview, garage, resources, packs, info (the Item
-page), settings, empty state, splash) and per overlay (dialogs, command palette, toasts, the "Apply to all items" wizard); `shell.rs`
+page, the Garage's Details), settings, backups (a page of Settings), about, empty state, splash) and per overlay (dialogs, command palette, toasts, the "Apply to all items" wizard); `shell.rs`
 is the sidebar and page frame.
 
 - State lives in `app.rs`; everything the user can do is a method in `actions.rs`, called by buttons, the
@@ -50,6 +50,14 @@ is the sidebar and page frame.
   (`later.rs`): the choice is queued in the state store (`tanki_state::later`), the cache is looked at
   again on its own (at launch, when the window comes back, every 5 minutes or hourly; a cheap stamp of
   the folder decides whether to read it), and the queued skins that are due go on as one batch.
+- Backups as the app keeps them (`backups.rs`): the limit (a setting), the lines of the Backups page (a
+  run is one line), deleting old ones, undoing one, and the low-space question. Every write checks first
+  that its backup fits on the disk; a backup of a skin on now is only deleted after that question. The
+  Garage's item states (skin on, original, waiting, lost to a game update) come from the backups and the
+  queue of skins that go on later. The About page reads the changelogs built into the app
+  (`changelog.rs`).
+- Pages opened from another one (Item from the Garage, Backups from Settings) have a back arrow and keep
+  their sidebar entry lit (`Page::section`, `Page::parent`).
 - Responsive: the sidebar becomes an icon rail below 1100 points, two-column pages stack below 860 points
   of content width and scroll, long text is clipped to its box. The window cannot be smaller than 820 × 520.
 

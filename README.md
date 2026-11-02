@@ -137,6 +137,13 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
   per item, and check every change before it is made. Each item is backed up, replaced and
   checked; one that fails is left exactly as it was. **Undo all** puts the whole run back, and it
   is one entry in the backups.
+- **Backups you can see and keep in check.** Settings → Backups lists every backup with what it is
+  still good for (needed to take a skin off, or old), with Undo per backup, **Delete old**, and a
+  limit (2 GB to start) over which old backups go by themselves. Backups of skins on now are never
+  deleted without asking. A full disk is checked before anything is written: nothing goes in
+  without its backup, and you choose what may go to make room.
+- **The Garage shows what each item wears** (skin on, original, waiting, lost), with a filter. A skin
+  a game update removed is marked **Lost** and offered again.
 - **The confirmation lists exactly which cache files will change** before anything is written.
 - **Waits while the game is running.** The client keeps its files open, so you are asked to close it
   first. The client is recognised on your machine, never by a name in the code: the cache's folder
@@ -146,8 +153,9 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
 
 ### Feels like a native app
 
-- **Five pages and Settings:** Overview, Garage, Resources, Packs and Item; Settings at the bottom
-  of the sidebar.
+- **Four pages, Settings and About:** Overview, Garage, Resources and Packs; Settings and About at
+  the bottom of the sidebar. An item's page opens from the Garage (**Details**), the backups from
+  Settings, each with a back arrow.
 - **A command palette** (<kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>) and shortcuts: <kbd>⌘I</kbd> import,
   <kbd>⌘Z</kbd> restore, <kbd>⌘+</kbd> / <kbd>⌘−</kbd> / <kbd>⌘0</kbd> interface size.
 - **English and Russian, dark and light themes.** Your language, theme, page, window place and
@@ -263,7 +271,7 @@ A Cargo workspace of focused crates, layered so the core never depends on the in
 | 1 | `tanki-cache` | Finding and scanning a cache; the item table and consecutive modification ids |
 | 1 | `tanki-pack` | The `.tankipack` format, safe import from ZIP or folder, and building packs from plain folders |
 | 1 | `tanki-update` | Updates from this repository's GitHub releases: the check, the download checked against `SHA256SUMS.txt`, the install and the restart |
-| 2 | `tanki-apply` | Recognition by content, transactional apply with backup, verification and rollback, restore, game-running check |
+| 2 | `tanki-apply` | Recognition by content, transactional apply with backup, verification and rollback, restore, backup housekeeping (needed or old, limit, free space), game-running check |
 | 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, preferences, session) and the data folder |
 | 3 | `tanki-core` | The façade every front end uses, and the end-to-end tests that cross all layers |
 | — | `tanki-studio` | The desktop app (egui / eframe, wgpu) |
