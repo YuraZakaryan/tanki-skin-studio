@@ -60,6 +60,11 @@ const COMMANDS: &[(&str, &str, Task)] = &[
         i18n,
     ),
     (
+        "telegram",
+        "build the Telegram post of every version in CHANGELOG.ru.md (packaging/telegram-post.py --json) and check it fits one message",
+        telegram,
+    ),
+    (
         "ui-diff",
         "compare two screenshots: ui-diff <ours.png> <reference.png> [out.png]; prints the share of differing pixels",
         ui_diff,
@@ -136,6 +141,7 @@ fn ci(_: &[String]) -> Result<()> {
     assets_cmd(&[])?;
     cargo(&["fmt", "--all", "--", "--check"])?;
     i18n(&[])?;
+    telegram(&[])?;
     cargo(&[
         "clippy",
         "--workspace",
@@ -146,6 +152,87 @@ fn ci(_: &[String]) -> Result<()> {
         "warnings",
     ])?;
     test(&[])
+}
+
+/// `cargo xtask telegram`: the channel post of every version in CHANGELOG.ru.md, as the Telegram
+/// workflow builds it, has its title, a headline, the tag and both buttons, and fits Telegram's
+/// 4096 characters (UTF-16 code units, tags included). Nothing is sent.
+fn telegram(_: &[String]) -> Result<()> {
+    const LIMIT: usize = 4096;
+    let python = ["python3", "python"]
+        .into_iter()
+        .find(|python| {
+            Command::new(python)
+                .arg("--version")
+                .output()
+                .is_ok_and(|output| output.status.success())
+        })
+        .context("the Telegram post check needs Python 3 (python3 or python)")?;
+    let changelog =
+        std::fs::read_to_string(root().join("CHANGELOG.ru.md")).context("read CHANGELOG.ru.md")?;
+    let versions: Vec<&str> = changelog
+        .lines()
+        .filter_map(|line| line.strip_prefix("## [")?.split_once(']'))
+        .map(|(version, _)| version)
+        .filter(|version| !version.eq_ignore_ascii_case("unreleased"))
+        .collect();
+    if versions.is_empty() {
+        bail!("telegram: CHANGELOG.ru.md lists no versions");
+    }
+    let mut problems = Vec::new();
+    for version in &versions {
+        let output = Command::new(python)
+            .args(["-I", "packaging/telegram-post.py", version, "--json"])
+            .current_dir(root())
+            .output()
+            .context("run packaging/telegram-post.py")?;
+        let post: serde_json::Value = match serde_json::from_slice(&output.stdout) {
+            Ok(post) if output.status.success() => post,
+            _ => {
+                problems.push(format!(
+                    "{version}: no post: {}",
+                    String::from_utf8_lossy(&output.stderr).trim()
+                ));
+                continue;
+            }
+        };
+        let text = post["text"].as_str().unwrap_or_default();
+        let length = text.encode_utf16().count();
+        if length > LIMIT {
+            problems.push(format!("{version}: {length} characters, over {LIMIT}"));
+        }
+        if !text.contains(&format!("<b>Tanki Skin Studio {version}</b>")) {
+            problems.push(format!("{version}: no title"));
+        }
+        if !text.contains("\n• ") {
+            problems.push(format!("{version}: no headline"));
+        }
+        if !text.ends_with("#обновление") {
+            problems.push(format!("{version}: no #обновление tag"));
+        }
+        let urls: Vec<&str> = post["reply_markup"]["inline_keyboard"][0]
+            .as_array()
+            .map(|row| row.iter().filter_map(|b| b["url"].as_str()).collect())
+            .unwrap_or_default();
+        if !urls
+            .iter()
+            .any(|url| url.ends_with(&format!("/releases/tag/v{version}")))
+            || !urls
+                .iter()
+                .any(|url| url.ends_with(&format!("/blob/v{version}/CHANGELOG.ru.md")))
+        {
+            problems.push(format!("{version}: buttons missing: {urls:?}"));
+        }
+    }
+    if !problems.is_empty() {
+        bail!(
+            "{} Telegram post problem(s):\n  {}",
+            problems.len(),
+            problems.join("\n  ")
+        );
+    }
+    println!("telegram: {} release posts fit one message", versions.len());
+    Ok(())
 }
 
 /// `cargo xtask assets`: check every file git would commit (tracked, plus new files that are not
