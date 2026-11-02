@@ -155,6 +155,20 @@ pub const COMMANDS: &[CommandSpec] = &[
         None,
     ),
     spec(
+        Command::Go(Page::Backups),
+        "Go to Backups",
+        "Page",
+        icons::ARCHIVE,
+        None,
+    ),
+    spec(
+        Command::Go(Page::About),
+        "Go to About",
+        "Page",
+        icons::INFO,
+        None,
+    ),
+    spec(
         Command::Zoom(1),
         "Zoom in",
         "Make the interface larger",

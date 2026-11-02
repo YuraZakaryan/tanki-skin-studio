@@ -15,14 +15,16 @@ fn the_sidebar_switches_pages() {
         ("Garage", Page::Garage),
         ("Resources", Page::Resources),
         ("Packs", Page::Packs),
-        ("Item", Page::Info),
         ("Settings", Page::Settings),
+        ("About", Page::About),
         ("Overview", Page::Overview),
     ] {
         h.get_by_label(label).click();
         h.run_steps(3);
         assert_eq!(h.state().page, page, "after clicking {label}");
     }
+    // The Item page is the Garage's: it is not in the sidebar.
+    assert!(h.query_by_label("Item").is_none());
 }
 
 #[test]

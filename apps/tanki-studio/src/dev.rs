@@ -9,7 +9,7 @@
 //!   `import:<path>`, `page:<code>`, `select:<kind|/marker/>`, `grade:<0-3>`, `filter:<code>`,
 //!   `pick:<n>` (picks the selection's n-th skin, as a click on it does),
 //!   `apply:<item>:<variant>` (applies at once), `begin:<item>:<variant>` (opens the dialog),
-//!   `confirm`, `restore` (everything back, no question), `ask-restore` (the Restore button's
+//!   `begin-picked` (the yellow Apply of the selection's picked skin), `confirm`, `restore` (everything back, no question), `ask-restore` (the Restore button's
 //!   question), `cache-switcher` (the cache card's switcher, in place of any question at start),
 //!   `palette:<query>`, `label:<marker>:<kind>:<id>:<grade>`, `dismiss`
 //!   (closes the toasts, which are never part of what a restart restores), `close` (closes the
@@ -28,6 +28,11 @@
 //!   use, `x` not run; items past the pattern are left out; with no `n` or `w` it is over and the
 //!   result shows), `bulk-undo` (the result's Undo all), `bulk-close` and
 //!   `restore-batch` (the newest batch's entry in the backups, confirmed).
+//!   Backups: `free-space:<bytes>` (any other value: the real free space), `limit:<bytes|none>`,
+//!   `game-update:<kind>:<id>:<m0-m3>` (the game writes the item's files again), `delete-old`
+//!   (its question), `delete-all`, `delete-day:<n>` and `delete-line:<n>` (their questions);
+//!   `garage-state:<all|skin|original|waiting|lost>`, `about-open:<version|none>`
+//!   and `latest:<current|tag>` (what the last update check found).
 //!   Also `lang:<code>`, `theme:<system|dark|light>` and `zoom:<+|-|0>`, which call the same methods as the
 //!   switches and shortcuts, so the choice is stored like a real one.
 //! - `TANKI_GAME_PROCESSES=<a,b>`: the processes "found" when checking whether the game runs
@@ -109,6 +114,7 @@ pub fn run_actions(app: &mut Studio) {
                     app.confirm_apply(pending);
                 }
             }
+            "begin-picked" => app.begin_apply_selected(),
             "confirm" => {
                 if let Some(Dialog::Confirm(pending)) = app.dialog.clone() {
                     app.confirm_apply(pending);
@@ -151,6 +157,33 @@ pub fn run_actions(app: &mut Studio) {
                 app.watch = false;
             }
             "rescan-mode" => app.rescan_mode = crate::later::RescanMode::from_code(Some(arg)),
+            // Backups: the free space "found", the limit, the game writing an item's files again,
+            // Delete old's question.
+            "free-space" => app.free_space_override = arg.parse().ok(),
+            "limit" => app.set_backup_limit(crate::backups::limit_from_code(Some(arg))),
+            "game-update" => game_update(app, arg),
+            "delete-old" => app.ask_to_delete_old(),
+            "delete-all" => app.ask_to_delete_all(),
+            // `delete-day:<n>` / `delete-line:<n>`: the n-th day's Delete day, the n-th line's
+            // trash, newest first.
+            "delete-day" | "delete-line" => delete_scene(app, verb, arg),
+            "garage-state" => {
+                app.garage_state = match arg {
+                    "skin" => crate::app::StateFilter::Skin,
+                    "original" => crate::app::StateFilter::Original,
+                    "waiting" => crate::app::StateFilter::Waiting,
+                    "lost" => crate::app::StateFilter::Lost,
+                    _ => crate::app::StateFilter::All,
+                }
+            }
+            "about-open" => app.about_open = (arg != "none").then(|| arg.to_owned()),
+            "latest" => {
+                app.updates.latest = Some(if arg == "current" {
+                    crate::updates::Latest::UpToDate
+                } else {
+                    crate::updates::Latest::Newer(arg.to_owned())
+                })
+            }
             "close" => app.dialog = None,
             "importing" => importing(app, arg),
             verb if verb.starts_with("bulk") || verb == "restore-batch" => {
@@ -594,6 +627,9 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::BulkGameRunning(_)) => "game running (all items)",
         Some(Dialog::CloseBulk) => "close apply to all",
         Some(Dialog::RestoreBatch { .. }) => "restore batch",
+        Some(Dialog::LowSpace { .. }) => "low space",
+        Some(Dialog::DeleteOld { .. }) => "delete old backups",
+        Some(Dialog::DeleteBackups { .. }) => "delete backups",
     }
 }
 
@@ -799,4 +835,50 @@ fn importing(app: &mut Studio, arg: &str) {
         started: Instant::now() - Duration::from_secs_f32(elapsed),
         receiver,
     });
+}
+
+/// `game-update:<kind>:<id>:<m0-m3>`: the game writes the item's cache files again, as an update
+/// does (a skin on it is gone).
+fn game_update(app: &mut Studio, arg: &str) {
+    let parts: Vec<&str> = arg.split(':').collect();
+    let (Some(scan), [kind, id, grade]) = (app.scan.clone(), parts.as_slice()) else {
+        return app.toast(format!("unknown dev action: game-update:{arg}"), None);
+    };
+    for resource in &scan.resources {
+        if tanki_core::cache::known_target_group(&scan.game, &resource.group)
+            == Some((*kind, *id, *grade))
+        {
+            let _ = std::fs::write(&resource.path, b"game update");
+        }
+    }
+    app.rescan();
+    app.reload_backups();
+}
+
+/// The questions of the Backups page's Delete day and a line's trash, for screenshots.
+fn delete_scene(app: &mut Studio, verb: &str, arg: &str) {
+    let n: usize = arg.parse().unwrap_or(0);
+    let lines = crate::backups::lines(&app.stored, |id| id.to_owned());
+    if verb == "delete-line" {
+        if let Some(line) = lines.get(n).cloned() {
+            let what = crate::app::DeleteWhat::One {
+                title: line.title.clone(),
+                old: line.kept.is_old(),
+            };
+            app.ask_to_delete(what, &[line]);
+        }
+        return;
+    }
+    let (now, offset) = crate::model::now_and_offset();
+    let mut days: Vec<(crate::model::Day, Vec<crate::backups::Line>)> = Vec::new();
+    for line in lines {
+        let (day, _) = crate::model::local_time(line.created, now, offset);
+        match days.last_mut() {
+            Some((last, group)) if *last == day => group.push(line),
+            _ => days.push((day, vec![line])),
+        }
+    }
+    if let Some((day, lines)) = days.get(n).cloned() {
+        app.ask_to_delete(crate::app::DeleteWhat::Day(day), &lines);
+    }
 }

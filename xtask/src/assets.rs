@@ -44,11 +44,13 @@ const GAME_FILE_NAMES: &[&str] = &[
     "alpha.jpg",
 ];
 
-/// Our own binary files and the only folders they may live in.
+/// The binary files we ship (our own, and other brands' marks for links) and the only folders they
+/// may live in.
 const ALLOWED_BINARIES: &[(&str, &str)] = &[
     ("ttf", "crates/tanki-ui/assets/"),
     ("png", "docs/images/"),
     ("png", "assets/app-icon/"),
+    ("png", "crates/tanki-ui/assets/brand/"),
     ("ico", "assets/app-icon/"),
     ("icns", "assets/app-icon/"),
 ];
@@ -179,6 +181,10 @@ mod tests {
         assert_eq!(check(&[file("crates/tanki-ui/assets/x.ttf")]).len(), 0);
         assert_eq!(check(&[file("docs/images/x.png")]).len(), 0);
         assert_eq!(check(&[file("assets/app-icon/x-256.png")]).len(), 0);
+        assert_eq!(
+            check(&[file("crates/tanki-ui/assets/brand/x.png")]).len(),
+            0
+        );
         assert_eq!(check(&[file("assets/app-icon/x.ico")]).len(), 0);
         assert_eq!(check(&[file("assets/app-icon/x.icns")]).len(), 0);
         let stray = check(&[

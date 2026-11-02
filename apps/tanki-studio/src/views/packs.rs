@@ -11,14 +11,11 @@ use tanki_ui::{
     icons,
     layout::{Size, columns, in_rect, rows},
     theme::Tokens,
-    widgets::{self, Button, ButtonKind, ChipKind, ListRow, Width},
+    widgets::{self, Button, ButtonKind, ChipKind, ListRow},
 };
 
 use super::{scroll_page, shell};
-use crate::{
-    app::Studio,
-    model::{BackupRow, backup_rows, format_bytes, target_name},
-};
+use crate::{app::Studio, model::target_name};
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     widgets::top_bar(
@@ -61,18 +58,15 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     let min_height = if wide {
         764.0 + 64.0
     } else {
-        32.0 + 560.0 + 24.0 + 201.0 + 24.0 + 175.0 + 24.0 + 340.0 + 32.0 + later_height + 24.0
+        32.0 + 560.0 + 24.0 + 201.0 + 24.0 + 340.0 + 32.0 + later_height + 24.0
     };
     scroll_page(ui, body, min_height, |ui, rect| {
         let content = rect.shrink(32.0);
-        let (mine, details, items, backup) = if wide {
+        // The backups have their own page (Settings, Backups): the pack's items take the room.
+        let (mine, details, items) = if wide {
             let cols = columns(content, 24.0, &[Size::Fill(1.0), Size::Fixed(420.0)]);
-            let right = rows(
-                cols[1],
-                24.0,
-                &[Size::Fixed(201.0), Size::Fixed(175.0), Size::Fill(1.0)],
-            );
-            (cols[0], right[0], right[1], right[2])
+            let right = rows(cols[1], 24.0, &[Size::Fixed(201.0), Size::Fill(1.0)]);
+            (cols[0], right[0], right[1])
         } else {
             let all = rows(
                 content,
@@ -80,11 +74,10 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
                 &[
                     Size::Fixed(560.0 + later_height + 24.0),
                     Size::Fixed(201.0),
-                    Size::Fixed(175.0),
                     Size::Fixed(340.0),
                 ],
             );
-            (all[0], all[1], all[2], all[3])
+            (all[0], all[1], all[2])
         };
         // The skins that go on later sit under the library, which gives up some of its drop zone.
         let mine = if waiting.is_empty() {
@@ -97,7 +90,6 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
         my_packs(app, ui, mine);
         active_details(app, ui, details);
         pack_items(app, ui, items);
-        backups(app, ui, backup);
     });
 }
 
@@ -416,113 +408,4 @@ fn pack_items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     if let Some((kind, id, grade)) = open {
         app.open_in_garage(&kind, &id, grade);
     }
-}
-
-fn backups(app: &mut Studio, ui: &mut Ui, rect: Rect) {
-    let tokens = Tokens::get(ui.ctx());
-    let entries = backup_rows(&app.backups);
-    let meta = tn(entries.len() as u64, "{n} backup", "{n} backups");
-    let body = widgets::panel(ui, rect, tl!("Backups"), Some(&meta));
-    let inner = body.shrink(8.0);
-    let button = Rect::from_min_size(
-        Pos2::new(inner.min.x, inner.max.y - 44.0),
-        Vec2::new(inner.width(), 44.0),
-    );
-    let list = Rect::from_min_max(inner.min, Pos2::new(inner.max.x, button.min.y - 8.0));
-    if entries.is_empty() {
-        fonts::draw_centered(
-            ui.painter(),
-            Rect::from_center_size(list.center(), Vec2::new(list.width(), 18.0)),
-            tl!("Backups appear after the first replacement."),
-            Text::body(13.0, 400, tokens.text_3),
-        );
-    }
-    let mut undo = None;
-    in_rect(ui, list, |ui| {
-        egui::ScrollArea::vertical()
-            .id_salt("packs-3")
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                ui.spacing_mut().item_spacing.y = 2.0;
-                for entry in &entries {
-                    match entry {
-                        BackupRow::Single(backup) => {
-                            let target = backup.tx.target.as_ref().map_or_else(
-                                || backup.tx.pack_id.clone(),
-                                |t| target_name(&t.id, &t.grade),
-                            );
-                            let name = if backup.tx.variant_name.is_empty() {
-                                target
-                            } else {
-                                format!("{target} · {}", backup.tx.variant_name)
-                            };
-                            let mut meta = fmt(
-                                tl!("{when} · {files}"),
-                                &[
-                                    ("when", &shell::describe_time(backup.created_unix)),
-                                    (
-                                        "files",
-                                        &tn(
-                                            backup.tx.changes.len() as u64,
-                                            "{n} file",
-                                            "{n} files",
-                                        ),
-                                    ),
-                                ],
-                            );
-                            if backup.restored {
-                                meta = format!("{meta} · {}", tl!("restored"));
-                            }
-                            ListRow::new(icons::HISTORY, &name, &meta)
-                                .size(&format_bytes(backup.bytes))
-                                .clickable(false)
-                                .show(ui);
-                        }
-                        BackupRow::Batch(batch) => {
-                            // One run of "Apply to all items": one entry, which undoes the run.
-                            let name = format!(
-                                "{} · {}",
-                                batch.name,
-                                tn(batch.items as u64, "{n} item", "{n} items")
-                            );
-                            let mut meta = fmt(
-                                tl!("{when} · {files}"),
-                                &[
-                                    ("when", &shell::describe_time(batch.created_unix)),
-                                    ("files", &tn(batch.files as u64, "{n} file", "{n} files")),
-                                ],
-                            );
-                            if batch.restored {
-                                meta = format!("{meta} · {}", tl!("restored"));
-                            }
-                            let size = format_bytes(batch.bytes);
-                            let mut row = ListRow::new(icons::LAYERS, &name, &meta)
-                                .size(&size)
-                                .clickable(!batch.restored);
-                            if !batch.restored {
-                                row = row.chip(ChipKind::Neutral, tl!("Undo"));
-                            }
-                            if row.show(ui).clicked() {
-                                undo = Some(batch.id.clone());
-                            }
-                        }
-                    }
-                }
-            });
-    });
-    if let Some(batch) = undo {
-        app.ask_to_restore_batch(&batch);
-    }
-    in_rect(ui, button, |ui| {
-        if Button::new(ButtonKind::Danger, tl!("Restore original files"))
-            .icon(icons::ROTATE_CCW)
-            .width(Width::Fill)
-            .height(44.0)
-            .enabled(app.can_restore())
-            .show(ui)
-            .clicked()
-        {
-            app.ask_to_restore();
-        }
-    });
 }

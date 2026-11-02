@@ -21,7 +21,7 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 tanki-core = { path = "../../crates/tanki-core" }
 tanki-i18n = { path = "../../crates/tanki-i18n" }
 tanki-ui = { path = "../../crates/tanki-ui" }
-eframe = { version = "0.37.0", default-features = false, features = ["wgpu", "default_fonts", "accesskit"] }
+eframe = { version = "0.37.0", default-features = false, features = ["wgpu", "default_fonts", "accesskit", "links"] }
 rfd = "0.17.2"
 image.workspace = true
 log = "0.4"

@@ -59,7 +59,17 @@ pub enum UpdateView {
     },
 }
 
+/// What the last check that finished found (the About page says it).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Latest {
+    UpToDate,
+    /// A newer release, by its tag.
+    Newer(String),
+}
+
 pub struct Updates {
+    /// What the last finished check found, this run.
+    pub latest: Option<Latest>,
     /// The user's choice: ask for a newer release when the app starts.
     pub check_at_start: bool,
     /// The desktop app turns the check at start on; tests leave it off, so they never reach GitHub.
@@ -82,6 +92,7 @@ pub struct Updates {
 impl Updates {
     pub fn new(check_at_start: bool) -> Self {
         Self {
+            latest: None,
             check_at_start,
             startup_check: false,
             install: install::current(),
@@ -186,6 +197,7 @@ impl Studio {
         }
         match answer {
             Ok(Some(release)) => {
+                self.updates.latest = Some(Latest::Newer(release.tag.clone()));
                 let skipped = self
                     .store
                     .get("update_skipped")
@@ -205,6 +217,7 @@ impl Studio {
                 }
             }
             Ok(None) => {
+                self.updates.latest = Some(Latest::UpToDate);
                 if requested {
                     self.updates.view = Some(UpdateView::UpToDate);
                 }

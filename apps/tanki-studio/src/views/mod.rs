@@ -3,6 +3,8 @@
 //! Screens. Each file draws one page or overlay from the design file into rectangles cut with
 //! `tanki_ui::layout`, using the widgets of `tanki_ui`.
 
+pub mod about;
+pub mod backups;
 pub mod bulk;
 pub mod dialogs;
 pub mod empty;

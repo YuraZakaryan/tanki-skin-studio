@@ -59,6 +59,11 @@ pub struct Batch {
     pub name: String,
 }
 fn hash(data: &[u8]) -> String {
+    sha256(data)
+}
+
+/// The hex SHA-256 a transaction records for a file's bytes.
+pub fn sha256(data: &[u8]) -> String {
     tanki_pack::pack::sha256_hex(data)
 }
 fn jpeg_rgb(image: &DynamicImage) -> Result<Vec<u8>> {
@@ -329,22 +334,31 @@ pub fn apply_variant_in(
         skin_grade: note.skin_grade.clone(),
     };
     let mut old = Vec::new();
-    for (index, (path, new)) in targets.iter().enumerate() {
-        let before = fs::read(path)?;
-        let backup_name = format!("{index:04}.bin");
-        fs::write(dir.join(&backup_name), &before)?;
-        tx.changes.push(FileChange {
-            target: path.clone(),
-            backup_name,
-            before_sha256: hash(&before),
-            after_sha256: hash(new),
-        });
-        old.push(before);
+    let saved = (|| -> Result<()> {
+        for (index, (path, new)) in targets.iter().enumerate() {
+            let before = fs::read(path)?;
+            let backup_name = format!("{index:04}.bin");
+            fs::write(dir.join(&backup_name), &before)?;
+            tx.changes.push(FileChange {
+                target: path.clone(),
+                backup_name,
+                before_sha256: hash(&before),
+                after_sha256: hash(new),
+            });
+            old.push(before);
+        }
+        fs::write(
+            dir.join("transaction.json"),
+            serde_json::to_vec_pretty(&tx)?,
+        )?;
+        Ok(())
+    })();
+    if let Err(error) = saved {
+        // A backup that could not be written in full (a full disk) is no backup: nothing in the
+        // cache was touched yet, so the half-written folder goes and the cache stays as it was.
+        let _ = fs::remove_dir_all(&dir);
+        return Err(error).context("could not save the backup; nothing was replaced");
     }
-    fs::write(
-        dir.join("transaction.json"),
-        serde_json::to_vec_pretty(&tx)?,
-    )?;
     let mut done = 0;
     let result = (|| -> Result<()> {
         for (path, new) in &targets {
@@ -579,10 +593,24 @@ pub fn restore_all(backup_root: &Path) -> Result<RestoreSummary> {
 /// later replacements of other files stay. Newest first, and every backup is checked before
 /// anything is written, as in [`restore_all`].
 pub fn restore_batch(backup_root: &Path, batch: &str) -> Result<RestoreSummary> {
+    restore_matching(backup_root, |backup| {
+        backup.tx.batch.as_ref().is_some_and(|b| b.id == batch)
+    })
+}
+
+/// Undo one replacement (its transaction id), and whatever later sits on the files it wrote, as
+/// [`restore_batch`] does for a run.
+pub fn restore_backup(backup_root: &Path, id: &str) -> Result<RestoreSummary> {
+    restore_matching(backup_root, |backup| backup.tx.id == id)
+}
+
+fn restore_matching(
+    backup_root: &Path,
+    in_batch: impl Fn(&BackupEntry) -> bool,
+) -> Result<RestoreSummary> {
     let pending = pending_restores(backup_root)?;
-    let in_batch = |backup: &BackupEntry| backup.tx.batch.as_ref().is_some_and(|b| b.id == batch);
     // Newest first: the batch's oldest replacement is its last one in the list.
-    let Some(oldest) = pending.iter().rposition(in_batch) else {
+    let Some(oldest) = pending.iter().rposition(&in_batch) else {
         return Ok(RestoreSummary::default());
     };
     let mut touched: BTreeSet<&Path> = BTreeSet::new();

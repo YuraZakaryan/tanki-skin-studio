@@ -14,6 +14,7 @@ use eframe::egui::{self, TextureHandle};
 use tanki_core::{
     apply::{AppliedSkin, BackupEntry},
     archive::ArchiveSummary,
+    backups::{RoomPlan, Stored, Usage},
     cache::{CacheScan, existing_cache_roots, looks_like_cache, scan_cache},
     later::LaterSkin,
     pack::{ImportProgress, InstalledPack, PackIssue, PackItem, PackTarget, PackVariant},
@@ -36,20 +37,56 @@ pub enum Page {
     Garage,
     Resources,
     Packs,
-    /// The item in focus: modifications, skin variants, pack and manual labelling.
+    /// The item in focus: modifications, skin variants, pack and manual labelling. A page of the
+    /// Garage (its Details), not in the sidebar.
     Info,
     Settings,
+    /// Every backup, what it takes and what it is still good for. A page of Settings.
+    Backups,
+    /// The app: version, what's new, community.
+    About,
 }
 
 impl Page {
-    pub const ALL: [Page; 6] = [
+    pub const ALL: [Page; 8] = [
         Page::Overview,
         Page::Garage,
         Page::Resources,
         Page::Packs,
         Page::Info,
         Page::Settings,
+        Page::Backups,
+        Page::About,
     ];
+
+    /// The pages the sidebar lists, in its order: the work pages at the top, Settings and About
+    /// at the bottom.
+    pub const SIDEBAR: [Page; 6] = [
+        Page::Overview,
+        Page::Garage,
+        Page::Resources,
+        Page::Packs,
+        Page::Settings,
+        Page::About,
+    ];
+
+    /// The sidebar entry a page belongs to: a page opened from another one keeps it lit.
+    pub fn section(self) -> Page {
+        match self {
+            Page::Info => Page::Garage,
+            Page::Backups => Page::Settings,
+            other => other,
+        }
+    }
+
+    /// Where Back goes from a page opened from another one.
+    pub fn parent(self) -> Option<Page> {
+        match self {
+            Page::Info => Some(Page::Garage),
+            Page::Backups => Some(Page::Settings),
+            _ => None,
+        }
+    }
 
     pub fn code(self) -> &'static str {
         match self {
@@ -59,6 +96,8 @@ impl Page {
             Page::Packs => "packs",
             Page::Info => "info",
             Page::Settings => "settings",
+            Page::Backups => "backups",
+            Page::About => "about",
         }
     }
 
@@ -166,6 +205,29 @@ pub enum Dialog {
         items: Vec<String>,
         files: usize,
     },
+    /// Not enough disk space for the backup a replacement needs: what can go to make room, old
+    /// backups first. `plan.needed` lists backups of skins on now, whose skins can then no
+    /// longer be taken off; with none the dialog only says so.
+    LowSpace {
+        retry: Retry,
+        need: u64,
+        free: u64,
+        plan: RoomPlan,
+    },
+    /// Delete every old backup (of skins taken off, or replaced by a game update): asked first.
+    DeleteOld {
+        backups: usize,
+        bytes: u64,
+    },
+    /// Delete backups chosen on the Backups page (one, a day's or all): asked first. `worn`
+    /// names the skins on now whose backups are among them: they can no longer be taken off.
+    DeleteBackups {
+        what: DeleteWhat,
+        dirs: Vec<PathBuf>,
+        backups: usize,
+        bytes: u64,
+        worn: Vec<Worn>,
+    },
     /// Which game cache the app works with: asked when several were found (see
     /// [`Studio::check_caches`]), or opened from the cache card to switch on purpose
     /// (`switching`, see [`Studio::open_cache_switcher`]).
@@ -174,6 +236,97 @@ pub enum Dialog {
         selected: usize,
         switching: bool,
     },
+}
+
+/// What waits for room on the disk (see [`Dialog::LowSpace`]).
+#[derive(Clone, Debug)]
+pub enum Retry {
+    /// One skin, as confirmed.
+    Apply(Box<PendingApply>),
+    /// The run of "Apply to all items" at its Check step.
+    Bulk,
+}
+
+/// What a [`Dialog::DeleteBackups`] deletes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum DeleteWhat {
+    /// One line of the page, by its title; whether it is old.
+    One {
+        title: String,
+        old: bool,
+    },
+    /// The backups of a day.
+    Day(crate::model::Day),
+    All,
+}
+
+/// A skin on now whose backup a delete takes: it can no longer be taken off. Named when the
+/// question is drawn, in the interface language then.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Worn {
+    /// One item's modification: "Wasp M3".
+    Item(String),
+    /// A run of "Apply to all items": its look and how many items it changed.
+    Run { look: String, items: usize },
+}
+
+impl Worn {
+    pub fn label(&self) -> String {
+        match self {
+            Worn::Item(name) => name.clone(),
+            Worn::Run { look, items } => tanki_i18n::fmt(
+                tanki_i18n::tl!("{look} on {items}"),
+                &[
+                    ("look", look),
+                    (
+                        "items",
+                        &tanki_i18n::tn(*items as u64, "{n} item", "{n} items"),
+                    ),
+                ],
+            ),
+        }
+    }
+}
+
+/// What the Backups page lists.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BackupsFilter {
+    All,
+    Needed,
+    Old,
+}
+
+impl BackupsFilter {
+    pub const ALL: [BackupsFilter; 3] = [
+        BackupsFilter::All,
+        BackupsFilter::Needed,
+        BackupsFilter::Old,
+    ];
+}
+
+/// Which items the Garage lists, by what they wear. An item is in every state one of its
+/// modifications is in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StateFilter {
+    All,
+    /// A skin is on.
+    Skin,
+    /// Nothing is on.
+    Original,
+    /// A skin waits for its modification (see [`crate::later`]).
+    Waiting,
+    /// A skin was on until a game update wrote the files again.
+    Lost,
+}
+
+impl StateFilter {
+    pub const ALL: [StateFilter; 5] = [
+        StateFilter::All,
+        StateFilter::Skin,
+        StateFilter::Original,
+        StateFilter::Waiting,
+        StateFilter::Lost,
+    ];
 }
 
 /// The steps of "Apply to all items".
@@ -343,6 +496,22 @@ pub struct Studio {
     pub backups: Vec<BackupEntry>,
     /// The skins in the cache now (see `tanki_apply::apply::applied_skins`).
     pub applied: Vec<AppliedSkin>,
+    /// Every backup with what it is still good for (see `tanki_apply::backups::survey`), and
+    /// what they take.
+    pub stored: Vec<Stored>,
+    pub usage: Usage,
+    /// The most the backups may take (`None`: no limit); over it, old backups go, oldest first.
+    pub backup_limit: Option<u64>,
+    /// Free disk space "found" instead of the real one (tests).
+    pub free_space_override: Option<u64>,
+    /// What the Backups page lists.
+    pub backups_filter: BackupsFilter,
+    /// Which items the Garage lists, by what they wear.
+    pub garage_state: StateFilter,
+    /// The release whose notes are open on the About page.
+    pub about_open: Option<String>,
+    /// Skins that wait could not go on for want of disk space, and the user was told.
+    pub later_space_warned: bool,
 
     pub page: Page,
     pub garage_tab: String,
@@ -510,6 +679,14 @@ impl Studio {
             packs: Vec::new(),
             active_pack: None,
             backups: Vec::new(),
+            stored: Vec::new(),
+            usage: Usage::default(),
+            backup_limit: Some(crate::backups::DEFAULT_LIMIT),
+            free_space_override: None,
+            backups_filter: BackupsFilter::All,
+            garage_state: StateFilter::All,
+            about_open: Some(env!("CARGO_PKG_VERSION").to_owned()),
+            later_space_warned: false,
             applied: Vec::new(),
             page: Page::from_code(&session.page),
             garage_tab: session.garage_tab.clone(),
@@ -585,6 +762,13 @@ impl Studio {
         app.reload_backups();
         app.later = app.store.later_skins();
         app.rescan_mode = RescanMode::from_code(app.store.rescan_mode().ok().flatten().as_deref());
+        app.backup_limit = crate::backups::limit_from_code(
+            app.store
+                .get(crate::backups::LIMIT_KEY)
+                .ok()
+                .flatten()
+                .as_deref(),
+        );
         app.report_finished_update();
         crate::dev::run_actions(&mut app);
         Ok(app)
@@ -698,6 +882,8 @@ impl Studio {
         let root = self.data.join("backups");
         self.backups = tanki_core::apply::list_backups(&root).unwrap_or_default();
         self.applied = tanki_core::apply::applied_skins(&root).unwrap_or_default();
+        self.stored = tanki_core::backups::survey(&root).unwrap_or_default();
+        self.usage = Usage::of(&self.stored);
     }
 
     /// The skin the selected cache modification wears now, whichever pack it came from.
@@ -802,6 +988,78 @@ impl Studio {
                     .find(|(i, v)| self.variant_key(*i, *v).as_deref() == Some(key.as_str()))
             })
             .or_else(|| self.applied_variant(selection))
+            .or_else(|| self.lost_variant(selection))
+    }
+
+    /// The backup of the skin a game update took off a cache modification: its newest backup,
+    /// when that one is of a skin the game wrote over and no skin is on now.
+    pub fn lost_skin(&self, kind: &str, id: &str, grade: usize) -> Option<&Stored> {
+        let code = grade_code(grade);
+        if self
+            .applied
+            .iter()
+            .any(|s| s.target.kind == kind && s.target.id == id && s.target.grade == code)
+        {
+            return None;
+        }
+        self.stored
+            .iter()
+            .find(|s| {
+                s.entry
+                    .tx
+                    .target
+                    .as_ref()
+                    .is_some_and(|t| t.kind == kind && t.id == id && t.grade == code)
+            })
+            .filter(|s| s.kept == tanki_core::backups::Kept::Replaced)
+    }
+
+    /// The active pack's variant of the skin a game update took off the selection.
+    pub fn lost_variant(&self, selection: &Selection) -> Option<(usize, usize)> {
+        let lost = self.lost_skin(&selection.kind, &selection.id, selection.grade)?;
+        let pack = self.active_pack.as_ref()?;
+        if pack.manifest.id != lost.entry.tx.pack_id {
+            return None;
+        }
+        let wanted = lost.entry.tx.skin_grade.as_deref();
+        self.pack_variants(&selection.kind, &selection.id)
+            .into_iter()
+            .filter(|&(i, v)| {
+                self.pack_variant(i, v)
+                    .is_some_and(|(_, variant)| variant.id == lost.entry.tx.variant_id)
+            })
+            .min_by_key(|&(i, _)| {
+                self.pack_variant(i, 0)
+                    .is_none_or(|(item, _)| Some(item.target.grade.as_str()) != wanted)
+            })
+    }
+
+    /// What an item wears, for the Garage's filter and cards: a skin a game update removed comes
+    /// first (it needs a look), then a skin on, then one that waits; else the original.
+    pub fn item_state(&self, item: &BaseItem) -> StateFilter {
+        if (0..4).any(|g| self.lost_skin(&item.kind, &item.id, g).is_some()) {
+            return StateFilter::Lost;
+        }
+        if self
+            .applied
+            .iter()
+            .any(|s| s.target.kind == item.kind && s.target.id == item.id)
+        {
+            return StateFilter::Skin;
+        }
+        let root = self
+            .scan
+            .as_ref()
+            .map(|s| s.root.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        if self
+            .later
+            .iter()
+            .any(|l| l.root == root && l.kind == item.kind && l.id == item.id)
+        {
+            return StateFilter::Waiting;
+        }
+        StateFilter::Original
     }
 
     pub fn remember_variant(&mut self, selection: &Selection, variant_id: &str) {

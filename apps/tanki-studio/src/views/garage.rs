@@ -7,7 +7,7 @@ use tanki_core::{
     apply::{cache_skin_files, missing_from},
     pack::PackTarget,
 };
-use tanki_i18n::{fmt, tl, tn};
+use tanki_i18n::{fmt, tl, tl_ctx, tn};
 use tanki_ui::{
     draw, fonts,
     fonts::Text,
@@ -19,7 +19,7 @@ use tanki_ui::{
 
 use super::{scroll_page, shell};
 use crate::{
-    app::{Selection, Studio, TABS},
+    app::{Page, Selection, StateFilter, Studio, TABS},
     model::{grade_code, target_name, target_title},
 };
 
@@ -260,15 +260,42 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         &label,
     );
     x += width + 8.0;
+    // Details opens the item's page; the chips give way to it.
+    let details = Button::new(ButtonKind::Ghost, tl!("Details"))
+        .icon(icons::SCAN_SEARCH)
+        .height(28.0);
+    let details_width = details.measure(ui);
+    let details_rect = Rect::from_min_size(
+        Pos2::new(stage.max.x - 18.0 - details_width, y - 2.0),
+        Vec2::new(details_width, 28.0),
+    );
+    let room = details_rect.min.x - 8.0;
     if let Some(row) = &row {
         let label = fmt(tl!("revision {r}"), &[("r", &row.revision)]);
         let width = widgets::chip_width(ui, &label);
-        widgets::paint_chip(
-            ui,
-            Rect::from_min_size(Pos2::new(x, y), Vec2::new(width, 24.0)),
-            ChipKind::Neutral,
-            &label,
-        );
+        if x + width <= room {
+            widgets::paint_chip(
+                ui,
+                Rect::from_min_size(Pos2::new(x, y), Vec2::new(width, 24.0)),
+                ChipKind::Neutral,
+                &label,
+            );
+            x += width + 8.0;
+        }
+    }
+    if app
+        .lost_skin(&selection.kind, &selection.id, selection.grade)
+        .is_some()
+    {
+        let label = tl!("Removed by a game update");
+        let width = widgets::chip_width(ui, label);
+        if x + width <= room {
+            let chip = Rect::from_min_size(Pos2::new(x, y), Vec2::new(width, 24.0));
+            widgets::paint_chip(ui, chip, ChipKind::Warning, label);
+        }
+    }
+    if in_rect(ui, details_rect, |ui| details.show(ui).clicked()) {
+        app.go(Page::Info);
     }
     // Preview: the chosen variant's picture, else the cache texture, else a placeholder icon.
     let center = Rect::from_min_max(
@@ -553,8 +580,11 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 .galley(Pos2::new(inner.min.x + 22.0, hint_y), text, tokens.danger);
         }
         None => {
+            let lost = chosen.is_some() && chosen == app.lost_variant(&selection);
             let hint = if chosen.is_none() && !options.is_empty() {
                 tl!("Pick a skin above to apply it.")
+            } else if lost {
+                tl!("A game update removed this skin. Apply it again.")
             } else if in_game {
                 tl!("This skin is in the game now.")
             } else {
@@ -579,11 +609,30 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
 fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let tokens = Tokens::get(ui.ctx());
     let tab = app.garage_tab.clone();
-    let list: Vec<_> = app
+    let in_tab: Vec<_> = app
         .items
         .iter()
         .filter(|i| i.kind == tab)
         .cloned()
+        .collect();
+    let states: Vec<StateFilter> = in_tab.iter().map(|i| app.item_state(i)).collect();
+    let count = |state: StateFilter| states.iter().filter(|s| **s == state).count();
+    // The filter shows the states that occur, and only when something is not original.
+    let shown_states: Vec<StateFilter> = StateFilter::ALL
+        .into_iter()
+        .filter(|s| *s == StateFilter::All || count(*s) > 0)
+        .collect();
+    let filtering = states.iter().any(|s| *s != StateFilter::Original);
+    let active = if filtering && shown_states.contains(&app.garage_state) {
+        app.garage_state
+    } else {
+        StateFilter::All
+    };
+    let list: Vec<_> = in_tab
+        .iter()
+        .zip(&states)
+        .filter(|(_, state)| active == StateFilter::All || **state == active)
+        .map(|(item, state)| (item.clone(), *state))
         .collect();
     let meta = tn(app.items.len() as u64, "{n} item", "{n} items");
     let body = widgets::panel(ui, rect, tl!("Items"), Some(&meta));
@@ -608,19 +657,62 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         .icon(icons::LAYERS)
         .height(34.0);
     let button_width = button.measure(ui);
+    let segment_items: Vec<(&str, Option<String>)> = shown_states
+        .iter()
+        .map(|s| (state_label(*s), Some(count_of(&states, *s).to_string())))
+        .collect();
+    let dots: Vec<Option<egui::Color32>> = shown_states
+        .iter()
+        .map(|s| state_color(&tokens, *s))
+        .collect();
+    let active_index = shown_states.iter().position(|s| *s == active).unwrap_or(0);
+    let segments_width = widgets::dotted_segments_width(
+        ui,
+        &segment_items,
+        dots.iter().flatten().count(),
+        active_index,
+    );
+    let after_tabs = tabs.min.x + tabs_width + 12.0;
+    // The filter sits after the tabs when there is room, else on a line of its own.
+    let filter_inline =
+        !filtering || after_tabs + segments_width + 12.0 + button_width <= tabs.max.x;
+    let mut head_bottom = tabs.max.y;
+    if filtering {
+        let origin = if filter_inline {
+            Pos2::new(after_tabs, tabs.center().y - 16.0)
+        } else {
+            head_bottom += 10.0 + 32.0;
+            Pos2::new(tabs.min.x, tabs.max.y + 10.0)
+        };
+        let (_, clicked) = widgets::dotted_segments(
+            ui,
+            origin,
+            32.0,
+            &segment_items,
+            &dots,
+            active_index,
+            "garage-states",
+        );
+        if let Some(state) = clicked.and_then(|i| shown_states.get(i)) {
+            app.garage_state = *state;
+        }
+    }
     let button_rect = Rect::from_min_size(
         Pos2::new(tabs.max.x - button_width, tabs.min.y),
         Vec2::new(button_width, 34.0),
     );
-    if button_rect.min.x > tabs.min.x + tabs_width + 12.0 {
+    let left_of_button = if filtering && filter_inline {
+        after_tabs + segments_width + 12.0
+    } else {
+        after_tabs
+    };
+    if button_rect.min.x > left_of_button {
         if in_rect(ui, button_rect, |ui| button.show(ui).clicked()) {
             app.open_bulk();
         }
         let hint = tl!("One look on every hull and turret at once");
         let style = Text::body(13.0, 400, tokens.text_2);
-        if button_rect.min.x - 12.0 - fonts::width(ui.painter(), hint, style)
-            > tabs.min.x + tabs_width + 12.0
-        {
+        if button_rect.min.x - 12.0 - fonts::width(ui.painter(), hint, style) > left_of_button {
             fonts::draw_right(
                 ui.painter(),
                 button_rect.min.x - 12.0,
@@ -630,7 +722,7 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             );
         }
     }
-    let cards = Rect::from_min_max(Pos2::new(inner.min.x, tabs.max.y + 14.0), inner.max);
+    let cards = Rect::from_min_max(Pos2::new(inner.min.x, head_bottom + 14.0), inner.max);
     if list.is_empty() {
         fonts::draw_centered(
             ui.painter(),
@@ -645,7 +737,16 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let ctx = ui.ctx().clone();
     let covers: Vec<_> = list
         .iter()
-        .map(|i| app.item_cover(&ctx, &i.kind, &i.id))
+        .map(|(i, _)| app.item_cover(&ctx, &i.kind, &i.id))
+        .collect();
+    // A card of an item that lost its skin opens the modification that lost it.
+    let lost_grades: Vec<Option<usize>> = list
+        .iter()
+        .map(|(i, state)| {
+            (*state == StateFilter::Lost)
+                .then(|| (0..4).find(|g| app.lost_skin(&i.kind, &i.id, *g).is_some()))
+                .flatten()
+        })
         .collect();
     let mut chosen = None;
     in_rect(ui, cards, |ui| {
@@ -660,7 +761,7 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                         Vec2::new(cards.width(), CARD_HEIGHT + 16.0),
                         Sense::hover(),
                     );
-                    for (col, item) in chunk.iter().enumerate() {
+                    for (col, (item, state)) in chunk.iter().enumerate() {
                         let rect = Rect::from_min_size(
                             Pos2::new(top.x + col as f32 * (card_width + 16.0), top.y),
                             Vec2::new(card_width, CARD_HEIGHT),
@@ -672,7 +773,11 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                             .is_some_and(|s| s.kind == item.kind && s.id == item.id);
                         // A card picks the item; its modification is chosen in the "My tank" panel.
                         let grade = app.selection.as_ref().filter(|_| selected).map_or_else(
-                            || (0..4).rev().find(|g| item.present[*g]).unwrap_or(3),
+                            || {
+                                lost_grades[index].unwrap_or_else(|| {
+                                    (0..4).rev().find(|g| item.present[*g]).unwrap_or(3)
+                                })
+                            },
                             |s| s.grade,
                         );
                         let cover = covers[index].as_ref().map_or(Cover::Icon(icons::BOX), |t| {
@@ -687,6 +792,7 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                                 kind: kind_label(&item.kind),
                                 cover,
                                 selected,
+                                state: card_state(*state),
                             },
                         );
                         if response.card.clicked() {
@@ -702,5 +808,43 @@ fn items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     });
     if let Some(selection) = chosen {
         app.selection = Some(selection);
+    }
+}
+
+/// A filter segment names a group of items ("Waiting" are the items that wait), a card one item.
+fn state_label(state: StateFilter) -> &'static str {
+    match state {
+        StateFilter::All => tl!("All"),
+        StateFilter::Skin => tl!("Skin on"),
+        StateFilter::Original => tl!("Original"),
+        StateFilter::Waiting => tl_ctx!("filter", "Waiting"),
+        StateFilter::Lost => tl_ctx!("filter", "Lost"),
+    }
+}
+
+fn state_color(tokens: &Tokens, state: StateFilter) -> Option<egui::Color32> {
+    match state {
+        StateFilter::Skin => Some(tokens.primary),
+        StateFilter::Waiting => Some(tokens.info),
+        StateFilter::Lost => Some(tokens.accent),
+        StateFilter::All | StateFilter::Original => None,
+    }
+}
+
+fn count_of(states: &[StateFilter], state: StateFilter) -> usize {
+    if state == StateFilter::All {
+        states.len()
+    } else {
+        states.iter().filter(|s| **s == state).count()
+    }
+}
+
+/// The chip of a card: what the item wears, in a word ("Skin on", "Waiting", "Lost").
+fn card_state(state: StateFilter) -> Option<(ChipKind, &'static str, Option<char>)> {
+    match state {
+        StateFilter::Skin => Some((ChipKind::Success, tl!("Skin on"), None)),
+        StateFilter::Waiting => Some((ChipKind::Info, tl!("Waiting"), Some(icons::CLOCK_3))),
+        StateFilter::Lost => Some((ChipKind::Warning, tl!("Lost"), Some(icons::TRIANGLE_ALERT))),
+        StateFilter::All | StateFilter::Original => None,
     }
 }

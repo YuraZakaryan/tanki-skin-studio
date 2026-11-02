@@ -17,16 +17,42 @@ use tanki_ui::{
 
 use super::{scroll_page, shell};
 use crate::{
-    app::Studio,
+    app::{Page, Studio},
     model::{grade_code, marker_id, target_name, target_title},
 };
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
-    widgets::top_bar(
+    // A page of the Garage (its Details), or of Resources when a resource is being labelled:
+    // Back goes where it came from, and the title names the item.
+    let from = if app.label_resource.is_some() {
+        Page::Resources
+    } else {
+        Page::Garage
+    };
+    let (title, subtitle) = match &app.selection {
+        Some(selection) if app.label_resource.is_none() => (
+            crate::model::target_title(&selection.id),
+            fmt(
+                tl!("{kind} · modifications, skin variants, pack and labeling"),
+                &[("kind", super::garage::kind_label(&selection.kind))],
+            ),
+        ),
+        _ => (
+            tl!("Item").to_owned(),
+            tl!("Modifications, skin variants, pack and manual labeling").to_owned(),
+        ),
+    };
+    let back = if from == Page::Resources {
+        tl!("Back to Resources")
+    } else {
+        tl!("Back to Garage")
+    };
+    let go_back = widgets::top_bar_back(
         ui,
         shell::top_bar_rect(main),
-        tl!("Item"),
-        tl!("Modifications, skin variants, pack and manual labeling"),
+        &title,
+        &subtitle,
+        back,
         |ui| {
             if Button::new(ButtonKind::Primary, tl!("Apply"))
                 .icon(icons::CHECK)
@@ -38,6 +64,9 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
             }
         },
     );
+    if go_back {
+        app.go(from);
+    }
     let body = Rect::from_min_max(
         Pos2::new(main.min.x, main.min.y + shell::TOP_BAR_HEIGHT),
         main.max,
@@ -490,23 +519,25 @@ fn labeling(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     }
     let toggle_rect =
         Rect::from_min_size(Pos2::new(inner.min.x, y), Vec2::new(inner.width(), 22.0));
+    let whole = tl!("Label all modifications M0–M3 (adjacent resources)");
     ui.add_enabled_ui(active, |ui| {
         in_rect(ui, toggle_rect, |ui| {
             ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 12.0;
-                widgets::toggle(
-                    ui,
-                    &mut app.label_whole,
-                    tl!("Label all modifications M0–M3 (adjacent resources)"),
-                );
-                ui.label(
-                    egui::RichText::new(tl!("Label all modifications M0–M3 (adjacent resources)"))
-                        .color(tokens.text_2)
-                        .size(13.0),
-                );
+                widgets::toggle(ui, &mut app.label_whole, whole).on_hover_text(whole);
             });
         });
     });
+    // The switch's caption, shortened with "…" in a narrow panel (the switch keeps the full name).
+    let style = Text::body(13.0, 400, tokens.text_2);
+    let caption = fonts::ellipsize(ui.painter(), whole, style, toggle_rect.width() - 52.0);
+    let caption_painter = ui.painter().with_clip_rect(toggle_rect);
+    fonts::draw_left(
+        &caption_painter,
+        toggle_rect.min.x + 52.0,
+        toggle_rect.center().y,
+        &caption,
+        style,
+    );
     let valid = !app.label_id.trim().is_empty()
         && app
             .label_id

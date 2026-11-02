@@ -5,6 +5,7 @@
 //! files on disk. No window is opened, so these run on every machine in `cargo test`.
 
 mod archive;
+mod backups;
 mod bulk;
 mod caches;
 mod chaos;

@@ -557,14 +557,14 @@ fn the_batch_is_one_entry_of_the_backups_which_undoes_it() {
     h.run_steps(4);
     h.get_by_label("Done").click();
     h.run_steps(2);
-    h.state_mut().go(Page::Packs);
+    h.state_mut().go(Page::Backups);
     h.run_steps(3);
     assert_eq!(
-        tanki_studio::model::backup_rows(&h.state().backups).len(),
+        tanki_studio::backups::lines(&h.state().stored, |id| id.to_owned()).len(),
         1,
         "twelve replacements, one entry"
     );
-    h.get_by_label("XT · 4 items").click();
+    h.get_by_label("Undo").click();
     h.run_steps(3);
     assert!(matches!(
         h.state().dialog,

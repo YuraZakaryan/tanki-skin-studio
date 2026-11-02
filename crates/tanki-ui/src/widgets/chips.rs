@@ -14,7 +14,7 @@ pub enum ChipKind {
     Neutral,
 }
 
-fn colors(tokens: &Tokens, kind: ChipKind) -> (Color32, Color32) {
+pub(crate) fn chip_colors(tokens: &Tokens, kind: ChipKind) -> (Color32, Color32) {
     match kind {
         ChipKind::Success => (tokens.primary_soft, tokens.primary),
         ChipKind::Info => (tokens.info_soft, tokens.info),
@@ -33,7 +33,7 @@ pub fn chip_width(ui: &Ui, label: &str) -> f32 {
 /// Paint a chip (pill with a dot and a label) at `rect`'s left edge, `rect` being 24 high.
 pub fn paint_chip(ui: &Ui, rect: Rect, kind: ChipKind, label: &str) {
     let tokens = Tokens::get(ui.ctx());
-    let (fill, ink) = colors(&tokens, kind);
+    let (fill, ink) = chip_colors(&tokens, kind);
     draw::rounded(ui.painter(), rect, CornerRadius::same(12), fill, None);
     draw::dot(
         ui.painter(),
@@ -61,7 +61,7 @@ pub fn icon_chip_at_right(
     label: &str,
 ) -> f32 {
     let tokens = Tokens::get(ui.ctx());
-    let (fill, ink) = colors(&tokens, kind);
+    let (fill, ink) = chip_colors(&tokens, kind);
     let style = Text::body(12.0, 600, ink);
     let width = 10.0 + 12.0 + 6.0 + fonts::width(ui.painter(), label, style) + 10.0;
     let rect = Rect::from_min_size(

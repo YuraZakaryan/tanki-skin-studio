@@ -7,6 +7,7 @@
 //! This crate knows nothing about caches, packs or skins, so any screen (or another app) can be
 //! assembled from it.
 
+pub mod brand;
 pub mod draw;
 pub mod fonts;
 pub mod icons;

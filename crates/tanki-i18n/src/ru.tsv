@@ -28,7 +28,6 @@
 	Author	Автор
 	Back to 100%	Вернуть 100%
 	Backups	Резервные копии
-	Backups appear after the first replacement.	Резервные копии появятся после первой замены.
 	Built a pack from the model archive: {items} · {variants}	Из архива моделей собран пак: {items} · {variants}
 	Cache found	Кэш найден
 	Cache not connected	Кэш не подключён
@@ -217,7 +216,6 @@
 	{os} · {n} files	{os} · файлов: {n}
 	{packs} · {variants}	{packs} · {variants}
 	{variants} · v{v}	{variants} · v{v}
-	{when} · {files}	{when} · {files}
 	Русский	Русский
 	↑↓ navigate	↑↓ навигация
 	↵ open	↵ открыть
@@ -265,7 +263,6 @@ step	Check and apply	Проверьте и наденьте
 	Pick a skin above to apply it.	Выберите скин выше, чтобы применить его.
 	Restore original files	Вернуть оригинальные файлы
 	Restore the original files?	Вернуть оригинальные файлы?
-	restored	откачено
 	Skin preview · not applied	Превью скина · не применён
 	The cache folder is gone. Choose it again.	Папка кэша пропала. Выберите её снова.
 	Tanki Skin Studio is already open. Switch to its window.	Tanki Skin Studio уже открыт. Перейдите в его окно.
@@ -477,10 +474,6 @@ step	Check and apply	Проверьте и наденьте
 	Settings	Настройки
 	Go to Item	Перейти в Предмет
 	Go to Settings	Перейти в Настройки
-	Cache, skins that go on later, appearance and about	Кэш, отложенные скины, оформление и о программе
-	Automatic: at launch, when you come back to the window and every 5 minutes. A check barely loads the computer.	Автоматически: при запуске, когда вы возвращаетесь в окно, и раз в 5 минут. Проверка почти не нагружает компьютер.
-	Rescan the cache	Перечитывать кэш
-	The Studio notices new game files by itself.	Студия сама замечает новые файлы игры.
 	Automatic	Автоматически
 	Every hour	Раз в час
 	Manual	Вручную
@@ -490,16 +483,99 @@ step	Check and apply	Проверьте и наденьте
 	Not yet	Ещё не было
 	Rescan now	Перечитать сейчас
 	Last check	Последняя проверка
-	Open the list	Открыть список
-	Nothing waits	Ничего не ждёт
-	A modification the game has not downloaded yet waits here, then goes on by itself.	Модификация, которую игра ещё не скачала, ждёт здесь, а потом наденется сама.
-	The Studio puts it on by itself once the game downloads it.	Студия наденет её сама, когда игра её скачает.
 	Theme	Тема
 	Like the system, or always light or dark	Как в системе или всегда светлая либо тёмная
 	Source code	Исходный код
-	Report a problem	Сообщить о проблеме
 	About	О программе
-	Version {version} · {license}	Версия {version} · {license}
 @plural	{n} modification goes on later, once the game downloads it|{n} modifications go on later, once the game downloads them	{n} модификация наденется позже, когда игра её скачает|{n} модификации наденутся позже, когда игра их скачает|{n} модификаций наденутся позже, когда игра их скачает
 @plural	{n} goes on later|{n} go on later	{n} наденется позже|{n} наденутся позже|{n} наденутся позже
-@plural	{n} modification goes on later|{n} modifications go on later	{n} модификация наденется позже|{n} модификации наденутся позже|{n} модификаций наденутся позже
+	A game update removed this skin. Apply it again.	Обновление игры сбросило этот скин. Примените его снова.
+	All releases on GitHub	Все выпуски на GitHub
+	Also Ctrl and + or −	Также Ctrl и + или −
+	Also ⌘ and + or −	Также ⌘ и + или −
+	Back to Garage	Назад в Гараж
+	Back to Resources	Назад в Ресурсы
+	Back to Settings	Назад в Настройки
+	Cache in use	Используемый кэш
+	Checking…	Проверяем…
+	Community	Сообщество
+	Current	Текущая
+	Delete and put on	Удалить и надеть
+	Delete old	Удалить старые
+	Delete old backups	Удалить старые копии
+	Delete old backups?	Удалить старые копии?
+	Details	Подробнее
+	Even deleting every backup is not enough. Free up disk space and try again.	Даже удаления всех копий не хватит. Освободите место на диске и попробуйте снова.
+	Freed {size}	Освобождено {size}
+	Game cache, backups and appearance	Кэш игры, резервные копии и оформление
+	Go to About	Перейти в «О программе»
+	Go to Backups	Перейти в резервные копии
+	In the cache in use: at launch and every hour	В используемом кэше: при запуске и раз в час
+	In the cache in use: at launch, on return to the window and every 5 minutes	В используемом кэше: при запуске, при возврате в окно и каждые 5 минут
+	In the cache in use: only with Rescan now	В используемом кэше: только по кнопке «Перечитать сейчас»
+	Interface size	Размер интерфейса
+	Larger	Крупнее
+	Look for new game files	Искать новые файлы игры
+	Lost	Слетел
+	Needed to undo	Нужны для отмены
+	News and new skin packs	Новости и новые паки скинов
+	No backups yet. Each skin you put on keeps its original files here.	Резервных копий пока нет. Каждый надетый скин хранит здесь исходные файлы.
+	No game cache found	Кэш игры не найден
+	No limit	Без ограничения
+	No old backups	Старых копий нет
+	Not enough disk space	Не хватает места на диске
+	Not enough disk space to put on the waiting skins. Free up space or delete old backups in Settings.	Не хватает места на диске, чтобы надеть ожидающие скины. Освободите место или удалите старые копии в Настройках.
+	Nothing here with this filter.	С этим фильтром ничего нет.
+	Old	Старые
+	Old backups · {n}	Старые копии · {n}
+	Old · removed by a game update	Старая · сброшена обновлением
+	Old · taken off	Старая · скин снят
+	Oldest backups of skins on now · {n}	Самые старые копии надетых скинов · {n}
+	Or free up disk space and try again.	Или освободите место на диске и попробуйте снова.
+	Original	Оригинал
+	Original files of every skin put on, newest first	Исходные файлы каждого надетого скина, сначала новые
+	Original files, so any skin can be taken off	Исходные файлы, чтобы любой скин можно было снять
+	Over it, the oldest old backups go first	Сверх него первыми удаляются самые старые из старых
+	Questions and help from players	Вопросы и помощь от игроков
+	Removed by a game update	Сброшен обновлением игры
+	Safe	Безопасно
+	Skin on	В скине
+	Skins on now keep their backups and can still be taken off.	У надетых сейчас скинов копии остаются, их по-прежнему можно снять.
+	Smaller	Мельче
+	Space for backups	Место под копии
+	Switch	Сменить
+	Telegram channel	Telegram-канал
+	Telegram chat	Telegram-чат
+	Telegram and YouTube are trademarks of their respective owners. Tanki Skin Studio is not affiliated with or endorsed by them.	Telegram и YouTube — товарные знаки их правообладателей. Tanki Skin Studio не связана с ними и не одобрена ими.
+	The backup needs {need}, and the disk has {free} free.	Для резервной копии нужно {need}, а на диске свободно {free}.
+	{backups} · {size}. They are copies of skins you already took off or that a game update removed. Nothing changes in the game.	{backups} · {size}. Это копии скинов, которые вы уже сняли или которые сбросило обновление игры. В игре ничего не изменится.
+	Today	Сегодня
+	Up to date	Актуальная версия
+	Version {version}	Версия {version}
+	Version, what's new and community	Версия, что нового и сообщество
+	Video guides	Видеоинструкции
+	Waiting	Ждёт
+	Yesterday	Вчера
+	{kind} · modifications, skin variants, pack and labeling	{kind} · модификации, варианты скина, пак и разметка
+	{names} and {n} more	{names} и ещё {n}
+	{skins}: can no longer be taken off	{skins}: снять будет нельзя
+	{used} of {limit}	{used} из {limit}
+	{version} is out	Вышла {version}
+filter	Waiting	Ждут
+filter	Lost	Слетели
+backup	Needed to undo	Нужна для отмены
+@plural	{n} cache found|{n} caches found	найден {n} кэш|найдено {n} кэша|найдено {n} кэшей
+	Delete all	Удалить все
+	Delete all backups?	Удалить все копии?
+	Delete day	Удалить за день
+	Delete the backups of {date}?	Удалить копии за {date}?
+	Delete this backup?	Удалить эту копию?
+	Delete today's backups?	Удалить сегодняшние копии?
+	Delete yesterday's backups?	Удалить вчерашние копии?
+	It is an old backup: nothing changes in the game.	Это старая копия: в игре ничего не изменится.
+	Old backups among them change nothing in the game.	Старые копии среди них в игре ничего не меняют.
+	Old backups change nothing in the game.	Старые копии в игре ничего не меняют.
+	To keep a way back, use Restore original files first.	Чтобы сохранить путь назад, сначала нажмите «Вернуть исходные файлы».
+	{look} on {items}	{look} ({items})
+	{names} and {last}	{names} и {last}
+	{skins} are on now: they can no longer be taken off.	{skins} надеты сейчас: их больше нельзя будет снять.
