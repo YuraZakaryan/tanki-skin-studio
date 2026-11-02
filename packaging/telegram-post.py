@@ -82,7 +82,8 @@ def groups(lines):
         elif line.startswith("- "):
             flush()
             note = line[2:]
-        elif line.startswith("  ") and note is not None:
+        elif line.startswith("  ") and not line.strip().startswith("- ") and note is not None:
+            # A nested item is a detail: the headline comes from the item itself.
             note += " " + line.strip()
     flush()
     return [(heading, notes) for heading, notes in result if notes]
@@ -96,10 +97,23 @@ def first_end(text):
 
 def headline(text):
     """The change's headline as Telegram HTML: its bold parts bold, everything else escaped."""
-    raw = text.strip().replace("`", "")
-    plain = raw.replace("**", "")
+    # A Markdown link shows only its text; the buttons carry the links.
+    raw = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", text.strip()).replace("`", "")
+    # Where each character of the text without "**" sits in the text with it: the cut is found
+    # on the plain text, as changelog.rs finds it ("**Скины… позже.** Модификация" ends at
+    # "позже"), and made at the same character of the marked-up one.
+    spots, i = [], 0
+    while i < len(raw):
+        if raw.startswith("**", i):
+            i += 2
+        else:
+            spots.append(i)
+            i += 1
+    plain = "".join(raw[spot] for spot in spots)
+    end = first_end(plain)
+    raw = raw[: spots[end] if end < len(spots) else len(raw)]
     # A closing aside ("… в браузере (исходный код, выпуски…)") stays in the changelog.
-    raw = re.sub(r"\s*\([^()]*\)$", "", raw[: first_end(raw)].rstrip(". *"))
+    raw = re.sub(r"\s*\([^()]*\)$", "", raw.rstrip(". *"))
     if len(plain[: first_end(plain)].rstrip(". ")) > HEADLINE:
         # Too long to keep its markup: plain text, cut at a word with "…".
         cut = plain[:HEADLINE]
@@ -132,7 +146,10 @@ def post(version, changelog, url):
     blocks = []
     for heading, notes in groups(lines):
         title = HEADINGS.get(heading, heading)
-        items = [f"• {headline(note)}" for note in notes]
+        # A change that leaves no headline ("**:**") is left out, as in changelog.rs.
+        items = [f"• {line}" for line in map(headline, notes) if re.sub(r"<[^>]*>", "", line).strip()]
+        if not items:
+            continue
         blocks.append(([f"<b>{html.escape(title, quote=False)}</b>"] if title else []) + items)
 
     def text(more):
@@ -226,7 +243,7 @@ def main(args):
     changelog = Path(options["--changelog"] or ROOT / "CHANGELOG.ru.md")
     fields = post(version, changelog, url)
     if fields is None:
-        warn(f"CHANGELOG.ru.md has no section for {version}; nothing is posted")
+        warn(f"{changelog.name} has no section for {version}; nothing is posted")
         return 0
     if flags["--json"]:
         out(json.dumps(fields, ensure_ascii=False, indent=2))
