@@ -6,12 +6,12 @@
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
 use tanki_i18n::{fmt, tl};
 use tanki_ui::{
-    draw, fonts,
+    brand, draw, fonts,
     fonts::Text,
     icons,
     layout::in_rect,
     theme::Tokens,
-    widgets::{self, Button, ButtonKind, ChipKind, GroupRow, Tint},
+    widgets::{self, Button, ButtonKind, ChipKind, GroupRow, Mark, Tint},
 };
 
 use super::{scroll_page, shell};
@@ -38,9 +38,12 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     let releases = changelog::releases(app.lang);
     let content_width = body.width() - 64.0;
     let wide = content_width >= TWO_COLUMNS;
-    let community = community_rows();
+    let community = community_rows(app, ui.ctx());
     let side_width = if wide { RIGHT } else { content_width };
-    let community_height = 29.0 + widgets::group_height(ui, side_width, &community);
+    let community_height = 29.0
+        + widgets::group_height(ui, side_width, &community)
+        + 10.0
+        + trademark_note(ui, side_width).size().y;
     // One column: the notes get room for the open release and every header, then the page
     // scrolls.
     let notes_min = 29.0 + notes_height(app, ui, &releases, content_width) + 48.0;
@@ -79,6 +82,14 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
             "community",
         );
         let tokens = Tokens::get(ui.ctx());
+        if let Some(last) = places.last() {
+            let note = trademark_note(ui, side.width());
+            ui.painter().galley(
+                Pos2::new(side.min.x, last.rect.max.y + 10.0),
+                note,
+                tokens.text_3,
+            );
+        }
         for (place, url) in places.iter().zip(LINKS) {
             fonts::icon(
                 ui.painter(),
@@ -100,9 +111,33 @@ const LINKS: [&str; 3] = [
     about::YOUTUBE,
 ];
 
-fn community_rows() -> [GroupRow<'static>; 3] {
-    let row = |icon, tint, title, desc| GroupRow {
-        icon,
+/// The links show their services' own marks, so the page says whose they are.
+fn trademark_note(ui: &Ui, width: f32) -> std::sync::Arc<egui::Galley> {
+    let tokens = Tokens::get(ui.ctx());
+    fonts::paragraph(
+        ui.painter(),
+        tl!(
+            "Telegram and YouTube are trademarks of their respective owners. Tanki Skin Studio is not affiliated with or endorsed by them."
+        ),
+        Text::body(11.0, 400, tokens.text_3),
+        width,
+        Some(15.0),
+    )
+}
+
+fn community_rows(app: &mut Studio, ctx: &egui::Context) -> [GroupRow<'static>; 3] {
+    let mut mark = |key: &str, bytes: &'static [u8], size| {
+        app.texture(ctx, key, || Some(bytes.to_vec()))
+            .map(|texture| Mark {
+                texture: texture.id(),
+                size,
+            })
+    };
+    let telegram = mark("brand/telegram", brand::TELEGRAM, brand::TELEGRAM_SIZE);
+    let youtube = mark("brand/youtube", brand::YOUTUBE, brand::YOUTUBE_SIZE);
+    let row = |mark, tint, title, desc| GroupRow {
+        icon: icons::EXTERNAL_LINK,
+        mark,
         tint,
         title,
         desc: Some(desc),
@@ -112,18 +147,18 @@ fn community_rows() -> [GroupRow<'static>; 3] {
     };
     [
         row(
-            icons::SEND,
+            telegram,
             Tint::Info,
             tl!("Telegram channel"),
             tl!("News and new skin packs"),
         ),
         row(
-            icons::MESSAGES_SQUARE,
+            telegram,
             Tint::Info,
             tl!("Telegram chat"),
             tl!("Questions and help from players"),
         ),
-        row(icons::YOUTUBE, Tint::Danger, "YouTube", tl!("Video guides")),
+        row(youtube, Tint::Danger, "YouTube", tl!("Video guides")),
     ]
 }
 

@@ -4,7 +4,7 @@
 //! row per setting with its icon, title and one line of description on the left and its control
 //! on the right, a hairline between rows. On a narrow page the control goes under the text.
 
-use egui::{Color32, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
+use egui::{Color32, CornerRadius, Pos2, Rect, Sense, TextureId, Ui, Vec2};
 
 use super::describe;
 use crate::{draw, fonts, fonts::Text, theme::Tokens};
@@ -18,9 +18,19 @@ pub enum Tint {
     Danger,
 }
 
+/// A brand's own mark, drawn as it is (no tinted box) in place of a row's icon: an image
+/// `size` points large, centred in the icon's square.
+#[derive(Clone, Copy, Debug)]
+pub struct Mark {
+    pub texture: TextureId,
+    pub size: Vec2,
+}
+
 /// One row of a [`group`].
 pub struct GroupRow<'a> {
     pub icon: char,
+    /// Drawn instead of `icon` when set.
+    pub mark: Option<Mark>,
     pub tint: Tint,
     pub title: &'a str,
     pub desc: Option<&'a str>,
@@ -176,8 +186,17 @@ pub fn group(
             Pos2::new(rect.min.x + PAD_X, rect.min.y + PAD_Y + (head - ICON) / 2.0),
             Vec2::splat(ICON),
         );
-        draw::rounded(ui.painter(), icon_box, CornerRadius::same(8), fill, None);
-        fonts::icon(ui.painter(), icon_box.center(), row.icon, 16.0, ink);
+        if let Some(mark) = row.mark {
+            ui.painter().image(
+                mark.texture,
+                Rect::from_center_size(icon_box.center(), mark.size),
+                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                Color32::WHITE,
+            );
+        } else {
+            draw::rounded(ui.painter(), icon_box, CornerRadius::same(8), fill, None);
+            fonts::icon(ui.painter(), icon_box.center(), row.icon, 16.0, ink);
+        }
         let text_height = 19.0 + desc_height(ui, width, row);
         let text_top = rect.min.y + PAD_Y + (head - text_height) / 2.0;
         let x = rect.min.x + TEXT_X;

@@ -36,3 +36,17 @@ SPDX-FileCopyrightText = [
     "2013-2022 Cole Bemis (portions from Feather)",
 ]
 SPDX-License-Identifier = "ISC"
+
+# Other brands' marks for the links in About, unchanged, used as their owners' guidelines allow
+# (see docs/brand-marks.md). They are trademarks, not under this project's licence.
+[[annotations]]
+path = "crates/tanki-ui/assets/brand/telegram.png"
+precedence = "override"
+SPDX-FileCopyrightText = "Telegram (https://telegram.org/tour/screenshots)"
+SPDX-License-Identifier = "LicenseRef-Trademark"
+
+[[annotations]]
+path = "crates/tanki-ui/assets/brand/youtube.png"
+precedence = "override"
+SPDX-FileCopyrightText = "Google LLC (https://brand.youtube/youtube-icon/)"
+SPDX-License-Identifier = "LicenseRef-Trademark"

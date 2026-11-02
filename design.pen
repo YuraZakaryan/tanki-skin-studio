@@ -132507,11 +132507,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "send",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "iodTG",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "cAkKJ",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram channel"
@@ -132548,11 +132565,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "messages-square",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "loWI6",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "mscec",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram chat"
@@ -132590,11 +132624,28 @@
 																	"strokeWidth": 0,
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$danger-soft"
-																		},
-																		"DomiC": {
-																			"icon": "youtube",
-																			"fill": "$danger"
+																			"type": "frame",
+																			"id": "msYHY",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "pbDt6",
+																					"name": "YouTube",
+																					"width": 36,
+																					"height": 31,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/youtube.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "YouTube"
@@ -132624,6 +132675,19 @@
 																	}
 																}
 															]
+														},
+														{
+															"type": "text",
+															"id": "ZwcvG",
+															"name": "Trademark note",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Telegram and YouTube are trademarks of their respective owners. Tanki Skin Studio is not affiliated with or endorsed by them.",
+															"lineHeight": 1.4,
+															"fontFamily": "$font-body",
+															"fontSize": 11,
+															"fontWeight": "normal"
 														}
 													]
 												}
@@ -133590,11 +133654,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "send",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "JKMPH",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "m9qlgg",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram channel"
@@ -133631,11 +133712,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "messages-square",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "zVlNH",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "RWocc",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram chat"
@@ -133673,11 +133771,28 @@
 																	"strokeWidth": 0,
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$danger-soft"
-																		},
-																		"DomiC": {
-																			"icon": "youtube",
-																			"fill": "$danger"
+																			"type": "frame",
+																			"id": "fZQUM",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "oWxX2",
+																					"name": "YouTube",
+																					"width": 36,
+																					"height": 31,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/youtube.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "YouTube"
@@ -133707,6 +133822,19 @@
 																	}
 																}
 															]
+														},
+														{
+															"type": "text",
+															"id": "dwJLY",
+															"name": "Trademark note",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Telegram and YouTube are trademarks of their respective owners. Tanki Skin Studio is not affiliated with or endorsed by them.",
+															"lineHeight": 1.4,
+															"fontFamily": "$font-body",
+															"fontSize": 11,
+															"fontWeight": "normal"
 														}
 													]
 												}
@@ -134688,11 +134816,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "send",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "u7R3e0",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "Ac7t3",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram-канал"
@@ -134729,11 +134874,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "messages-square",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "Gki4L",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "ToDh7",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram-чат"
@@ -134771,11 +134933,28 @@
 																	"strokeWidth": 0,
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$danger-soft"
-																		},
-																		"DomiC": {
-																			"icon": "youtube",
-																			"fill": "$danger"
+																			"type": "frame",
+																			"id": "FMOgb",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "vmR2o",
+																					"name": "YouTube",
+																					"width": 36,
+																					"height": 31,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/youtube.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "YouTube"
@@ -134805,6 +134984,19 @@
 																	}
 																}
 															]
+														},
+														{
+															"type": "text",
+															"id": "nik9h",
+															"name": "Trademark note",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Telegram и YouTube — товарные знаки их правообладателей. Tanki Skin Studio не связана с ними и не одобрена ими.",
+															"lineHeight": 1.4,
+															"fontFamily": "$font-body",
+															"fontSize": 11,
+															"fontWeight": "normal"
 														}
 													]
 												}
@@ -135786,11 +135978,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "send",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "kLU4Z",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "pm49E",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram-канал"
@@ -135827,11 +136036,28 @@
 																	"width": "fill_container",
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$info-soft"
-																		},
-																		"DomiC": {
-																			"icon": "messages-square",
-																			"fill": "$info"
+																			"type": "frame",
+																			"id": "L0Hjj",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "WUjVk",
+																					"name": "Telegram",
+																					"width": 28,
+																					"height": 28,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/telegram.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "Telegram-чат"
@@ -135869,11 +136095,28 @@
 																	"strokeWidth": 0,
 																	"descendants": {
 																		"DCWCD": {
-																			"fill": "$danger-soft"
-																		},
-																		"DomiC": {
-																			"icon": "youtube",
-																			"fill": "$danger"
+																			"type": "frame",
+																			"id": "mrkI2",
+																			"name": "Mark",
+																			"width": 36,
+																			"height": 36,
+																			"justifyContent": "center",
+																			"alignItems": "center",
+																			"children": [
+																				{
+																					"type": "frame",
+																					"id": "pTmm9",
+																					"name": "YouTube",
+																					"width": 36,
+																					"height": 31,
+																					"fill": {
+																						"type": "image",
+																						"enabled": true,
+																						"url": "crates/tanki-ui/assets/brand/youtube.png",
+																						"mode": "contain"
+																					}
+																				}
+																			]
 																		},
 																		"R7a4ua": {
 																			"content": "YouTube"
@@ -135903,6 +136146,19 @@
 																	}
 																}
 															]
+														},
+														{
+															"type": "text",
+															"id": "McG5m",
+															"name": "Trademark note",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Telegram и YouTube — товарные знаки их правообладателей. Tanki Skin Studio не связана с ними и не одобрена ими.",
+															"lineHeight": 1.4,
+															"fontFamily": "$font-body",
+															"fontSize": 11,
+															"fontWeight": "normal"
 														}
 													]
 												}

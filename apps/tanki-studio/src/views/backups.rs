@@ -412,6 +412,7 @@ fn rows<'a>(ui: &Ui, lines: &'a [&'a Line], details: &'a [String]) -> Vec<GroupR
             } else {
                 icons::HISTORY
             },
+            mark: None,
             tint: if line.kept.is_old() {
                 Tint::Plain
             } else {

@@ -186,6 +186,7 @@ impl CacheRows {
         [
             GroupRow {
                 icon: icons::HARD_DRIVE,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Cache in use"),
                 desc: Some(&self.cache_desc),
@@ -195,6 +196,7 @@ impl CacheRows {
             },
             GroupRow {
                 icon: icons::HISTORY,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Last check"),
                 desc: Some(&self.last_desc),
@@ -204,6 +206,7 @@ impl CacheRows {
             },
             GroupRow {
                 icon: icons::REFRESH_CW,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Look for new game files"),
                 desc: Some(self.scan_desc),
@@ -213,6 +216,7 @@ impl CacheRows {
             },
             GroupRow {
                 icon: icons::ARCHIVE,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Backups"),
                 desc: Some(tl!("Original files, so any skin can be taken off")),
@@ -375,6 +379,7 @@ impl LookRows {
         [
             GroupRow {
                 icon: icons::SUN_MOON,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Theme"),
                 desc: Some(tl!("Like the system, or always light or dark")),
@@ -384,6 +389,7 @@ impl LookRows {
             },
             GroupRow {
                 icon: icons::LANGUAGES,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Language"),
                 desc: None,
@@ -393,6 +399,7 @@ impl LookRows {
             },
             GroupRow {
                 icon: icons::ZOOM_IN,
+                mark: None,
                 tint: Tint::Plain,
                 title: tl!("Interface size"),
                 desc: Some(if cfg!(target_os = "macos") {

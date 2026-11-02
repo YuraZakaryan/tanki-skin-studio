@@ -193,6 +193,7 @@ else's game content.
 |---|---|---|
 | Source code | Rust, GPL-3.0-or-later | `apps/`, `crates/`, `xtask/` |
 | Fonts | Chakra Petch, Inter and JetBrains Mono (SIL Open Font License); Lucide icons (ISC). Each ships with its licence text | `crates/tanki-ui/assets/` |
+| Brand marks | Telegram's logo and YouTube's icon for the links in About, unchanged from their owners' official downloads; trademarks of their owners ([where they came from](docs/brand-marks.md)) | `crates/tanki-ui/assets/brand/` |
 | Licences | The text of every licence used, and the licence and copyright of every file ([REUSE](https://reuse.software) compliant) | `LICENSES/`, `REUSE.toml`, SPDX headers |
 | App icon | The project's own mark, drawn in `design.pen`: the SVG source and the PNG, `.ico` and `.icns` files rendered from it by `packaging/icons.sh` | `assets/app-icon/` |
 | Interface design | The project's own design file | `design.pen` |
@@ -448,3 +449,7 @@ Tanki Skin Studio is an independent fan project. It is **not affiliated with, en
 connected to** any game, game client or their developers, and it names none of them. The names of
 in-game items are property of their respective owners and are used here only to describe
 compatibility. All game content belongs to its owners and is not part of this project.
+
+Telegram and YouTube are trademarks of their respective owners. About shows their marks only to
+link to the project's channel, chat and video guides, as their brand guidelines allow; Tanki Skin
+Studio is not affiliated with or endorsed by them. See [docs/brand-marks.md](docs/brand-marks.md).

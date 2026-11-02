@@ -1,0 +1,10 @@
+These files are trademarks of their owners, not covered by this project's licence.
+
+Tanki Skin Studio shows them only to mark links to the owners' services, unchanged and as the
+owners' guidelines allow. It is not affiliated with or endorsed by the owners. You may not reuse
+these files under this project's licence; any other use is subject to the owner's own guidelines:
+
+- telegram.png: Telegram's logo, https://telegram.org/tour/screenshots
+- youtube.png: YouTube's icon, https://brand.youtube/youtube-icon/
+
+See docs/brand-marks.md for where each file came from and how it was made.

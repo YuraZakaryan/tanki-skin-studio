@@ -418,6 +418,13 @@ fn about_lists_the_releases_and_opens_one_at_a_time() {
     ] {
         assert!(h.query_by_label(label).is_some(), "{label}");
     }
+    // The links show their services' own marks, decoded from the files built in.
+    for key in ["brand/telegram", "brand/youtube"] {
+        assert!(
+            h.state().textures.get(key).is_some_and(Option::is_some),
+            "{key} is drawn"
+        );
+    }
     // Each community row hands its link to the system to open in the browser.
     for (label, url) in [
         ("Telegram channel", tanki_studio::about::TELEGRAM_CHANNEL),

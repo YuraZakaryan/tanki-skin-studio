@@ -29,7 +29,8 @@ All notable changes are recorded here. The format follows
 - **About page** in the sidebar: version and whether it is up to date, the source code, what's new
   in every version (from the changelog built into the app, in the interface language, one version
   open at a time, scrolling when there are many) and the community: the Telegram channel, the
-  Telegram chat and the YouTube video guides.
+  Telegram chat and the YouTube video guides, each with its service's own mark, used unchanged
+  as the owner allows, and a note that the app is not affiliated with them.
 
 ### Changed
 
