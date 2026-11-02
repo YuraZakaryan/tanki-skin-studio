@@ -333,8 +333,10 @@ pub struct Settings {
 }
 
 impl Settings {
-    /// Every modification on; each takes its own skin when an item has one (or the edition's),
-    /// else the skin of the highest modification some item has.
+    /// A modification is on when some item has a skin made for it, so no modification wears
+    /// another one's skin, nor an edition's one skin for all, unless the user turns it on. Each
+    /// takes its own skin when an item has one (or the edition's), else the skin of the highest
+    /// modification some item has: what it gets when turned on.
     pub fn for_look(look: &Look) -> Self {
         let sources = look.sources();
         let edition = look.has_edition_skins();
@@ -345,7 +347,10 @@ impl Settings {
             } else {
                 highest.map_or(Source::Own, Source::From)
             };
-            Choice { on: true, source }
+            Choice {
+                on: sources[k],
+                source,
+            }
         });
         Self {
             choices,
@@ -1134,7 +1139,12 @@ mod tests {
         let looks = gather_looks(&refs, &items);
         let xt = &looks[0];
         let settings = Settings::for_look(xt);
-        assert!(settings.choices.iter().all(|c| c.on));
+        let on: Vec<bool> = settings.choices.iter().map(|c| c.on).collect();
+        assert_eq!(
+            on,
+            [true, false, false, true],
+            "only the modifications some item has its own skin for"
+        );
         assert_eq!(settings.choices[0].source, Source::Own);
         assert_eq!(
             settings.choices[1].source,
@@ -1151,9 +1161,18 @@ mod tests {
             Settings::for_look(prime)
                 .choices
                 .iter()
-                .all(|c| c.source == Source::Own),
-            "an edition skin is every modification's own"
+                .all(|c| c.source == Source::Own && !c.on),
+            "an edition's one skin is every modification's own, and none is on until chosen"
         );
+    }
+
+    /// The look's defaults with every modification turned on.
+    fn all_on(look: &Look) -> Settings {
+        let mut settings = Settings::for_look(look);
+        for choice in &mut settings.choices {
+            choice.on = true;
+        }
+        settings
     }
 
     #[test]
@@ -1181,7 +1200,7 @@ mod tests {
                 Vec::new()
             }
         };
-        let mut settings = Settings::for_look(xt);
+        let mut settings = all_on(xt);
         settings.choices[1] = Choice {
             on: false,
             source: Source::Own,
@@ -1344,7 +1363,7 @@ mod tests {
         let looks = gather_looks(&refs, &items);
         let xt = &looks[0];
         let none = |_: &LookItem, _: u8, _: &LookSkin| Vec::new();
-        let mut settings = Settings::for_look(xt);
+        let mut settings = all_on(xt);
         settings.turrets = false;
         let plan = plan_of(xt, &settings, &items, &[], &none);
         assert!(plan.rows.iter().all(|r| r.kind == "hull"));

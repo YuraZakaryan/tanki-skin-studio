@@ -15,8 +15,8 @@ use std::{
 
 use tanki_core::{
     apply::{
-        ApplyNote, Batch, SKIN_FILES, apply_variant_in, missing_files, missing_from,
-        pending_restores, planned_files, restore_all, restore_batch,
+        ApplyNote, Batch, SKIN_FILES, apply_variant_in, cache_skin_files, missing_files,
+        missing_from, pending_restores, planned_files, restore_all, restore_batch,
     },
     archive,
     cache::{client_id, known_target_group, looks_like_cache, scan_cache},
@@ -530,7 +530,12 @@ impl Studio {
         let Some(pack) = &self.active_pack else {
             return;
         };
-        let files = match planned_files(pack, pack_variant) {
+        let cache_files = self
+            .scan
+            .as_ref()
+            .map(|scan| cache_skin_files(scan, &cache_target))
+            .unwrap_or_default();
+        let files = match planned_files(pack, pack_variant, &cache_files) {
             Ok(files) => files,
             Err(error) => {
                 self.toast(crate::errors::user_message(&error), None);

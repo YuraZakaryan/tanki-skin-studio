@@ -84266,20 +84266,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "QIoF9",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "HDfOr",
+																			"id": "ECrVj",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84289,20 +84297,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "ntr6B",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "KBIIz",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "TaZ3n",
+																			"id": "8chDM",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84312,14 +84328,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "PEjXn",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "yuvoy",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -84550,20 +84574,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "X9jH5f",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "P7dABO",
+																			"id": "bAuqH",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84573,20 +84605,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "UuwEs",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "Qf075",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "O96yOt",
+																			"id": "5GOT9",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84596,14 +84636,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "D8g3W",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "BOxaw",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -84824,20 +84872,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "A7zz1c",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "KKlFJ",
+																			"id": "TP8SD",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84847,20 +84903,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "W0Fmu",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "qZqva",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "dVePu",
+																			"id": "Kq534",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -84870,14 +84934,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "E45caS",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "FafDM",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -85110,20 +85182,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "H6qcJ",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "uhhRn",
+																			"id": "sPfwD",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -85133,20 +85213,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "z5iMYq",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "Obg3C",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "IWlix",
+																			"id": "VIeqO",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -85156,14 +85244,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "ze42R",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "3Ojti",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -85385,20 +85481,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "pAKAP",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "VOmmv",
+																			"id": "eo8kP",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -85408,20 +85512,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "gS2Jm",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "Ca1dH",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "C1s7cG",
+																			"id": "PsW4y",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -85431,14 +85543,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "tMdU0",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "au5rg",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -85660,57 +85780,11 @@
 																			"children": [
 																				{
 																					"type": "icon",
-																					"id": "j6ph4",
-																					"name": "Icon car-front",
-																					"width": 22,
-																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
-																				}
-																			]
-																		},
-																		{
-																			"type": "frame",
-																			"id": "mDDND",
-																			"name": "Preview",
-																			"width": "fill_container",
-																			"height": "fill_container",
-																			"fill": "$surface-3",
-																			"cornerRadius": 8,
-																			"justifyContent": "center",
-																			"alignItems": "center",
-																			"children": [
-																				{
-																					"type": "icon",
 																					"id": "IGJJA",
 																					"name": "Icon crosshair",
 																					"width": 22,
 																					"height": 22,
 																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
-																				}
-																			]
-																		},
-																		{
-																			"type": "frame",
-																			"id": "X3YE37",
-																			"name": "Preview",
-																			"width": "fill_container",
-																			"height": "fill_container",
-																			"fill": "$surface-3",
-																			"cornerRadius": 8,
-																			"justifyContent": "center",
-																			"alignItems": "center",
-																			"children": [
-																				{
-																					"type": "icon",
-																					"id": "R8YaB",
-																					"name": "Icon car-front",
-																					"width": 22,
-																					"height": 22,
-																					"icon": "car-front",
 																					"library": "lucide",
 																					"fill": "$text-3"
 																				}
@@ -85771,7 +85845,7 @@
 																			"id": "S4kdg",
 																			"name": "3 items · 2 hulls · 1 tu",
 																			"fill": "$text-2",
-																			"content": "3 items · 2 hulls · 1 turret · 2 packs",
+																			"content": "1 item · 1 turret · 1 pack",
 																			"fontFamily": "$font-body",
 																			"fontSize": 12,
 																			"fontWeight": "normal"
@@ -86628,20 +86702,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "mX9Zw",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "uUy35",
+																			"id": "N96i8",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -86651,20 +86733,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "y3Bydh",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "CHO6P",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "ODzGo",
+																			"id": "QWErg",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -86674,14 +86764,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "X1BdgB",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "sUGP2",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -86912,20 +87010,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "WP62B",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "dXx4v",
+																			"id": "kLokl",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -86935,20 +87041,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "BKbmZ",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "vd4Js",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "mpOQI",
+																			"id": "MA1f3",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -86958,14 +87072,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "x7TS7",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "f8n0m",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -87186,20 +87308,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "M0IMw4",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "dLWag",
+																			"id": "1ijBy",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87209,20 +87339,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "TlU7B",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "OOfpO",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "y9ypFT",
+																			"id": "ZYZ9b",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87232,14 +87370,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "NpcGn",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "PvRta",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -87472,20 +87618,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "lYwBI",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "ypFOk",
+																			"id": "FubgU",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87495,20 +87649,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "UUGjt",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "OriRJ",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "D8uL3",
+																			"id": "IAxuk",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87518,14 +87680,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "jSFdt",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "qXd6m",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -87747,20 +87917,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "S4C2a",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "S7gEz",
+																			"id": "Blh5m",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87770,20 +87948,28 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "OyWCN",
-																					"name": "Icon crosshair",
+																					"type": "path",
+																					"id": "IWxen",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
 																		{
 																			"type": "frame",
-																			"id": "ku63W",
+																			"id": "g4ZTX",
 																			"name": "Preview",
 																			"width": "fill_container",
 																			"height": "fill_container",
@@ -87793,14 +87979,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
-																					"id": "r1P47o",
-																					"name": "Icon car-front",
+																					"type": "path",
+																					"id": "PV7At",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -88022,57 +88216,11 @@
 																			"children": [
 																				{
 																					"type": "icon",
-																					"id": "DxsVK",
-																					"name": "Icon car-front",
-																					"width": 22,
-																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
-																				}
-																			]
-																		},
-																		{
-																			"type": "frame",
-																			"id": "AMwqi",
-																			"name": "Preview",
-																			"width": "fill_container",
-																			"height": "fill_container",
-																			"fill": "$surface-3",
-																			"cornerRadius": 8,
-																			"justifyContent": "center",
-																			"alignItems": "center",
-																			"children": [
-																				{
-																					"type": "icon",
 																					"id": "hsFBY",
 																					"name": "Icon crosshair",
 																					"width": 22,
 																					"height": 22,
 																					"icon": "crosshair",
-																					"library": "lucide",
-																					"fill": "$text-3"
-																				}
-																			]
-																		},
-																		{
-																			"type": "frame",
-																			"id": "wCC5D",
-																			"name": "Preview",
-																			"width": "fill_container",
-																			"height": "fill_container",
-																			"fill": "$surface-3",
-																			"cornerRadius": 8,
-																			"justifyContent": "center",
-																			"alignItems": "center",
-																			"children": [
-																				{
-																					"type": "icon",
-																					"id": "Zso8Q",
-																					"name": "Icon car-front",
-																					"width": 22,
-																					"height": 22,
-																					"icon": "car-front",
 																					"library": "lucide",
 																					"fill": "$text-3"
 																				}
@@ -88133,7 +88281,7 @@
 																			"id": "My1rZ",
 																			"name": "3 items · 2 hulls · 1 tu",
 																			"fill": "$text-2",
-																			"content": "3 items · 2 hulls · 1 turret · 2 packs",
+																			"content": "1 item · 1 turret · 1 pack",
 																			"fontFamily": "$font-body",
 																			"fontSize": 12,
 																			"fontWeight": "normal"
@@ -88990,14 +89138,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "otQgh",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -89036,14 +89192,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "AN9w5",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -89274,14 +89438,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "iGYV3",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -89320,14 +89492,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "N8NJF",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -89548,14 +89728,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "tcvpc",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -89594,14 +89782,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "ZXJ6o",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -89834,14 +90030,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "fALSP",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -89880,14 +90084,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "hgO6M",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -90109,14 +90321,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "ujrdH",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -90155,14 +90375,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "miYaG",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -90383,14 +90611,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "Qgg0a",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -90429,14 +90665,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "hNM8w",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -91352,14 +91596,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "sUu4r",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -91398,14 +91650,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "WE1IZ",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -91636,14 +91896,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "CPeZm",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -91682,14 +91950,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "uEu3V",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -91910,14 +92186,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "OOYgM",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -91956,14 +92240,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "AED94",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -92196,14 +92488,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "aQ30u",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -92242,14 +92542,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "c7AYH",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -92471,14 +92779,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "h8tSVW",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -92517,14 +92833,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "nKpCu",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -92745,14 +93069,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "eKVwz",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		},
@@ -92791,14 +93123,22 @@
 																			"alignItems": "center",
 																			"children": [
 																				{
-																					"type": "icon",
+																					"type": "path",
 																					"id": "HbxLZ",
-																					"name": "Icon car-front",
+																					"name": "Icon tank",
+																					"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																					"viewBox": [
+																						0,
+																						0,
+																						24,
+																						24
+																					],
 																					"width": 22,
 																					"height": 22,
-																					"icon": "car-front",
-																					"library": "lucide",
-																					"fill": "$text-3"
+																					"stroke": "$text-3",
+																					"strokeWidth": 1.83,
+																					"strokeLinejoin": "round",
+																					"strokeLinecap": "round"
 																				}
 																			]
 																		}
@@ -94622,14 +94962,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "g1lSb",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -94869,14 +95217,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "VtEKl",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -95116,14 +95472,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "mdWOd",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -95541,14 +95905,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "fDlSG",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -96033,14 +96405,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "uk6O8",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -97886,14 +98266,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "d0Nc6",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -98133,14 +98521,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "ejazd",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -98380,14 +98776,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "SqulY",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -98805,14 +99209,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "qnBNl",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -99297,14 +99709,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "uR1VH",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -101150,14 +101570,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "McFBE",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -101397,14 +101825,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "b0An3",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -101644,14 +102080,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "J0b0N",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -102069,14 +102513,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "ly3lG",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -102561,14 +103013,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "DdWAr",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -104414,14 +104874,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "wDXov",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -104661,14 +105129,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "AwAOC",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -104908,14 +105384,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "WD0FI",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -105333,14 +105817,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "AHCJH",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},
@@ -105825,14 +106317,22 @@
 																	"alignItems": "center",
 																	"children": [
 																		{
-																			"type": "icon",
+																			"type": "path",
 																			"id": "A9NUU",
-																			"name": "Icon car-front",
+																			"name": "Icon tank",
+																			"geometry": "M5.5 13h13a3.5 3.5 0 0 1 0 7h-13a3.5 3.5 0 0 1 0-7z m0.5 0v-3a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3m0-3h7m-15.5 6.5h0.01m5.49 0h0.01m5.49 0h0.01",
+																			"viewBox": [
+																				0,
+																				0,
+																				24,
+																				24
+																			],
 																			"width": 15,
 																			"height": 15,
-																			"icon": "car-front",
-																			"library": "lucide",
-																			"fill": "$text-3"
+																			"stroke": "$text-3",
+																			"strokeWidth": 1.25,
+																			"strokeLinejoin": "round",
+																			"strokeLinecap": "round"
 																		}
 																	]
 																},

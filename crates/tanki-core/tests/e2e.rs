@@ -514,7 +514,7 @@ fn labelling_one_modification_labels_the_whole_item() -> Result<()> {
 
 #[test]
 fn backups_are_listed_newest_first_with_what_was_replaced() -> Result<()> {
-    use tanki_core::apply::{list_backups, planned_files};
+    use tanki_core::apply::{cache_skin_files, list_backups, planned_files};
     let root = scratch("backups");
     let cache = build_cache(&root.join("cache"))?;
     let data = root.join("data");
@@ -528,7 +528,7 @@ fn backups_are_listed_newest_first_with_what_was_replaced() -> Result<()> {
 
     // The plan names exactly the cache files that will change, with the replacement sizes.
     let (target, variant) = find_item(&pack, "wasp");
-    let plan = planned_files(&pack, variant)?;
+    let plan = planned_files(&pack, variant, &cache_skin_files(&scan, target))?;
     let names: Vec<&str> = plan.iter().map(|(n, _)| n.as_str()).collect();
     assert_eq!(
         names,

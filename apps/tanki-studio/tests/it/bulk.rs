@@ -10,7 +10,7 @@ use egui_kittest::{
     Harness,
     kittest::{NodeT, Queryable},
 };
-use tanki_core::{pack::import_pack, state::StateStore};
+use tanki_core::{cache::decoded_name, pack::import_pack, state::StateStore};
 use tanki_studio::{
     app::{BulkStep, BulkWizard, Dialog, ItemState, Page, RowFilter, Selection, Studio},
     bulk::{Cell, Choice, Failure, Pick, Source},
@@ -109,6 +109,38 @@ fn cell<'a>(h: &'a Harness<'static, Studio>, id: &str, k: usize) -> &'a Option<C
         .find(|r| r.id == id)
         .expect("the item's row")
         .cells[k]
+}
+
+#[test]
+fn an_open_list_keeps_the_close_button_and_takes_esc() {
+    let looks = looks("bulk-list-open");
+    let mut h = harness(&looks);
+    open(&mut h);
+    h.get_by_label("Next: where").click();
+    h.run_steps(3);
+    h.get_by_label("What M1 gets").click();
+    h.run_steps(3);
+    assert!(
+        h.query_by_label("XT · from M3").is_some(),
+        "the list is open"
+    );
+    assert!(
+        h.query_by_label("Close").is_some(),
+        "the × stays while the list is open"
+    );
+    h.key_press(Key::Escape);
+    h.run_steps(3);
+    assert!(
+        h.query_by_label("XT · from M3").is_none(),
+        "Esc closes the list"
+    );
+    assert!(h.state().bulk.is_some(), "and not the wizard");
+
+    h.get_by_label("What M1 gets").click();
+    h.run_steps(3);
+    h.get_by_label("Close").click();
+    h.run_steps(3);
+    assert!(h.state().bulk.is_none(), "the × closes the wizard");
 }
 
 #[test]
@@ -391,6 +423,35 @@ fn a_running_game_stops_it_then_every_item_gets_its_skin_in_one_batch() {
         h.get_by_label("Check and apply")
             .accesskit_node()
             .is_disabled()
+    );
+}
+
+#[test]
+fn an_item_with_no_transparency_in_the_cache_is_applied_without_one() {
+    let looks = looks("bulk-no-alpha");
+    // The Viking's M1 has no transparency in the cache, as some items of the real game have not.
+    let is_alpha =
+        |path: &PathBuf| decoded_name(path).is_some_and(|url| url.ends_with("/details_alpha.jpg"));
+    let alphas: Vec<PathBuf> = looks
+        .files("viking", 1)
+        .into_iter()
+        .filter(is_alpha)
+        .collect();
+    assert_eq!(alphas.len(), 2, "one per cache revision");
+    for path in &alphas {
+        std::fs::remove_file(path).expect("remove");
+    }
+    let mut h = harness(&looks);
+    to_check(&mut h);
+    h.get_by_label("Apply to 4 items").click();
+    h.run_steps(4);
+    assert_eq!(wizard(&h).step, BulkStep::Done);
+    let run = wizard(&h).run.as_ref().expect("the run");
+    assert_eq!(run.applied(), 4, "{:?}", run.states);
+    assert!(looks.wears("viking", 1, "looks-a", "xt-m1"));
+    assert!(
+        alphas.iter().all(|path| !path.exists()),
+        "no transparency is added to the item"
     );
 }
 

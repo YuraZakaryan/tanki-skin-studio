@@ -87,17 +87,21 @@ pub fn draw(app: &mut Studio, ctx: &Context) {
         return;
     };
     let empty = app.bulk.as_ref().is_some_and(|w| w.looks.is_empty());
-    // A dialog over the wizard (the game is running) takes the keys.
-    let keys = app.dialog.is_none() && !egui::Popup::is_any_open(ctx);
-    let enter = keys && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Enter));
+    // A dialog over the wizard (the game is running) takes the keys and the ×. An open list takes
+    // the keys alone: Enter picks in it, and Esc closes it (the wizard leaves Esc to it), while the
+    // × stays to close the wizard.
+    let closable = app.dialog.is_none();
+    let enter = closable
+        && !egui::Popup::is_any_open(ctx)
+        && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Enter));
     let mut acts = Vec::new();
     match step {
-        BulkStep::Look if empty => empty_state(ctx, keys, &mut acts),
-        BulkStep::Look => look_step(app, ctx, keys, &mut acts),
-        BulkStep::Where => where_step(app, ctx, keys, &mut acts),
-        BulkStep::Check => check_step(app, ctx, keys, &mut acts),
+        BulkStep::Look if empty => empty_state(ctx, closable, &mut acts),
+        BulkStep::Look => look_step(app, ctx, closable, &mut acts),
+        BulkStep::Where => where_step(app, ctx, closable, &mut acts),
+        BulkStep::Check => check_step(app, ctx, closable, &mut acts),
         BulkStep::Running => running_step(app, ctx, &mut acts),
-        BulkStep::Done => done_step(app, ctx, keys, &mut acts),
+        BulkStep::Done => done_step(app, ctx, closable, &mut acts),
     }
     if enter && step != BulkStep::Running {
         acts.push(if empty { Act::AddPack } else { Act::Next });
@@ -180,8 +184,8 @@ fn label_node(ui: &mut Ui, rect: Rect, salt: impl std::hash::Hash + std::fmt::De
 // ---------------------------------------------------------------------------------------------
 // Empty state.
 
-fn empty_state(ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
-    let spec = spec(title(), None, &[], 0, keys, EMPTY, None);
+fn empty_state(ctx: &Context, closable: bool, acts: &mut Vec<Act>) {
+    let spec = spec(title(), None, &[], 0, closable, EMPTY, None);
     let mut add = false;
     let mut close = false;
     let event = widgets::wizard(
@@ -272,7 +276,7 @@ fn look_meta(look: &Look) -> String {
     parts.join(" · ")
 }
 
-fn look_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
+fn look_step(app: &mut Studio, ctx: &Context, closable: bool, acts: &mut Vec<Act>) {
     let Some(wizard) = app.bulk.as_ref() else {
         return;
     };
@@ -303,7 +307,7 @@ fn look_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
         Some(tl!("Pick a look from your packs")),
         &steps,
         0,
-        keys,
+        closable,
         BIG,
         Some((icons::LAYERS, &hint)),
     );
@@ -495,7 +499,8 @@ fn look_card(
         tokens.stage,
         None,
     );
-    let pictures = 3;
+    // One picture per item, up to three: an item is never shown twice.
+    let pictures = look.items.len().clamp(1, 3);
     let pic_width = (strip.width() - 24.0 - 8.0 * (pictures - 1) as f32) / pictures as f32;
     let ctx = ui.ctx().clone();
     for slot in 0..pictures {
@@ -513,8 +518,7 @@ fn look_card(
             tokens.surface_3,
             None,
         );
-        // Fewer items than pictures: the items again, so the strip is never half empty.
-        let item = look.items.get(slot % look.items.len().max(1));
+        let item = look.items.get(slot);
         let texture = item.and_then(|item| {
             let skin = item.skins.first()?;
             let pack = app
@@ -543,11 +547,11 @@ fn look_card(
                 );
             }
             None => {
-                // No picture: a hull, a turret and a hull stand for the look.
-                let icon = if slot == 1 {
+                // No picture: the item's kind stands for it.
+                let icon = if item.is_some_and(|i| i.kind == "turret") {
                     icons::CROSSHAIR
                 } else {
-                    icons::CAR_FRONT
+                    icons::TANK
                 };
                 fonts::icon(ui.painter(), pic.center(), icon, 22.0, tokens.text_3);
             }
@@ -841,7 +845,7 @@ const TILE_HEIGHT: f32 = 160.0;
 const ROW_HEIGHT: f32 = 49.0;
 const NAME_COLUMN: f32 = 210.0;
 
-fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
+fn where_step(app: &mut Studio, ctx: &Context, closable: bool, acts: &mut Vec<Act>) {
     let Some(wizard) = app.bulk.as_ref() else {
         return;
     };
@@ -898,7 +902,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
         Some(&subtitle),
         &steps,
         1,
-        keys,
+        closable,
         BIG,
         Some((icons::LIST_CHECKS, &hint)),
     );
@@ -1365,7 +1369,7 @@ fn item_row(
     let icon = if row.kind == "turret" {
         icons::CROSSHAIR
     } else {
-        icons::CAR_FRONT
+        icons::TANK
     };
     fonts::icon(ui.painter(), thumb.center(), icon, 15.0, tokens.text_3);
     x += 30.0 + 10.0;
@@ -1774,7 +1778,7 @@ fn backup_size(app: &Studio, plan: &Plan) -> u64 {
         .sum()
 }
 
-fn check_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
+fn check_step(app: &mut Studio, ctx: &Context, closable: bool, acts: &mut Vec<Act>) {
     let Some(wizard) = app.bulk.as_ref() else {
         return;
     };
@@ -1797,7 +1801,7 @@ fn check_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
         Some(&subtitle),
         &steps,
         2,
-        keys,
+        closable,
         BIG,
         Some((icons::INFO, tl!("Close the game before applying."))),
     );
@@ -2554,7 +2558,7 @@ fn item_states(ui: &mut Ui, rect: Rect, items: &[(String, ItemState)], follow: b
 // ---------------------------------------------------------------------------------------------
 // The result.
 
-fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
+fn done_step(app: &mut Studio, ctx: &Context, closable: bool, acts: &mut Vec<Act>) {
     let Some(wizard) = app.bulk.as_ref() else {
         return;
     };
@@ -2578,7 +2582,7 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
         tl!("{skins} replaced · backup saved"),
         &[("skins", &tn(run.skins() as u64, "{n} skin", "{n} skins"))],
     );
-    let spec = spec(&title, Some(&subtitle), &[], 0, keys, DONE, None);
+    let spec = spec(&title, Some(&subtitle), &[], 0, closable, DONE, None);
     // What did not go: each failed item with its reason, and why the run stopped early.
     let mut problems: Vec<String> = run
         .tasks
