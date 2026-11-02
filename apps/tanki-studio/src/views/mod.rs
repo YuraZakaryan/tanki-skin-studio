@@ -13,6 +13,7 @@ pub mod packs;
 pub mod palette;
 pub mod progress;
 pub mod resources;
+pub mod settings;
 pub mod shell;
 pub mod splash;
 pub mod toast;
@@ -69,4 +70,18 @@ pub fn scroll_page(ui: &mut Ui, rect: Rect, min_height: f32, content: impl FnOnc
 /// Whether a page's content area is wide enough for two columns; otherwise columns are stacked.
 pub fn is_wide(content: Rect) -> bool {
     content.width() >= 860.0
+}
+
+/// Name painted text for assistive technology (and the tests that read the window like it).
+pub fn label_node(
+    ui: &mut Ui,
+    rect: Rect,
+    salt: impl std::hash::Hash + std::fmt::Debug,
+    text: &str,
+) {
+    let response = ui.interact(rect, ui.scope_id().with(salt), Sense::hover());
+    let text = text.to_owned();
+    response.widget_info(move || {
+        egui::WidgetInfo::labeled(egui::accesskit::Role::Label, true, text.clone())
+    });
 }

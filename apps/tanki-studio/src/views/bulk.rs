@@ -730,7 +730,7 @@ fn skin_name(look: &Look, source: Option<u8>) -> String {
 }
 
 /// The tone, icon and text of a cell of the table.
-fn cell_view(look: &Look, modification: u8, cell: &Cell) -> (Tone, char, String) {
+fn cell_view(look: &Look, cell: &Cell) -> (Tone, char, String) {
     match cell {
         Cell::Change { skin, how } => match how {
             How::Own => (Tone::Ok, icons::CHECK, skin_name(look, skin.source)),
@@ -757,14 +757,7 @@ fn cell_view(look: &Look, modification: u8, cell: &Cell) -> (Tone, char, String)
             icons::CIRCLE_MINUS,
             fmt(tl!("No {skin}"), &[("skin", &skin_name(look, *source))]),
         ),
-        Cell::NotInGame => (
-            Tone::Missing,
-            icons::CIRCLE_SLASH,
-            fmt(
-                tl!("No {modification} in cache"),
-                &[("modification", &grade(modification))],
-            ),
-        ),
+        Cell::Later { .. } => (Tone::Info, icons::CLOCK_3, tl!("Goes on later").to_owned()),
         Cell::Already => (
             Tone::Neutral,
             icons::CHECK_CHECK,
@@ -876,7 +869,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
             ),
         ],
     );
-    let hint = fmt(
+    let mut hint = fmt(
         tl!("{items} will change · {skipped}"),
         &[
             (
@@ -889,6 +882,16 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
             ),
         ],
     );
+    if plan.later_count() > 0 {
+        hint = format!(
+            "{hint} · {}",
+            tn(
+                plan.later_count() as u64,
+                "{n} goes on later",
+                "{n} go on later"
+            )
+        );
+    }
     let steps = steps();
     let spec = spec(
         title(),
@@ -952,7 +955,7 @@ fn where_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
         |ui| {
             next = Button::new(ButtonKind::Primary, tl!("Check and apply"))
                 .icon(icons::ARROW_RIGHT)
-                .enabled(plan.changes() > 0)
+                .enabled(plan.changes() + plan.later_count() > 0)
                 .show(ui)
                 .clicked();
             back = Button::new(ButtonKind::Ghost, tl!("Back"))
@@ -1125,80 +1128,18 @@ fn filter_row(
         (RowFilter::Change, tl!("Will change"), plan.changing_items()),
         (RowFilter::Skipped, tl!("Skipped"), plan.skipped_items()),
     ];
-    let label_style =
-        |on: bool| Text::body(13.0, 600, if on { tokens.text } else { tokens.text_2 });
-    let count_style = Text::mono(12.0, 400, tokens.text_3);
-    let widths: Vec<f32> = segments
+    let items: Vec<(&str, Option<String>)> = segments
         .iter()
-        .map(|(f, label, count)| {
-            12.0 + fonts::width(ui.painter(), label, label_style(*f == filter))
-                + 6.0
-                + fonts::width(ui.painter(), &count.to_string(), count_style)
-                + 12.0
-        })
+        .map(|(_, label, count)| (*label, Some(count.to_string())))
         .collect();
-    let total: f32 = widths.iter().sum::<f32>() + 4.0 * 2.0 + 6.0;
-    let frame = Rect::from_min_size(rect.min, Vec2::new(total, rect.height()));
-    draw::rounded(
-        ui.painter(),
-        frame,
-        CornerRadius::same(9),
-        tokens.surface,
-        Some((1.0, tokens.border)),
-    );
-    let mut x = frame.min.x + 3.0;
-    for ((value, label, count), width) in segments.iter().zip(&widths) {
-        let segment = Rect::from_min_size(
-            Pos2::new(x, frame.min.y + 3.0),
-            Vec2::new(*width, frame.height() - 6.0),
-        );
-        let on = *value == filter;
-        let response = ui.interact(
-            segment,
-            ui.scope_id().with(("filter", *label)),
-            Sense::click(),
-        );
-        let name = (*label).to_owned();
-        response
-            .widget_info(move || egui::WidgetInfo::selected(Role::Button, true, on, name.clone()));
-        if on {
-            draw::rounded(
-                ui.painter(),
-                segment,
-                CornerRadius::same(7),
-                tokens.surface_3,
-                Some((1.0, tokens.border_strong)),
-            );
-        } else if response.hovered() {
-            draw::rounded(
-                ui.painter(),
-                segment,
-                CornerRadius::same(7),
-                tokens.surface_2,
-                None,
-            );
-        }
-        let used = fonts::draw_left(
-            ui.painter(),
-            segment.min.x + 12.0,
-            segment.center().y,
-            label,
-            label_style(on),
-        );
-        fonts::draw_left(
-            ui.painter(),
-            used.max.x + 6.0,
-            segment.center().y,
-            &count.to_string(),
-            count_style,
-        );
-        if response
-            .on_hover_cursor(egui::CursorIcon::PointingHand)
-            .clicked()
-        {
-            acts.push(Act::Filter(*value));
-        }
-        x += width + 4.0;
+    let active = segments
+        .iter()
+        .position(|(value, _, _)| *value == filter)
+        .unwrap_or(0);
+    let (_, clicked) =
+        widgets::choice_segments(ui, rect.min, rect.height(), &items, active, "filter");
+    if let Some((value, _, _)) = clicked.and_then(|index| segments.get(index)) {
+        acts.push(Act::Filter(*value));
     }
     // The kinds: a kind left out leaves the run.
     let mut right = rect.max.x;
@@ -1453,7 +1394,7 @@ fn item_row(
             Pos2::new(cells_left + slot as f32 * (cell_width + 10.0), cy - 15.0),
             Vec2::new(cell_width, 30.0),
         );
-        let (tone, icon, text) = cell_view(look, *k, cell);
+        let (tone, icon, text) = cell_view(look, cell);
         paint_cell(
             ui,
             rect,
@@ -1473,7 +1414,7 @@ fn pick_lines(row: &bulk::Row, settings: &bulk::Settings, editing: Option<u8>) -
         .cells
         .iter()
         .enumerate()
-        .filter(|(_, cell)| matches!(cell, Some(cell) if *cell != Cell::NotInGame))
+        .filter(|(_, cell)| cell.is_some())
         .map(|(k, _)| k as u8)
         .collect();
     let mut lines: Vec<u8> = in_game
@@ -1537,7 +1478,7 @@ fn own_picks(
         .cells
         .iter()
         .enumerate()
-        .filter(|(_, cell)| matches!(cell, Some(cell) if *cell != Cell::NotInGame))
+        .filter(|(_, cell)| cell.is_some())
         .map(|(k, _)| k as u8)
         .collect();
     let mut y = panel.min.y + 10.0;
@@ -1791,8 +1732,8 @@ fn skip_reason(look: &Look, modification: u8, cell: &Cell) -> String {
                 ("modification", &grade(modification)),
             ],
         ),
-        Cell::NotInGame => fmt(
-            tl!("This item has no {modification} in the cache"),
+        Cell::Later { .. } => fmt(
+            tl!("Goes on by itself once the game downloads {modification}"),
             &[("modification", &grade(modification))],
         ),
         Cell::Already => tl!("This skin is on it already").to_owned(),
@@ -1805,13 +1746,10 @@ fn skip_reason(look: &Look, modification: u8, cell: &Cell) -> String {
 }
 
 /// Why a modification was skipped, short, for the result: "no XT M3".
-fn short_reason(look: &Look, modification: u8, cell: &Cell) -> String {
+fn short_reason(look: &Look, cell: &Cell) -> String {
     match cell {
         Cell::Missing { source } => fmt(tl!("no {skin}"), &[("skin", &skin_name(look, *source))]),
-        Cell::NotInGame => fmt(
-            tl!("no {modification} in the cache"),
-            &[("modification", &grade(modification))],
-        ),
+        Cell::Later { .. } => tl!("goes on later").to_owned(),
         Cell::Already => tl!("already on").to_owned(),
         Cell::Incomplete { .. } => tl!("incomplete skin").to_owned(),
         Cell::Change { .. } | Cell::Off => String::new(),
@@ -2012,7 +1950,7 @@ fn check_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) 
         |ui| {
             apply = Button::new(ButtonKind::Accent, &apply_label)
                 .icon(icons::LAYERS)
-                .enabled(changing > 0)
+                .enabled(changing > 0 || plan.later_count() > 0)
                 .show(ui)
                 .clicked();
             back = Button::new(ButtonKind::Ghost, tl!("Back"))
@@ -2142,8 +2080,30 @@ fn review_lists(ui: &mut Ui, rect: Rect, look: &Look, plan: &Plan) {
                 })
         })
         .collect();
-    let rows = changes.len().max(skipped.len()).max(1);
-    let total = rows as f32 * 40.0;
+    let later: Vec<(String, u8, &Cell)> = plan
+        .rows
+        .iter()
+        .flat_map(|row| {
+            row.cells
+                .iter()
+                .enumerate()
+                .filter_map(move |(k, cell)| match cell {
+                    Some(cell) if cell.later() => Some((row.name(), k as u8, cell)),
+                    _ => None,
+                })
+        })
+        .collect();
+    // Right of the changes: the skipped ones, then those that go on later with what to do.
+    let skipped_height = skipped.len().max(1) as f32 * 40.0;
+    let later_top = skipped_height + 8.0;
+    let later_rows = later_top + 22.0;
+    let note_top = later_rows + later.len() as f32 * 40.0;
+    let right_height = if later.is_empty() {
+        skipped_height
+    } else {
+        note_top + 40.0
+    };
+    let total = (changes.len().max(1) as f32 * 40.0).max(right_height);
     let list = Rect::from_min_max(Pos2::new(rect.min.x, rect.min.y + 22.0), rect.max);
     in_rect(ui, list, |ui| {
         egui::ScrollArea::vertical()
@@ -2269,8 +2229,89 @@ fn review_lists(ui: &mut Ui, rect: Rect, look: &Look, plan: &Plan) {
                         Text::body(12.0, 400, tokens.text_3),
                     );
                 }
+                if !later.is_empty() {
+                    later_list(ui, right.min.x, top.y, half, &later, look, later_top);
+                }
             });
     });
+}
+
+/// The modifications that go on later, under the skipped ones: a caption, a line each and what
+/// to do to get them on.
+fn later_list(
+    ui: &mut Ui,
+    x: f32,
+    top: f32,
+    width: f32,
+    later: &[(String, u8, &Cell)],
+    look: &Look,
+    offset: f32,
+) {
+    let tokens = Tokens::get(ui.ctx());
+    let caption = Text::display(11.0, 700, tokens.text_3).spaced(1.0);
+    fonts::draw(
+        ui.painter(),
+        Pos2::new(x, top + offset),
+        &tl!("Go on later").to_uppercase(),
+        caption,
+    );
+    let rows_top = top + offset + 22.0;
+    for (index, (name, k, cell)) in later.iter().enumerate() {
+        let line = Rect::from_min_size(
+            Pos2::new(x, rows_top + index as f32 * 40.0),
+            Vec2::new(width, 36.0),
+        );
+        draw::rounded(
+            ui.painter(),
+            line,
+            CornerRadius::same(10),
+            tokens.info_soft,
+            None,
+        );
+        fonts::icon(
+            ui.painter(),
+            Pos2::new(line.min.x + 12.0 + 7.0, line.center().y),
+            icons::CLOCK_3,
+            14.0,
+            tokens.info,
+        );
+        let title = format!("{name} {}", grade(*k));
+        let name_style = Text::body(13.0, 600, tokens.text);
+        let shown = fonts::ellipsize(ui.painter(), &title, name_style, 110.0);
+        fonts::draw_left(
+            ui.painter(),
+            line.min.x + 12.0 + 14.0 + 10.0,
+            line.center().y,
+            &shown,
+            name_style,
+        );
+        let reason = skip_reason(look, *k, cell);
+        let reason_x = line.min.x + 12.0 + 14.0 + 10.0 + 110.0 + 10.0;
+        let style = Text::body(12.0, 400, tokens.text_2);
+        let shown = fonts::ellipsize(ui.painter(), &reason, style, line.max.x - 12.0 - reason_x);
+        fonts::draw_left(ui.painter(), reason_x, line.center().y, &shown, style);
+        label_node(ui, line, ("later", name, *k), &format!("{title}: {reason}"));
+    }
+    let note = match later {
+        [(name, k, _)] => fmt(
+            tl!("Open {item} in the game's garage. Once the game is closed, the Studio puts {look} on by itself."),
+            &[("item", &format!("{name} {}", grade(*k))), ("look", &look.name)],
+        ),
+        _ => tl!("Open these modifications in the game's garage. Once the game is closed, the Studio puts them on by itself.").to_owned(),
+    };
+    let note_top = rows_top + later.len() as f32 * 40.0;
+    let style = Text::body(12.0, 400, tokens.text_3);
+    let text_x = x + 12.0 + 13.0 + 8.0;
+    let galley = fonts::paragraph(ui.painter(), &note, style, x + width - 12.0 - text_x, None);
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(x + 12.0 + 6.5, note_top + 8.0),
+        icons::INFO,
+        13.0,
+        tokens.text_3,
+    );
+    ui.painter()
+        .galley(Pos2::new(text_x, note_top), galley, tokens.text_3);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -2588,17 +2629,21 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
             )
         });
     }
+    let later_text = (!run.later.is_empty()).then(|| {
+        fmt(
+            tl!("Goes on later: {list}."),
+            &[("list", &run.later.join(", "))],
+        )
+    });
     let skipped_text = look.as_ref().and_then(|look| {
         if run.skipped.is_empty() {
-            return None;
+            return later_text.clone();
         }
         let shown: Vec<String> = run
             .skipped
             .iter()
             .take(6)
-            .map(|(name, k, cell)| {
-                format!("{name} {} ({})", grade(*k), short_reason(look, *k, cell))
-            })
+            .map(|(name, k, cell)| format!("{name} {} ({})", grade(*k), short_reason(look, cell)))
             .collect();
         let mut list = shown.join(", ");
         if run.skipped.len() > 6 {
@@ -2607,7 +2652,11 @@ fn done_step(app: &mut Studio, ctx: &Context, keys: bool, acts: &mut Vec<Act>) {
                 &[("list", &list), ("n", &(run.skipped.len() - 6).to_string())],
             );
         }
-        Some(fmt(tl!("Skipped: {list}."), &[("list", &list)]))
+        let skipped = fmt(tl!("Skipped: {list}."), &[("list", &list)]);
+        Some(match &later_text {
+            Some(later) => format!("{skipped} {later}"),
+            None => skipped,
+        })
     });
     let stats = [
         (icons::CHECK, applied, tl!("applied"), Tone::Ok),

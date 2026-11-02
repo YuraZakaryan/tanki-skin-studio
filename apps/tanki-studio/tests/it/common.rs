@@ -62,6 +62,8 @@ pub fn harness_in(data: PathBuf, caches: Vec<PathBuf>) -> Harness<'static, Studi
             app.background_import = false;
             // …and the result of "Apply to all items" too.
             app.background_bulk = false;
+            // A test never asks GitHub: Check for updates (Settings, the palette) finds nothing.
+            app.updates.source = Some(std::sync::Arc::new(|| Ok(None)));
             app
         });
     harness.run_steps(4);

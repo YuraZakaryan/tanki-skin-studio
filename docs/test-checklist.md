@@ -108,7 +108,7 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Looks: the same name without the item's own in front, plus the pack's edition (`xt-m0` is XT, `prime` is Prime); case, spaces, `-` and `_` do not count; an item's plain skin is no look unless the pack names it; only hulls and turrets in the cache; the first pack (the active one) wins for the same item and source | unit `bulk`, it `bulk` |
 | Opens from the Garage's button and the palette; no look: the empty state, Add a pack opens the import | it `bulk`, ui `bulk-garage`, `bulk-empty` |
 | Defaults: every modification on, its own skin when an item has one (or the edition's), else the highest modification's | unit `bulk` |
-| Every cell says what happens: own skin, from another modification, the item's own pick, no such skin, no such modification in the game, already on (the recorded pack item's grade), incomplete, not touched | unit `bulk`, it `bulk`, ui `bulk-where` |
+| Every cell says what happens: own skin, from another modification, the item's own pick, no such skin, goes on later (no such modification in the cache yet), already on (the recorded pack item's grade), incomplete, not touched | unit `bulk`, it `bulk`, ui `bulk-where` |
 | A modification off, another source, an item's own pick and back to the common choice; the Hulls / Turrets boxes leave a kind out of the run; the filter only shows | unit `bulk`, it `bulk` |
 | The last step lists every change and every skip; the backup is always on; Esc there asks first; Enter is the primary button | it `bulk`, ui `bulk-check` |
 | The game running: the same warning, nothing written until it is closed | it `bulk` |
@@ -119,7 +119,11 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Two replacements in the same clock tick never share a backup folder | unit `apply` |
 | Russian fits every step, down to the smallest window; toasts stay above the wizard's buttons | it `bulk`, ui `bulk-*` |
 | Every screen on the design's own sample at 1440 × 900, English and Russian, dark and light, compared 1:1 with `design.pen`'s frames; the sample gives the frames' numbers | ui `design-*` (visual check against `target/design-preview/full/`), it `bulk` |
-| Items in the game's order (resource id), "Already on" is no reason to list, an item is skipped when nothing of it changes | unit `bulk`, it `bulk` |
+| Items in the game's order (resource id), "Already on" is no reason to list, an item is skipped when nothing of it changes now or later | unit `bulk`, it `bulk` |
+| Goes on later: queued on Apply (a newer choice for the same modification wins), kept across starts; the review lists it apart from the skipped ones; nothing goes on while the cache is unchanged, the game runs or a dialog or the wizard is open | unit `later`, unit `tanki-state`, it `bulk` |
+| Once the game downloads the modification the skin goes on by itself in one batch; the Garage's bar says so and Undo puts the game's files back; the sidebar's Garage has a badge; a skin that can never go on leaves the queue with a toast | it `bulk`, ui `design-8-*` |
+| Packs → Go on later lists what waits, Remove takes it out; the Item page marks a waiting modification | it `bulk`, ui `design-7-*`, `design-9-*` |
+| Settings: rescan Automatic / Every hour / Manual is kept; Automatic looks at launch, on coming back to the window and every 5 minutes and reads the cache only when its stamp changed; Rescan now; theme, language; About with Check for updates and links; stacks and wraps in a narrow window | unit `later`, it `bulk`, it `navigation`, it `chaos`, ui `design-10-*` |
 
 ## Recognition and labelling
 

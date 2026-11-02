@@ -13,6 +13,8 @@ pub struct ListRow<'a> {
     pub meta: &'a str,
     pub selected: bool,
     pub chip: Option<(ChipKind, &'a str)>,
+    /// A second chip, with an icon, right of the first.
+    pub note: Option<(ChipKind, char, &'a str)>,
     pub size: Option<&'a str>,
     pub clickable: bool,
 }
@@ -25,6 +27,7 @@ impl<'a> ListRow<'a> {
             meta,
             selected: false,
             chip: None,
+            note: None,
             size: None,
             clickable: true,
         }
@@ -35,6 +38,10 @@ impl<'a> ListRow<'a> {
     }
     pub fn chip(mut self, kind: ChipKind, label: &'a str) -> Self {
         self.chip = Some((kind, label));
+        self
+    }
+    pub fn note(mut self, kind: ChipKind, icon: char, label: &'a str) -> Self {
+        self.note = Some((kind, icon, label));
         self
     }
     pub fn size(mut self, size: &'a str) -> Self {
@@ -113,6 +120,11 @@ impl<'a> ListRow<'a> {
                 Text::mono(12.0, 400, tokens.text_3),
             );
             right = used.min.x - 14.0;
+        }
+        // The note goes after the chip, 6 apart: drawn first, as everything is right to left.
+        if let Some((kind, icon, label)) = self.note {
+            let width = icon_chip_at_right(ui, right, cy, kind, icon, label);
+            right -= width + 6.0;
         }
         if let Some((kind, label)) = self.chip {
             let width = chip_at_right(ui, right, cy, kind, label);

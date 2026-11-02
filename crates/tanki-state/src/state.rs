@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-use crate::session::{SESSION_KEY, SessionState};
+use crate::{
+    later::{self, LATER_KEY, LaterSkin, RESCAN_KEY},
+    session::{SESSION_KEY, SessionState},
+};
 use anyhow::Result;
 use rusqlite::{Connection, params};
 use std::{
@@ -134,6 +137,23 @@ impl StateStore {
         }
         self.set(SESSION_KEY, &text)?;
         Ok(true)
+    }
+    /// The skins that go on later, for every cache (see [`crate::later`]).
+    pub fn later_skins(&self) -> Vec<LaterSkin> {
+        match self.get(LATER_KEY) {
+            Ok(Some(text)) => later::from_json(&text),
+            _ => Vec::new(),
+        }
+    }
+    pub fn save_later_skins(&self, queue: &[LaterSkin]) -> Result<()> {
+        self.set(LATER_KEY, &later::to_json(queue))
+    }
+    /// How often the cache is read again (`auto`, `hourly`, `manual`), if the user ever chose.
+    pub fn rescan_mode(&self) -> Result<Option<String>> {
+        self.get(RESCAN_KEY)
+    }
+    pub fn set_rescan_mode(&self, mode: &str) -> Result<()> {
+        self.set(RESCAN_KEY, mode)
     }
     /// The saved interface size as a percentage string (`125`), if the user ever changed it.
     pub fn ui_scale(&self) -> Result<Option<String>> {

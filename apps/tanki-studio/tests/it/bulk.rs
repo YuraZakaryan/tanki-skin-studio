@@ -14,8 +14,11 @@ use tanki_core::{pack::import_pack, state::StateStore};
 use tanki_studio::{
     app::{BulkStep, BulkWizard, Dialog, ItemState, Page, RowFilter, Selection, Studio},
     bulk::{Cell, Choice, Failure, Pick, Source},
+    later::RescanMode,
 };
-use tanki_testkit::{LooksFixture, build_looks, looks_model, scratch};
+use tanki_testkit::{
+    LooksFixture, build_looks, id_marker, looks_model, scratch, write_looks_modification,
+};
 
 use crate::common::{contents, env, harness_in};
 
@@ -185,7 +188,11 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
         cell(&h, "dictator", 2),
         Some(Cell::Incomplete { .. })
     ));
-    assert_eq!(cell(&h, "hunter", 0), &Some(Cell::NotInGame));
+    assert_eq!(
+        cell(&h, "hunter", 0),
+        &Some(Cell::Missing { source: Some(0) }),
+        "no M0 in the cache and no XT made for it: nothing to put on later"
+    );
     assert_eq!(
         cell(&h, "smoky", 1),
         &Some(Cell::Missing { source: Some(1) })
@@ -194,7 +201,7 @@ fn every_cell_of_the_table_says_what_happens_and_every_choice_changes_it() {
         matches!(cell(&h, "viking", 3), Some(Cell::Change { skin, .. }) if skin.pack_id == "looks-b"),
         "the same look of the same item in two packs: the first pack's (the active one)"
     );
-    for label in ["Skin incomplete", "No M0 in cache", "No XT M1", "XT M3"] {
+    for label in ["Skin incomplete", "No XT M0", "No XT M1", "XT M3"] {
         assert!(
             h.query_all_by_label(label).next().is_some(),
             "a cell says “{label}”"
@@ -736,5 +743,123 @@ fn the_design_sample_shows_the_designs_numbers() {
         cell(&h, "hornet", 0),
         &Some(Cell::Missing { source: Some(3) })
     );
-    assert_eq!(cell(&h, "dictator", 0), &Some(Cell::NotInGame));
+    assert!(matches!(cell(&h, "dictator", 0), Some(Cell::Later { .. })));
+    assert_eq!(plan.later_count(), 1);
+}
+
+#[test]
+fn a_modification_not_in_the_cache_gets_its_skin_once_the_game_downloads_it() {
+    let looks = looks("bulk-later");
+    // Recognising an item labels its whole block, the modifications not downloaded yet too.
+    let hunter = looks.fixture.item("hunter").first_id;
+    StateStore::open(&looks.work.join("data/state.sqlite"))
+        .expect("state store")
+        .save_user_target("air-cache", &id_marker(hunter), "hull", "hunter", "m0")
+        .expect("label");
+    let mut h = harness(&looks);
+    open(&mut h);
+    h.get_by_label("Next: where").click();
+    h.run_steps(3);
+    // M0 from M3: the Hunter has an XT made for M3, but no M0 in the cache yet.
+    h.state_mut().bulk_set_source(0, Source::From(3));
+    h.run_steps(3);
+    assert!(matches!(cell(&h, "hunter", 0), Some(Cell::Later { .. })));
+    assert!(h.query_all_by_label("Goes on later").next().is_some());
+    h.get_by_label("Check and apply").click();
+    h.run_steps(3);
+    assert!(
+        h.query_all_by_label("Hunter M0: Goes on by itself once the game downloads M0")
+            .next()
+            .is_some(),
+        "the review lists it under Go on later, not as skipped"
+    );
+    h.state_mut().bulk_apply();
+    h.run_steps(4);
+    assert_eq!(wizard(&h).step, BulkStep::Done);
+    let queued = h.state().later.clone();
+    assert_eq!(queued.len(), 1);
+    assert_eq!(
+        (queued[0].id.as_str(), queued[0].modification),
+        ("hunter", 0)
+    );
+    assert_eq!(
+        StateStore::open(&looks.work.join("data/state.sqlite"))
+            .expect("state store")
+            .later_skins(),
+        queued,
+        "the queue outlives the window"
+    );
+    h.get_by_label("Done").click();
+    h.run_steps(3);
+
+    // Looking at an unchanged cache puts nothing on.
+    h.state_mut().look_at_cache(false);
+    assert_eq!(h.state().later.len(), 1);
+    assert!(h.state().later_done.is_none());
+
+    // The game downloads the Hunter's M0; the next look puts the skin on, backed up.
+    let files =
+        write_looks_modification(&looks.fixture.cache, "hunter", hunter, 0).expect("download");
+    let before = contents(&files);
+    h.state_mut().look_at_cache(false);
+    h.run_steps(3);
+    assert!(h.state().later.is_empty(), "it left the queue");
+    let done = h.state().later_done.clone().expect("the Garage says so");
+    assert_eq!(done.items, ["Hunter M0"]);
+    let models: Vec<Vec<u8>> = contents(&files)
+        .into_iter()
+        .filter(|bytes| bytes.ends_with(b"model"))
+        .collect();
+    assert_eq!(models.len(), 2);
+    assert!(
+        models
+            .iter()
+            .all(|m| *m == looks_model("looks-a", "hunter", "xt-m3"))
+    );
+
+    h.state_mut().go(Page::Garage);
+    h.run_steps(3);
+    assert!(h.query_by_label("XT is on Hunter M0").is_some());
+    h.get_by_label("Undo").click();
+    h.run_steps(3);
+    assert!(h.state().later_done.is_none());
+    assert_eq!(contents(&files), before, "Undo puts the game's files back");
+}
+
+#[test]
+fn a_skin_waiting_in_packs_can_be_removed_and_the_rescan_choice_is_kept() {
+    let looks = looks("bulk-later-remove");
+    let mut h = harness(&looks);
+    open(&mut h);
+    h.get_by_label("Next: where").click();
+    h.run_steps(3);
+    h.state_mut().bulk_set_source(0, Source::From(3));
+    h.run_steps(3);
+    h.get_by_label("Check and apply").click();
+    h.run_steps(3);
+    h.state_mut().bulk_apply();
+    h.run_steps(4);
+    h.get_by_label("Done").click();
+    h.run_steps(3);
+    assert_eq!(h.state().later.len(), 1);
+
+    h.state_mut().go(Page::Packs);
+    h.run_steps(3);
+    assert!(h.query_by_label("Hunter M0 · XT").is_some());
+    h.get_by_label("Remove").click();
+    h.run_steps(3);
+    assert!(h.state().later.is_empty());
+
+    h.state_mut().go(Page::Settings);
+    h.run_steps(3);
+    h.get_by_label("Manual").click();
+    h.run_steps(3);
+    assert_eq!(h.state().rescan_mode, RescanMode::Manual);
+    assert_eq!(
+        StateStore::open(&looks.work.join("data/state.sqlite"))
+            .expect("state store")
+            .rescan_mode()
+            .expect("read"),
+        Some("manual".to_owned())
+    );
 }

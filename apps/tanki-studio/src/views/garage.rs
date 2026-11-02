@@ -74,13 +74,21 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
         main.max,
     );
     let wide = super::is_wide(body.shrink2(Vec2::new(32.0, 0.0)));
-    let min_height = if wide {
-        828.0
-    } else {
-        32.0 + 420.0 + 24.0 + 440.0 + 24.0 + 320.0 + 32.0
-    };
+    let done = app.later_done.clone();
+    let bar = if done.is_some() { 48.0 + 16.0 } else { 0.0 };
+    let min_height = bar
+        + if wide {
+            828.0
+        } else {
+            32.0 + 420.0 + 24.0 + 440.0 + 24.0 + 320.0 + 32.0
+        };
     scroll_page(ui, body, min_height, |ui, rect| {
-        let content = rect.shrink(32.0);
+        let mut content = rect.shrink(32.0);
+        if let Some(done) = &done {
+            let strip = Rect::from_min_size(content.min, Vec2::new(content.width(), 48.0));
+            later_bar(app, ui, strip, done);
+            content.min.y += bar;
+        }
         if wide {
             let parts = rows(content, 24.0, &[Size::Fixed(420.0), Size::Fill(1.0)]);
             let top = columns(parts[0], 24.0, &[Size::Fill(1.0), Size::Fixed(440.0)]);
@@ -98,6 +106,83 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
             items(app, ui, all[2]);
         }
     });
+}
+
+/// The skins that went on by themselves: what went on where, with Undo and ×.
+fn later_bar(app: &mut Studio, ui: &mut Ui, rect: Rect, done: &crate::app::LaterDone) {
+    let tokens = Tokens::get(ui.ctx());
+    draw::rounded(
+        ui.painter(),
+        rect,
+        CornerRadius::same(12),
+        tokens.primary_soft,
+        Some((1.0, tokens.primary)),
+    );
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(rect.min.x + 16.0 + 9.0, rect.center().y),
+        icons::CIRCLE_CHECK,
+        18.0,
+        tokens.primary,
+    );
+    let items = match done.items.as_slice() {
+        [one] => one.clone(),
+        [first, rest @ ..] => fmt(
+            tl!("{item} and {n} more"),
+            &[("item", first), ("n", &rest.len().to_string())],
+        ),
+        [] => String::new(),
+    };
+    let title = fmt(
+        tl!("{look} is on {items}"),
+        &[("look", &done.look), ("items", &items)],
+    );
+    let message = match done.items.as_slice() {
+        [one] => fmt(
+            tl!(
+                "{modification} appeared in the cache and the Studio put the waiting skin on. Backup saved."
+            ),
+            &[("modification", one.rsplit(' ').next().unwrap_or_default())],
+        ),
+        _ => {
+            tl!("They appeared in the cache and the Studio put the waiting skins on. Backup saved.")
+                .to_owned()
+        }
+    };
+    // Right to left: ×, then Undo.
+    let close = Rect::from_min_size(
+        Pos2::new(rect.max.x - 6.0 - 38.0, rect.center().y - 19.0),
+        Vec2::splat(38.0),
+    );
+    let close_clicked = in_rect(ui, close, |ui| {
+        widgets::icon_button(ui, icons::X, tl!("Close")).clicked()
+    });
+    let undo = Button::new(ButtonKind::Secondary, tl!("Undo")).icon(icons::UNDO_2);
+    let undo_width = undo.measure(ui);
+    let undo_rect = Rect::from_min_size(
+        Pos2::new(close.min.x - 12.0 - undo_width, rect.center().y - 20.0),
+        Vec2::new(undo_width, 40.0),
+    );
+    let undo_clicked = in_rect(ui, undo_rect, |ui| undo.show(ui).clicked());
+    let title_style = Text::body(14.0, 700, tokens.text);
+    let x = rect.min.x + 16.0 + 18.0 + 12.0;
+    let used = fonts::draw_left(ui.painter(), x, rect.center().y, &title, title_style);
+    super::label_node(ui, used, "later-bar", &title);
+    let message_style = Text::body(13.0, 400, tokens.text_2);
+    let room = undo_rect.min.x - 12.0 - (used.max.x + 10.0);
+    let shown = fonts::ellipsize(ui.painter(), &message, message_style, room.max(0.0));
+    fonts::draw_left(
+        ui.painter(),
+        used.max.x + 10.0,
+        rect.center().y,
+        &shown,
+        message_style,
+    );
+    if undo_clicked {
+        app.undo_later();
+    } else if close_clicked {
+        app.dismiss_later_done();
+    }
 }
 
 fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {

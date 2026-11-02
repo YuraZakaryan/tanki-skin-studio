@@ -15,7 +15,8 @@ fn the_sidebar_switches_pages() {
         ("Garage", Page::Garage),
         ("Resources", Page::Resources),
         ("Packs", Page::Packs),
-        ("Info", Page::Info),
+        ("Item", Page::Info),
+        ("Settings", Page::Settings),
         ("Overview", Page::Overview),
     ] {
         h.get_by_label(label).click();

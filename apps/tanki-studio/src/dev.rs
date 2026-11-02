@@ -132,6 +132,26 @@ pub fn run_actions(app: &mut Studio) {
                 app.open_cache_switcher();
             }
             "dismiss" => app.toasts.clear(),
+            // `later-done:XT|Dictator M0`: queued skins that went on by themselves.
+            "later-done" => {
+                let mut parts = arg.split('|');
+                let look = parts.next().unwrap_or("XT").to_owned();
+                app.later_done = Some(crate::app::LaterDone {
+                    batch: "0".into(),
+                    look,
+                    items: parts.map(str::to_owned).collect(),
+                });
+            }
+            // `last-check:<unix seconds>:<1 if it found new files>`: a fixed last look at the cache.
+            "last-check" => {
+                let (at, changed) = arg.split_once(':').unwrap_or((arg, "0"));
+                app.last_check = Some(crate::app::LastCheck {
+                    at: at.parse().unwrap_or(0),
+                    changed: changed == "1",
+                });
+                app.watch = false;
+            }
+            "rescan-mode" => app.rescan_mode = crate::later::RescanMode::from_code(Some(arg)),
             "close" => app.dialog = None,
             "importing" => importing(app, arg),
             verb if verb.starts_with("bulk") || verb == "restore-batch" => {
@@ -675,6 +695,7 @@ fn bulk_running(app: &mut Studio, done: usize) {
         states,
         skipped: Vec::new(),
         skipped_items: plan.skipped_items(),
+        later: crate::bulk::later_labels(plan),
         stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         receiver: Some(receiver),
         finished: None,
@@ -749,6 +770,7 @@ fn bulk_frozen(app: &mut Studio, pattern: &str) {
         states,
         skipped,
         skipped_items: plan.skipped_items(),
+        later: crate::bulk::later_labels(plan),
         stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         finished: (!running).then(|| (false, Vec::new())),
         receiver,

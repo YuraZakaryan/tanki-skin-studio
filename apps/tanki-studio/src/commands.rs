@@ -142,9 +142,16 @@ pub const COMMANDS: &[CommandSpec] = &[
     ),
     spec(
         Command::Go(Page::Info),
-        "Go to Info",
+        "Go to Item",
         "Page",
-        icons::INFO,
+        icons::SCAN_SEARCH,
+        None,
+    ),
+    spec(
+        Command::Go(Page::Settings),
+        "Go to Settings",
+        "Page",
+        icons::SETTINGS,
         None,
     ),
     spec(
