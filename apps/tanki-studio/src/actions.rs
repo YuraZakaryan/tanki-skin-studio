@@ -20,6 +20,7 @@ use tanki_core::{
     },
     archive,
     cache::{client_id, known_target_group, looks_like_cache, scan_cache},
+    later::LaterSkin,
     pack::{ImportProgress, InstalledPack, PackRejected, PackTarget, import_pack_with},
     process::running_game_processes,
     recognize::recognise_by_content,
@@ -29,10 +30,11 @@ use tanki_ui::theme::ThemePreference;
 
 use crate::{
     app::{
-        BulkRun, BulkStep, BulkWizard, CacheChoice, Dialog, ImportJob, Imported, ItemState, Page,
-        PendingApply, RowFilter, Selection, Studio, ToastAction,
+        BulkRun, BulkStep, BulkWizard, CacheChoice, Dialog, ImportJob, Imported, ItemState,
+        LastCheck, LaterDone, Page, PendingApply, RowFilter, Selection, Studio, ToastAction,
     },
     bulk,
+    later::{self, RescanMode},
     model::{caches_to_ask, grade_code, grade_index, target_name},
 };
 
@@ -94,6 +96,13 @@ impl Studio {
                 self.set_scan(scan);
                 self.restore_cache_selection();
                 self.toast(tl!("Cache rescanned"), None);
+                self.cache_stamp = later::stamp(&root);
+                self.last_look = Instant::now();
+                self.last_check = Some(LastCheck {
+                    at: unix_now(),
+                    changed: true,
+                });
+                self.apply_due_later();
             }
             Err(error) => self.toast(crate::errors::user_message(&error), None),
         }
@@ -549,6 +558,21 @@ impl Studio {
         } else {
             Dialog::GameRunning(pending, running)
         });
+    }
+
+    /// The check a run on its own thread makes before each item: the game's processes now.
+    fn game_check(&self) -> Box<dyn Fn() -> Vec<String> + Send> {
+        match self.game_processes_override.clone() {
+            Some(list) => Box::new(move || list.clone()),
+            None => {
+                let root = self
+                    .scan
+                    .as_ref()
+                    .map(|s| s.root.clone())
+                    .unwrap_or_default();
+                Box::new(move || running_game_processes(&root))
+            }
+        }
     }
 
     /// The game's processes running now (none when it is closed).
@@ -1094,7 +1118,11 @@ impl Studio {
                 self.refresh_bulk_plan();
             }
             BulkStep::Where => {
-                if wizard.plan.as_ref().is_some_and(|p| p.changes() > 0) {
+                if wizard
+                    .plan
+                    .as_ref()
+                    .is_some_and(|p| p.changes() + p.later_count() > 0)
+                {
                     wizard.step = BulkStep::Check;
                 }
             }
@@ -1254,6 +1282,7 @@ impl Studio {
         let Some(scan) = self.scan.clone() else {
             return;
         };
+        let running = self.game_check();
         let Some(wizard) = self.bulk.as_mut() else {
             return;
         };
@@ -1261,7 +1290,22 @@ impl Studio {
             return;
         };
         let tasks = bulk::tasks(plan);
+        let later = bulk::later(plan);
+        let later_labels = bulk::later_labels(plan);
+        let look_name = look.name.clone();
         if tasks.is_empty() {
+            if !later.is_empty() {
+                self.queue_later(&later, &look_name);
+                self.bulk = None;
+                self.toast(
+                    tanki_i18n::tn(
+                        later.len() as u64,
+                        "{n} modification goes on later, once the game downloads it",
+                        "{n} modifications go on later, once the game downloads them",
+                    ),
+                    None,
+                );
+            }
             return;
         }
         let stamp = std::time::SystemTime::now()
@@ -1285,14 +1329,6 @@ impl Studio {
             })
             .collect();
         let skipped_items = plan.skipped_items();
-        let running: Box<dyn Fn() -> Vec<String> + Send> =
-            match self.game_processes_override.clone() {
-                Some(list) => Box::new(move || list.clone()),
-                None => {
-                    let root = scan.root.clone();
-                    Box::new(move || running_game_processes(&root))
-                }
-            };
         let stop = Arc::new(AtomicBool::new(false));
         let (sender, receiver) = std::sync::mpsc::channel();
         let work = bulk::Run {
@@ -1318,11 +1354,13 @@ impl Studio {
             tasks,
             skipped,
             skipped_items,
+            later: later_labels,
             stop,
             receiver: Some(receiver),
             finished: None,
         });
         wizard.step = BulkStep::Running;
+        self.queue_later(&later, &look_name);
         if self.background_bulk {
             let spawned = std::thread::Builder::new()
                 .name("tanki-bulk".into())
@@ -1406,43 +1444,46 @@ impl Studio {
                 *state = ItemState::NotRun;
             }
         }
-        // The Garage shows what is on the items now: each applied skin is the item's pick.
-        let picks: Vec<(String, String)> = run
+        let applied: Vec<bulk::Task> = run
             .tasks
             .iter()
             .zip(&run.states)
             .filter(|(_, state)| matches!(state, ItemState::Applied { .. }))
-            .flat_map(|(task, _)| {
-                task.writes.iter().map(|write| {
-                    (
-                        format!(
-                            "{}/{}:{}:{}",
-                            write.skin.pack_id,
-                            task.kind,
-                            task.id,
-                            grade_code(usize::from(write.modification))
-                        ),
-                        format!("{}:{}", write.skin.grade, write.skin.variant_id),
-                    )
-                })
-            })
+            .map(|(task, _)| task.clone())
             .collect();
         if let Some(wizard) = self.bulk.as_mut() {
             wizard.step = BulkStep::Done;
         }
-        if let Some(root) = self
-            .scan
-            .as_ref()
-            .map(|s| s.root.to_string_lossy().into_owned())
-        {
-            let entry = self.session.cache_mut(&root);
-            for (key, value) in picks {
-                entry.variants.insert(key, value);
-            }
-        }
+        self.remember_picks(&applied);
         self.rescan_quietly();
         self.reload_backups();
         false
+    }
+
+    /// The Garage shows what is on the items now: each applied skin is the item's pick.
+    fn remember_picks(&mut self, applied: &[bulk::Task]) {
+        let Some(root) = self
+            .scan
+            .as_ref()
+            .map(|s| s.root.to_string_lossy().into_owned())
+        else {
+            return;
+        };
+        let entry = self.session.cache_mut(&root);
+        for task in applied {
+            for write in &task.writes {
+                entry.variants.insert(
+                    format!(
+                        "{}/{}:{}:{}",
+                        write.skin.pack_id,
+                        task.kind,
+                        task.id,
+                        grade_code(usize::from(write.modification))
+                    ),
+                    format!("{}:{}", write.skin.grade, write.skin.variant_id),
+                );
+            }
+        }
     }
 
     /// The result's Undo all: put back what every item of the run wore before it.
@@ -1560,6 +1601,238 @@ impl Studio {
         self.import(false);
         self.go(Page::Packs);
     }
+}
+
+/// Skins that go on later (see [`crate::later`]).
+impl Studio {
+    fn cache_root(&self) -> Option<String> {
+        self.scan
+            .as_ref()
+            .map(|s| s.root.to_string_lossy().into_owned())
+    }
+
+    /// Queue the cells of a run that go on later; a newer choice for the same modification wins.
+    fn queue_later(&mut self, cells: &[(String, String, bulk::Write)], look: &str) {
+        let Some(root) = self.cache_root() else {
+            return;
+        };
+        if cells.is_empty() {
+            return;
+        }
+        let now = unix_now();
+        let new = cells
+            .iter()
+            .map(|(kind, id, write)| later::entry(&root, kind, id, write, look, now))
+            .collect();
+        tanki_core::later::merge(&mut self.later, new);
+        self.save_later();
+    }
+
+    fn save_later(&mut self) {
+        if let Err(error) = self.store.save_later_skins(&self.later) {
+            log::warn!("could not save the skins that go on later: {error}");
+        }
+    }
+
+    /// The Packs list's Remove: the modification no longer waits for a skin.
+    pub fn remove_later(&mut self, skin: &LaterSkin) {
+        self.later.retain(|queued| !queued.same_slot(skin));
+        self.save_later();
+    }
+
+    pub fn set_rescan_mode(&mut self, mode: RescanMode) {
+        self.rescan_mode = mode;
+        if let Err(error) = self.store.set_rescan_mode(mode.code()) {
+            log::warn!("could not save how often to rescan: {error}");
+        }
+    }
+
+    /// Every frame: look at the cache at the start, when the window comes back to the front
+    /// (Automatic) and when the mode's time has passed; ask for a frame when it is next due.
+    pub fn watch_cache(&mut self, ctx: &eframe::egui::Context) {
+        let focused = ctx.input(|i| i.focused);
+        let came_back = focused && !self.was_focused;
+        self.was_focused = focused;
+        if self.scan.is_none() || !self.splash_done || !self.watch {
+            return;
+        }
+        let every = self.rescan_mode.every();
+        let first = self.last_check.is_none();
+        let due = first
+            || (came_back && self.rescan_mode.on_focus())
+            || every.is_some_and(|e| self.last_look.elapsed() >= e);
+        if due {
+            self.look_at_cache(first);
+        }
+        if let Some(every) = every {
+            ctx.request_repaint_after(every.saturating_sub(self.last_look.elapsed()));
+        }
+    }
+
+    /// Read the cache again if its files changed, then put on the queued skins that are due.
+    /// `first`: the cache was just read at the start.
+    pub fn look_at_cache(&mut self, first: bool) {
+        if self.bulk_running() || self.import_job.is_some() {
+            return;
+        }
+        self.last_look = Instant::now();
+        let Some(root) = self.scan.as_ref().map(|s| s.root.clone()) else {
+            return;
+        };
+        let stamp = later::stamp(&root);
+        // Without an earlier stamp there is nothing to compare: the cache was just read.
+        let changed = !first && self.cache_stamp.is_some() && stamp != self.cache_stamp;
+        self.cache_stamp = stamp;
+        if changed {
+            let selection = self.selection.clone();
+            self.rescan_quietly();
+            // The selection stays where the user left it while it still exists.
+            if let Some(selection) = selection
+                && self
+                    .items
+                    .iter()
+                    .any(|i| i.kind == selection.kind && i.id == selection.id)
+            {
+                self.selection = Some(selection);
+            }
+        }
+        self.last_check = Some(LastCheck {
+            at: unix_now(),
+            changed,
+        });
+        self.apply_due_later();
+    }
+
+    /// Put on the queued skins whose modification is in the cache now, if the game is closed and
+    /// nothing else is open: one batch, item by item, through the run's transactions. A skin that
+    /// can never go on (pack or skin gone, files missing) leaves the queue with a toast; one that
+    /// failed for another reason waits for the next look.
+    pub fn apply_due_later(&mut self) {
+        let Some(scan) = self.scan.clone() else {
+            return;
+        };
+        if self.bulk.is_some() || self.dialog.is_some() {
+            return;
+        }
+        let root = scan.root.to_string_lossy().into_owned();
+        let due: Vec<LaterSkin> = later::due(&self.later, &root, &self.items)
+            .into_iter()
+            .cloned()
+            .collect();
+        if due.is_empty() || !self.running_game().is_empty() {
+            return;
+        }
+        let refs: Vec<&LaterSkin> = due.iter().collect();
+        let tasks = later::tasks(&refs);
+        let mut looks: Vec<&str> = Vec::new();
+        for skin in &due {
+            if !looks.contains(&skin.look.as_str()) {
+                looks.push(&skin.look);
+            }
+        }
+        let look = looks.join(", ");
+        let batch = Batch {
+            id: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_nanos())
+                .to_string(),
+            name: look.clone(),
+        };
+        let work = bulk::Run {
+            root: scan.root.clone(),
+            game: scan.game.clone(),
+            packs: self.packs.clone(),
+            backups: self.data.join("backups"),
+            batch: batch.clone(),
+            tasks: tasks.clone(),
+            running: self.game_check(),
+            gate: None,
+        };
+        let events = std::cell::RefCell::new(Vec::new());
+        bulk::run(work, &AtomicBool::new(false), &|event| {
+            events.borrow_mut().push(event);
+        });
+        let mut applied = Vec::new();
+        let mut done = Vec::new();
+        for event in events.into_inner() {
+            let bulk::Event::Done { index, outcome } = event else {
+                continue;
+            };
+            let Some(task) = tasks.get(index) else {
+                continue;
+            };
+            let slot = |write: &bulk::Write| LaterSkin {
+                root: root.clone(),
+                kind: task.kind.clone(),
+                id: task.id.clone(),
+                modification: write.modification,
+                ..LaterSkin::default()
+            };
+            match outcome {
+                bulk::Outcome::Applied { .. } => {
+                    for write in &task.writes {
+                        self.later.retain(|q| !q.same_slot(&slot(write)));
+                        done.push(format!("{} M{}", task.name(), write.modification));
+                    }
+                    applied.push(task.clone());
+                }
+                bulk::Outcome::Failed {
+                    modification,
+                    failure,
+                    kept,
+                } => {
+                    let lasting =
+                        !matches!(failure, bulk::Failure::Error(_) | bulk::Failure::NotInCache);
+                    if lasting {
+                        for write in &task.writes {
+                            self.later.retain(|q| !q.same_slot(&slot(write)));
+                        }
+                    }
+                    let message = fmt(
+                        tl!("{item} did not get its skin: {reason}"),
+                        &[
+                            ("item", &format!("{} M{modification}", task.name())),
+                            ("reason", &failure_text(&failure, kept.as_deref())),
+                        ],
+                    );
+                    self.toast(message, None);
+                }
+            }
+        }
+        self.save_later();
+        if applied.is_empty() {
+            return;
+        }
+        self.remember_picks(&applied);
+        self.later_done = Some(LaterDone {
+            batch: batch.id,
+            look,
+            items: done,
+        });
+        self.rescan_quietly();
+        self.reload_backups();
+    }
+
+    /// The Garage bar's Undo: put back what the skins that went on by themselves replaced.
+    pub fn undo_later(&mut self) {
+        let Some(done) = self.later_done.clone() else {
+            return;
+        };
+        if self.undo_batch(&done.batch, &done.look) {
+            self.later_done = None;
+        }
+    }
+
+    /// The Garage bar's ×.
+    pub fn dismiss_later_done(&mut self) {
+        self.later_done = None;
+    }
+}
+
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs())
 }
 
 /// Why an item of the run was not applied, in the interface's language.

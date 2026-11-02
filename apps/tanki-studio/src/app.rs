@@ -15,6 +15,7 @@ use tanki_core::{
     apply::{AppliedSkin, BackupEntry},
     archive::ArchiveSummary,
     cache::{CacheScan, existing_cache_roots, looks_like_cache, scan_cache},
+    later::LaterSkin,
     pack::{ImportProgress, InstalledPack, PackIssue, PackItem, PackTarget, PackVariant},
     paths::app_data_dir,
     session::{SessionState, WindowGeometry},
@@ -23,6 +24,7 @@ use tanki_core::{
 use tanki_i18n::Lang;
 use tanki_ui::theme::{ThemeKind, ThemePreference};
 
+use crate::later::RescanMode;
 use crate::model::{
     BaseItem, Filter, ResourceRow, base_items, build_rows, grade_code, grade_index,
 };
@@ -34,16 +36,19 @@ pub enum Page {
     Garage,
     Resources,
     Packs,
+    /// The item in focus: modifications, skin variants, pack and manual labelling.
     Info,
+    Settings,
 }
 
 impl Page {
-    pub const ALL: [Page; 5] = [
+    pub const ALL: [Page; 6] = [
         Page::Overview,
         Page::Garage,
         Page::Resources,
         Page::Packs,
         Page::Info,
+        Page::Settings,
     ];
 
     pub fn code(self) -> &'static str {
@@ -53,6 +58,7 @@ impl Page {
             Page::Resources => "resources",
             Page::Packs => "packs",
             Page::Info => "info",
+            Page::Settings => "settings",
         }
     }
 
@@ -222,6 +228,8 @@ pub struct BulkRun {
     /// Skipped modifications of the plan, for the result: (item, modification, why).
     pub skipped: Vec<(String, u8, crate::bulk::Cell)>,
     pub skipped_items: usize,
+    /// The modifications that go on later ("Dictator M0"), for the result.
+    pub later: Vec<String>,
     pub stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
     /// The run's reports; `None` once it is over.
     pub receiver: Option<std::sync::mpsc::Receiver<crate::bulk::Event>>,
@@ -403,6 +411,37 @@ pub struct Studio {
     pub background_bulk: bool,
     /// Tests: each item of the next run waits for a message here (see [`crate::bulk::Run::gate`]).
     pub bulk_gate: Option<std::sync::mpsc::Receiver<()>>,
+    /// Skins that go on once their modification appears in the cache (see [`crate::later`]).
+    pub later: Vec<LaterSkin>,
+    pub rescan_mode: RescanMode,
+    /// The cache folder as last read (see [`crate::later::stamp`]): an equal stamp skips a rescan.
+    pub cache_stamp: Option<(u64, u64)>,
+    /// When the cache was last looked at, and whether that found anything new.
+    pub last_check: Option<LastCheck>,
+    pub last_look: Instant,
+    /// Whether the window had the focus in the last frame.
+    pub was_focused: bool,
+    /// Whether the cache is looked at on its own (a screenshot keeps a fixed last check).
+    pub watch: bool,
+    /// Queued skins that went on by themselves, shown in the Garage until dismissed.
+    pub later_done: Option<LaterDone>,
+}
+
+/// A look at the cache: when (Unix seconds) and whether its files had changed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LastCheck {
+    pub at: u64,
+    pub changed: bool,
+}
+
+/// Queued skins that went on by themselves: the Garage says so and can undo them.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LaterDone {
+    /// The backup batch of the run, for Undo.
+    pub batch: String,
+    pub look: String,
+    /// "Dictator M0", one per modification.
+    pub items: Vec<String>,
 }
 
 /// Everything the app needs from outside to start: where its data lives, the state it was left
@@ -529,6 +568,14 @@ impl Studio {
             bulk: None,
             background_bulk: true,
             bulk_gate: None,
+            later: Vec::new(),
+            rescan_mode: RescanMode::Auto,
+            cache_stamp: None,
+            last_check: None,
+            last_look: Instant::now(),
+            was_focused: true,
+            watch: true,
+            later_done: None,
         };
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();
@@ -536,6 +583,8 @@ impl Studio {
         app.open_initial_cache();
         app.check_caches();
         app.reload_backups();
+        app.later = app.store.later_skins();
+        app.rescan_mode = RescanMode::from_code(app.store.rescan_mode().ok().flatten().as_deref());
         app.report_finished_update();
         crate::dev::run_actions(&mut app);
         Ok(app)

@@ -77,7 +77,6 @@
 	Garage	Гараж
 	Give this resource an item id below to use skins for it.	Задайте этому ресурсу идентификатор предмета ниже, чтобы использовать для него скины.
 	Go to Garage	Перейти в Гараж
-	Go to Info	Перейти в Информацию
 	Go to Overview	Перейти в Обзор
 	Go to Packs	Перейти в Паки
 	Go to Resources	Перейти в Ресурсы
@@ -91,12 +90,10 @@
 	Import pack	Импортировать пак
 	Import pack from folder	Импортировать пак из папки
 	In library	В библиотеке
-	Info	Информация
 	Invalid manifest	Некорректный манифест
 	Invalid path	Недопустимый путь
 	Item	Предмет
 	Item id, e.g. hornet	Идентификатор предмета, например hornet
-	Item, labeling and pack source	Предмет, разметка и источник пака
 	Items	Предметы
 	Label all modifications M0–M3 (adjacent resources)	Разметить все модификации M0–M3 (соседние ресурсы)
 	Label manually	Разметить вручную
@@ -366,7 +363,6 @@ step	Check and apply	Проверьте и наденьте
 	No items here.	Здесь нет предметов.
 	No look matches “{query}”.	Ни один образ не подходит под «{query}».
 	No looks to apply yet	Пока нечего надевать
-	No {modification} in cache	Нет {modification} в кэше
 	No {skin}	Нет {skin}
 	No {skin} in the packs, {modification} stays as it is	В паках нет {skin}, {modification} останется как есть
 	Not touched	Не трогаем
@@ -396,7 +392,6 @@ step	Check and apply	Проверьте и наденьте
 	The game was started ({names}), so the rest stopped: {items} not changed.	Игра запущена ({names}), поэтому остальное остановлено: {items} без изменений.
 	The file is in use.	Файл занят.
 	The skin has no {files}, so it is not put on	В скине нет {files}, поэтому он не надевается
-	This item has no {modification} in the cache	У этого предмета нет {modification} в кэше
 	This replaces the skins these items wear now	Это заменит скины, которые сейчас надеты на эти предметы
 	This skin is on it already	Этот скин уже надет
 	Undid “{look}”: {files} put back. Restart the game.	«{look}» отменён: возвращено {files}. Перезапустите игру.
@@ -417,7 +412,6 @@ step	Check and apply	Проверьте и наденьте
 	backup	бэкап
 	from {modification}	с {modification}
 	incomplete skin	неполный скин
-	no {modification} in the cache	нет {modification} в кэше
 	no {skin}	нет {skin}
 	not applied	не удалось
 	nothing skipped	ничего не пропущено
@@ -465,3 +459,47 @@ step	Check and apply	Проверьте и наденьте
 @plural	{n} skin|{n} skins	{n} скин|{n} скина|{n} скинов
 @plural	{n} skipped|{n} skipped	{n} пропущен|{n} пропущены|{n} пропущено
 @plural	{n} turret|{n} turrets	пушек: {n}|пушек: {n}|пушек: {n}
+	{item} did not get its skin: {reason}	{item} не получил скин: {reason}
+	Goes on later	Наденется позже
+	Goes on by itself once the game downloads {modification}	Наденется сам, когда игра скачает {modification}
+	goes on later	наденется позже
+	Go on later	Наденутся позже
+	Open {item} in the game's garage. Once the game is closed, the Studio puts {look} on by itself.	Откройте {item} в гараже игры. Когда игра будет закрыта, Студия наденет {look} сама.
+	Open these modifications in the game's garage. Once the game is closed, the Studio puts them on by itself.	Откройте эти модификации в гараже игры. Когда игра будет закрыта, Студия наденет их сама.
+	Goes on later: {list}.	Наденется позже: {list}.
+	{item} and {n} more	{item} и ещё {n}
+	{modification} appeared in the cache and the Studio put the waiting skin on. Backup saved.	{modification} появился в кэше, и Студия надела отложенный скин. Бэкап сохранён.
+	They appeared in the cache and the Studio put the waiting skins on. Backup saved.	Они появились в кэше, и Студия надела отложенные скины. Бэкап сохранён.
+	Modifications, skin variants, pack and manual labeling	Модификации, варианты скина, пак и ручная разметка
+	Later: {look}	Позже: {look}
+	Remove	Убрать
+	Goes on by itself once the game downloads M{n} · from {pack}	Наденется сам, когда игра скачает M{n} · из {pack}
+	Settings	Настройки
+	Go to Item	Перейти в Предмет
+	Go to Settings	Перейти в Настройки
+	Cache, skins that go on later, appearance and about	Кэш, отложенные скины, оформление и о программе
+	Automatic: at launch, when you come back to the window and every 5 minutes. A check barely loads the computer.	Автоматически: при запуске, когда вы возвращаетесь в окно, и раз в 5 минут. Проверка почти не нагружает компьютер.
+	Rescan the cache	Перечитывать кэш
+	The Studio notices new game files by itself.	Студия сама замечает новые файлы игры.
+	Automatic	Автоматически
+	Every hour	Раз в час
+	Manual	Вручную
+	{when} · {what}	{when} · {what}
+	new files read	новые файлы прочитаны
+	no new files	новых файлов нет
+	Not yet	Ещё не было
+	Rescan now	Перечитать сейчас
+	Last check	Последняя проверка
+	Open the list	Открыть список
+	Nothing waits	Ничего не ждёт
+	A modification the game has not downloaded yet waits here, then goes on by itself.	Модификация, которую игра ещё не скачала, ждёт здесь, а потом наденется сама.
+	The Studio puts it on by itself once the game downloads it.	Студия наденет её сама, когда игра её скачает.
+	Theme	Тема
+	Like the system, or always light or dark	Как в системе или всегда светлая либо тёмная
+	Source code	Исходный код
+	Report a problem	Сообщить о проблеме
+	About	О программе
+	Version {version} · {license}	Версия {version} · {license}
+@plural	{n} modification goes on later, once the game downloads it|{n} modifications go on later, once the game downloads them	{n} модификация наденется позже, когда игра её скачает|{n} модификации наденутся позже, когда игра их скачает|{n} модификаций наденутся позже, когда игра их скачает
+@plural	{n} goes on later|{n} go on later	{n} наденется позже|{n} наденутся позже|{n} наденутся позже
+@plural	{n} modification goes on later|{n} modifications go on later	{n} модификация наденется позже|{n} модификации наденутся позже|{n} модификаций наденутся позже

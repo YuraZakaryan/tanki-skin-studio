@@ -34,7 +34,7 @@ pub fn game_name(game: &str) -> String {
     }
 }
 
-fn os_name() -> &'static str {
+pub fn os_name() -> &'static str {
     if cfg!(target_os = "macos") {
         "macOS"
     } else if cfg!(target_os = "windows") {
@@ -77,15 +77,30 @@ pub fn sidebar(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         Some(thousands(app.packs.len())),
         None,
     ];
+    // The skins that went on by themselves ask for a look at the Garage.
+    let badge = app
+        .later_done
+        .as_ref()
+        .map(|done| done.items.len().to_string());
+    let pages = [
+        Page::Overview,
+        Page::Garage,
+        Page::Resources,
+        Page::Packs,
+        Page::Info,
+    ];
     let nav = Rect::from_min_size(
         Pos2::new(rect.min.x + 12.0, rect.min.y + 85.0 + 8.0),
         Vec2::new(rect.width() - 24.0 - 1.0, 5.0 * 42.0 + 4.0 * 4.0),
     );
     in_rect(ui, nav, |ui| {
         ui.spacing_mut().item_spacing.y = 4.0;
-        for (page, count) in Page::ALL.into_iter().zip(counts) {
+        for (page, count) in pages.into_iter().zip(counts) {
             let (icon, label) = page_entry(page);
-            if widgets::nav_item(ui, icon, label, count.as_deref(), app.page == page).clicked() {
+            let badge = (page == Page::Garage).then_some(badge.as_deref()).flatten();
+            if widgets::nav_item_badged(ui, icon, label, count.as_deref(), badge, app.page == page)
+                .clicked()
+            {
                 app.go(page);
             }
         }
@@ -97,6 +112,17 @@ pub fn sidebar(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let theme_y = rect.max.y - 16.0 - 36.0;
     let lang_y = theme_y - 12.0 - 36.0;
     let card_y = lang_y - 12.0 - 99.0;
+    // Settings sit apart, at the bottom of the navigation (as Windows apps keep them).
+    let settings = Rect::from_min_size(
+        Pos2::new(rect.min.x + 12.0, card_y - 24.0 - 42.0),
+        Vec2::new(rect.width() - 24.0 - 1.0, 42.0),
+    );
+    in_rect(ui, settings, |ui| {
+        let (icon, label) = page_entry(Page::Settings);
+        if widgets::nav_item(ui, icon, label, None, app.page == Page::Settings).clicked() {
+            app.go(Page::Settings);
+        }
+    });
     cache_card(
         app,
         ui,
@@ -293,7 +319,8 @@ fn page_entry(page: Page) -> (char, &'static str) {
         Page::Garage => (icons::WAREHOUSE, tl!("Garage")),
         Page::Resources => (icons::DATABASE, tl!("Resources")),
         Page::Packs => (icons::PACKAGE, tl!("Packs")),
-        Page::Info => (icons::INFO, tl!("Info")),
+        Page::Info => (icons::SCAN_SEARCH, tl!("Item")),
+        Page::Settings => (icons::SETTINGS, tl!("Settings")),
     }
 }
 
@@ -399,6 +426,7 @@ pub fn page(app: &mut Studio, ui: &mut Ui, main: Rect) {
         Page::Resources => super::resources::draw(app, ui, main),
         Page::Packs => super::packs::draw(app, ui, main),
         Page::Info => super::info::draw(app, ui, main),
+        Page::Settings => super::settings::draw(app, ui, main),
     }
 }
 

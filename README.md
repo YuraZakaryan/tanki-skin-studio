@@ -146,7 +146,8 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
 
 ### Feels like a native app
 
-- **Five pages:** Overview, Garage, Resources, Packs and Info.
+- **Five pages and Settings:** Overview, Garage, Resources, Packs and Item; Settings at the bottom
+  of the sidebar.
 - **A command palette** (<kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>) and shortcuts: <kbd>⌘I</kbd> import,
   <kbd>⌘Z</kbd> restore, <kbd>⌘+</kbd> / <kbd>⌘−</kbd> / <kbd>⌘0</kbd> interface size.
 - **English and Russian, dark and light themes.** Your language, theme, page, window place and

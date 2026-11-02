@@ -394,8 +394,12 @@ pub enum Cell {
     Missing {
         source: Option<u8>,
     },
-    /// The item has no such modification in the cache.
-    NotInGame,
+    /// The item has no such modification in the cache yet: the skin goes on by itself once the
+    /// game downloads it (see [`crate::later`]).
+    Later {
+        skin: LookSkin,
+        how: How,
+    },
     /// Exactly this skin is on it already.
     Already,
     /// The skin does not bring every model and texture file the item has.
@@ -411,13 +415,14 @@ impl Cell {
         matches!(self, Cell::Change { .. })
     }
 
-    /// Skipped for a reason the user should see: no such skin, no such modification, an
-    /// incomplete skin. Turned off on purpose and already on are not.
+    /// Skipped for a reason the user should see: no such skin, an incomplete skin. Turned off on
+    /// purpose, already on and put on later are not.
     pub fn skipped(&self) -> bool {
-        matches!(
-            self,
-            Cell::Missing { .. } | Cell::NotInGame | Cell::Incomplete { .. }
-        )
+        matches!(self, Cell::Missing { .. } | Cell::Incomplete { .. })
+    }
+
+    pub fn later(&self) -> bool {
+        matches!(self, Cell::Later { .. })
     }
 }
 
@@ -438,9 +443,14 @@ impl Row {
         self.cells.iter().flatten().any(Cell::changes)
     }
 
-    /// Nothing of the item changes: it is skipped as a whole.
+    /// Nothing of the item changes, now or later: it is skipped as a whole.
     pub fn skipped(&self) -> bool {
-        !self.changes()
+        !self.changes() && self.later_count() == 0
+    }
+
+    /// The modifications that go on later, when the game downloads them.
+    pub fn later_count(&self) -> usize {
+        self.cells.iter().flatten().filter(|c| c.later()).count()
     }
 
     pub fn change_count(&self) -> usize {
@@ -468,6 +478,11 @@ impl Plan {
 
     pub fn changes(&self) -> usize {
         self.rows.iter().map(Row::change_count).sum()
+    }
+
+    /// The modifications that go on later.
+    pub fn later_count(&self) -> usize {
+        self.rows.iter().map(Row::later_count).sum()
     }
 }
 
@@ -567,9 +582,6 @@ pub fn plan(look: &Look, settings: &Settings, facts: &CacheFacts<'_>) -> Plan {
                 if pick == Some(Pick::Off) || (pick.is_none() && !choice.on) {
                     return Some(Cell::Off);
                 }
-                if !here[k] {
-                    return Some(Cell::NotInGame);
-                }
                 let chosen = match pick {
                     Some(Pick::Skin(source)) => item
                         .skin(source)
@@ -581,6 +593,12 @@ pub fn plan(look: &Look, settings: &Settings, facts: &CacheFacts<'_>) -> Plan {
                     Ok(found) => found,
                     Err(source) => return Some(Cell::Missing { source }),
                 };
+                if !here[k] {
+                    return Some(Cell::Later {
+                        skin: skin.clone(),
+                        how,
+                    });
+                }
                 if already_on(
                     facts.applied,
                     &item.kind,
@@ -682,6 +700,37 @@ pub fn tasks(plan: &Plan) -> Vec<Task> {
                 })
                 .collect(),
         })
+        .collect()
+}
+
+/// The modifications the plan puts on later: (kind, id, write), in its order.
+pub fn later(plan: &Plan) -> Vec<(String, String, Write)> {
+    plan.rows
+        .iter()
+        .flat_map(|row| {
+            row.cells
+                .iter()
+                .enumerate()
+                .filter_map(move |(k, cell)| match cell {
+                    Some(Cell::Later { skin, .. }) => Some((
+                        row.kind.clone(),
+                        row.id.clone(),
+                        Write {
+                            modification: k as u8,
+                            skin: skin.clone(),
+                        },
+                    )),
+                    _ => None,
+                })
+        })
+        .collect()
+}
+
+/// "Dictator M0" for each modification the plan puts on later.
+pub fn later_labels(plan: &Plan) -> Vec<String> {
+    later(plan)
+        .iter()
+        .map(|(_, id, write)| format!("{} M{}", target_title(id), write.modification))
         .collect()
 }
 
@@ -1161,9 +1210,10 @@ mod tests {
         );
         assert_eq!(
             cell(&plan, "hunter", 0),
-            &Some(Cell::NotInGame),
-            "no M0 in the cache"
+            &Some(Cell::Missing { source: Some(0) }),
+            "no XT made for M0: nothing to put on later either"
         );
+        assert!(later(&plan).is_empty());
         assert_eq!(
             cell(&plan, "hunter", 2).as_ref().map(Cell::changes),
             Some(true)
@@ -1184,6 +1234,19 @@ mod tests {
         assert!(
             matches!(cell(&from, "smoky", 0), Some(Cell::Change { skin, how: How::From(3) }) if skin.pack_id == "a")
         );
+        assert!(
+            matches!(
+                cell(&from, "hunter", 0),
+                Some(Cell::Later {
+                    how: How::From(3),
+                    ..
+                })
+            ),
+            "no M0 in the cache yet: XT M3 goes on it later"
+        );
+        assert_eq!(later(&from).len(), 1);
+        assert_eq!(from.later_count(), 1);
+        assert!(!from.rows.iter().any(|r| r.id == "hunter" && r.skipped()));
         // Own M0: the Hunter's M0 is not in the game, a Viking skin made for M0 exists.
         settings.choices[0].source = Source::Own;
         settings.choices[2] = Choice {
@@ -1205,7 +1268,10 @@ mod tests {
             !Cell::Already.skipped(),
             "nothing to do is no reason to list"
         );
-        assert!(Cell::NotInGame.skipped());
+        assert!(
+            Cell::Missing { source: Some(3) }.skipped(),
+            "no such skin is skipped"
+        );
     }
 
     #[test]

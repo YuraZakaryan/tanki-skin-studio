@@ -13,6 +13,19 @@ pub fn nav_item(
     count: Option<&str>,
     active: bool,
 ) -> Response {
+    nav_item_badged(ui, icon, label, count, None, active)
+}
+
+/// A navigation item with a badge left of its count: an accent pill that asks to look at the
+/// page ("1": a skin went on by itself).
+pub fn nav_item_badged(
+    ui: &mut Ui,
+    icon: char,
+    label: &str,
+    count: Option<&str>,
+    badge: Option<&str>,
+    active: bool,
+) -> Response {
     let tokens = Tokens::get(ui.ctx());
     let (rect, response) = alloc(ui, Vec2::new(ui.available_width(), 42.0), Sense::click());
     describe(&response, Role::Button, true, Some(active), label);
@@ -54,14 +67,26 @@ pub fn nav_item(
         label,
         Text::body(14.0, weight, ink),
     );
+    let mut right = rect.max.x - 14.0;
     if let Some(count) = count {
-        fonts::draw_right(
+        let drawn = fonts::draw_right(
             painter,
-            rect.max.x - 14.0,
+            right,
             rect.center().y,
             count,
             Text::mono(12.0, 400, count_ink),
         );
+        right = drawn.min.x - 8.0;
+    }
+    if let Some(badge) = badge {
+        let style = Text::mono(11.0, 700, tokens.on_accent);
+        let width = fonts::width(painter, badge, style) + 12.0;
+        let pill = egui::Rect::from_min_size(
+            Pos2::new(right - width, rect.center().y - 9.0),
+            Vec2::new(width, 18.0),
+        );
+        draw::rounded(painter, pill, CornerRadius::same(9), tokens.accent, None);
+        fonts::draw_centered(painter, pill, badge, style);
     }
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
@@ -201,4 +226,119 @@ pub fn top_bar(
         subtitle,
         Text::body(13.0, 400, tokens.text_3),
     );
+}
+
+/// The width [`choice_segments`] takes for `items`.
+pub fn choice_segments_width(ui: &Ui, items: &[(&str, Option<String>)], active: usize) -> f32 {
+    let tokens = Tokens::get(ui.ctx());
+    let widths: f32 = items
+        .iter()
+        .enumerate()
+        .map(|(index, (label, count))| {
+            let weight = Text::body(
+                13.0,
+                600,
+                if index == active {
+                    tokens.text
+                } else {
+                    tokens.text_2
+                },
+            );
+            let count = count.as_deref().map_or(0.0, |c| {
+                6.0 + fonts::width(ui.painter(), c, Text::mono(12.0, 400, tokens.text_3))
+            });
+            24.0 + fonts::width(ui.painter(), label, weight) + count
+        })
+        .sum();
+    widths + 4.0 * items.len().saturating_sub(1) as f32 + 6.0
+}
+
+/// Choices side by side in one frame, the active one raised (a filter, a setting): 13 px labels,
+/// each with an optional count after it. Drawn from `origin`, `height` tall; returns the frame
+/// and the index clicked.
+pub fn choice_segments(
+    ui: &mut Ui,
+    origin: Pos2,
+    height: f32,
+    items: &[(&str, Option<String>)],
+    active: usize,
+    salt: &str,
+) -> (Rect, Option<usize>) {
+    let tokens = Tokens::get(ui.ctx());
+    let label_style =
+        |on: bool| Text::body(13.0, 600, if on { tokens.text } else { tokens.text_2 });
+    let count_style = Text::mono(12.0, 400, tokens.text_3);
+    let widths: Vec<f32> = items
+        .iter()
+        .enumerate()
+        .map(|(index, (label, count))| {
+            let count = count
+                .as_deref()
+                .map_or(0.0, |c| 6.0 + fonts::width(ui.painter(), c, count_style));
+            12.0 + fonts::width(ui.painter(), label, label_style(index == active)) + count + 12.0
+        })
+        .collect();
+    let total: f32 = widths.iter().sum::<f32>() + 4.0 * items.len().saturating_sub(1) as f32 + 6.0;
+    let frame = Rect::from_min_size(origin, Vec2::new(total, height));
+    draw::rounded(
+        ui.painter(),
+        frame,
+        CornerRadius::same(9),
+        tokens.surface,
+        Some((1.0, tokens.border)),
+    );
+    let mut clicked = None;
+    let mut x = frame.min.x + 3.0;
+    for (index, ((label, count), width)) in items.iter().zip(&widths).enumerate() {
+        let segment = Rect::from_min_size(
+            Pos2::new(x, frame.min.y + 3.0),
+            Vec2::new(*width, frame.height() - 6.0),
+        );
+        let on = index == active;
+        let response = ui.interact(segment, ui.scope_id().with((salt, index)), Sense::click());
+        let name = (*label).to_owned();
+        response
+            .widget_info(move || egui::WidgetInfo::selected(Role::Button, true, on, name.clone()));
+        if on {
+            draw::rounded(
+                ui.painter(),
+                segment,
+                CornerRadius::same(7),
+                tokens.surface_3,
+                Some((1.0, tokens.border_strong)),
+            );
+        } else if response.hovered() {
+            draw::rounded(
+                ui.painter(),
+                segment,
+                CornerRadius::same(7),
+                tokens.surface_2,
+                None,
+            );
+        }
+        let used = fonts::draw_left(
+            ui.painter(),
+            segment.min.x + 12.0,
+            segment.center().y,
+            label,
+            label_style(on),
+        );
+        if let Some(count) = count {
+            fonts::draw_left(
+                ui.painter(),
+                used.max.x + 6.0,
+                segment.center().y,
+                count,
+                count_style,
+            );
+        }
+        if response
+            .on_hover_cursor(egui::CursorIcon::PointingHand)
+            .clicked()
+        {
+            clicked = Some(index);
+        }
+        x += width + 4.0;
+    }
+    (frame, clicked)
 }

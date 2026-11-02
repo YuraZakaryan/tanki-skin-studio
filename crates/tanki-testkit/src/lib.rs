@@ -382,6 +382,30 @@ pub fn id_marker(id: u64) -> String {
     )
 }
 
+/// Write the cache files of modification `j` of a looks fixture item, as the game does when it
+/// downloads one: the files [`build_looks`] writes for a modification it has. Returns them.
+pub fn write_looks_modification(
+    cache: &Path,
+    id: &str,
+    first_id: u64,
+    j: usize,
+) -> Result<Vec<PathBuf>> {
+    let marker = id_marker(first_id + 2 * j as u64);
+    let mut files = Vec::new();
+    for revision in REVISIONS {
+        for role in ROLES {
+            let url = format!("http://cache.test{marker}{revision}/{role}");
+            let bytes = if role.ends_with(".jpg") {
+                jpeg(16, 16, [60, 60 + 20 * j as u8, 90])
+            } else {
+                format!("original-{id}-m{j}-{revision}-{role}").into_bytes()
+            };
+            files.push(write_cache_file(cache, &url, &bytes)?);
+        }
+    }
+    Ok(files)
+}
+
 /// The looks fixture:
 ///
 /// - the cache has hulls Viking, Hunter (no M0) and Dictator, turrets Smoky and Thunder, each
@@ -409,25 +433,13 @@ pub fn build_looks(work: &Path) -> Result<LooksFixture> {
             if !present[j] {
                 continue;
             }
-            let resource = first_id + 2 * j as u64;
-            let marker = id_marker(resource);
             labels.push((
-                marker.clone(),
+                id_marker(first_id + 2 * j as u64),
                 kind.to_owned(),
                 id.to_owned(),
                 format!("m{j}"),
             ));
-            for revision in REVISIONS {
-                for role in ROLES {
-                    let url = format!("http://cache.test{marker}{revision}/{role}");
-                    let bytes = if role.ends_with(".jpg") {
-                        jpeg(16, 16, [60, 60 + 20 * j as u8, 90])
-                    } else {
-                        format!("original-{id}-m{j}-{revision}-{role}").into_bytes()
-                    };
-                    slot.push(write_cache_file(&cache, &url, &bytes)?);
-                }
-            }
+            *slot = write_looks_modification(&cache, id, first_id, j)?;
         }
         items.push(LooksItem {
             kind,
@@ -687,7 +699,8 @@ pub fn build_design_sample(work: &Path) -> Result<LooksFixture> {
         ("wasp", &["xt-m0", "xt-m1", "xt-m2", "xt-m3"]),
         ("hornet", &["xt-m0", "xt-m1", "xt-m2"]),
         ("viking", &["xt-m0", "xt-m1", "xt-m2"]),
-        ("dictator", &["xt-m1", "xt-m2"]),
+        // M3 only for the M0 the cache does not have yet: it goes on later.
+        ("dictator", &["xt-m1", "xt-m2", "xt-m3"]),
         ("railgun", &["xt-m1", "xt-m2", "xt-m3"]),
         ("hunter", &["xt-m1", "xt-m2", "xt-m3"]),
         ("smoky", &["xt-m1", "xt-m2", "xt-m3"]),

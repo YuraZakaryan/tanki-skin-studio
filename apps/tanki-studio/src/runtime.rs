@@ -31,6 +31,7 @@ impl eframe::App for Studio {
             ctx.request_repaint_after(std::time::Duration::from_millis(50));
         }
         self.poll_updates(ctx);
+        self.watch_cache(ctx);
         crate::dev::autopilot_tick(self, ctx);
         self.handle_shortcuts(ctx);
         let dropped = ctx.input(|i| {

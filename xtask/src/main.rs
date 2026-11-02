@@ -1001,6 +1001,128 @@ const SCENES: &[Scene] = &[
         design: 2,
         ..SCENE
     },
+    // Skins that go on later (after the backups scenes, whose run queued Dictator M0): the
+    // Garage's bar once one went on by itself, the Item page's mark and the Settings page.
+    Scene {
+        name: "design-8-later-en-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;later-done:XT|Dictator M0",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-8-later-en-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;later-done:XT|Dictator M0",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-8-later-ru-dark",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;later-done:XT|Dictator M0",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-8-later-ru-light",
+        page: "garage",
+        actions: "dismiss;select:/0/0/120/6/;later-done:XT|Dictator M0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 1,
+        ..SCENE
+    },
+    Scene {
+        name: "design-9-item-en-dark",
+        page: "info",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/66/;page:info",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-9-item-en-light",
+        page: "info",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/66/;page:info",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-9-item-ru-dark",
+        page: "info",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/66/;page:info",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-9-item-ru-light",
+        page: "info",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;select:/0/0/120/66/;page:info",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-10-settings-en-dark",
+        page: "settings",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:settings;last-check:1792479840:0",
+        lang: "en",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-10-settings-en-light",
+        page: "settings",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:settings;last-check:1792479840:0",
+        lang: "en",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-10-settings-ru-dark",
+        page: "settings",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:settings;last-check:1792479840:0",
+        lang: "ru",
+        theme: "dark",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
+    Scene {
+        name: "design-10-settings-ru-light",
+        page: "settings",
+        actions: "dismiss;bulk;bulk-next;bulk-off:3;bulk-source:0:3;bulk-row:hull:viking;bulk-pick:hull:viking:0:0;bulk-next;bulk-apply;bulk-close;dismiss;page:settings;last-check:1792479840:0",
+        lang: "ru",
+        theme: "light",
+        size: "1440x900",
+        design: 2,
+        ..SCENE
+    },
     // Restore asks first and lists what goes back: two replacements, then the Restore button.
     // Last on purpose: the scenes share one data folder and cache, and this one writes to them.
     Scene {

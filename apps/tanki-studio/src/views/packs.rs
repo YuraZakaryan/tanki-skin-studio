@@ -3,9 +3,10 @@
 //! Packs: the library of imported packs, the active pack's details and the backup history.
 
 use eframe::egui::{self, Pos2, Rect, Ui, Vec2};
+use tanki_core::later::LaterSkin;
 use tanki_i18n::{fmt, tl, tn};
 use tanki_ui::{
-    fonts,
+    draw, fonts,
     fonts::Text,
     icons,
     layout::{Size, columns, in_rect, rows},
@@ -47,10 +48,20 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
         main.max,
     );
     let wide = super::is_wide(body.shrink2(Vec2::new(32.0, 0.0)));
+    let root = app
+        .scan
+        .as_ref()
+        .map(|s| s.root.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let waiting: Vec<LaterSkin> = crate::later::of_cache(&app.later, &root)
+        .into_iter()
+        .cloned()
+        .collect();
+    let later_height = if waiting.is_empty() { 0.0 } else { 210.0 };
     let min_height = if wide {
         764.0 + 64.0
     } else {
-        32.0 + 560.0 + 24.0 + 201.0 + 24.0 + 175.0 + 24.0 + 340.0 + 32.0
+        32.0 + 560.0 + 24.0 + 201.0 + 24.0 + 175.0 + 24.0 + 340.0 + 32.0 + later_height + 24.0
     };
     scroll_page(ui, body, min_height, |ui, rect| {
         let content = rect.shrink(32.0);
@@ -67,13 +78,21 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
                 content,
                 24.0,
                 &[
-                    Size::Fixed(560.0),
+                    Size::Fixed(560.0 + later_height + 24.0),
                     Size::Fixed(201.0),
                     Size::Fixed(175.0),
                     Size::Fixed(340.0),
                 ],
             );
             (all[0], all[1], all[2], all[3])
+        };
+        // The skins that go on later sit under the library, which gives up some of its drop zone.
+        let mine = if waiting.is_empty() {
+            mine
+        } else {
+            let parts = rows(mine, 24.0, &[Size::Fill(1.0), Size::Fixed(later_height)]);
+            later_list(app, ui, parts[1], &waiting);
+            parts[0]
         };
         my_packs(app, ui, mine);
         active_details(app, ui, details);
@@ -184,6 +203,126 @@ fn my_packs(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     }
     if let Some((id, version)) = delete {
         app.ask_to_delete_pack(&id, &version);
+    }
+}
+
+/// The modifications waiting for the game to download them, each with Remove.
+fn later_list(app: &mut Studio, ui: &mut Ui, rect: Rect, waiting: &[LaterSkin]) {
+    let tokens = Tokens::get(ui.ctx());
+    let meta = tn(
+        waiting.len() as u64,
+        "{n} modification",
+        "{n} modifications",
+    );
+    let body = widgets::panel(ui, rect, tl!("Go on later"), Some(&meta));
+    let inner = body.shrink(18.0);
+    let note_text = tl!(
+        "Open these modifications in the game's garage. Once the game is closed, the Studio puts them on by itself."
+    );
+    let note = fonts::paragraph(
+        ui.painter(),
+        note_text,
+        Text::body(12.0, 400, tokens.text_2),
+        inner.width() - 24.0 - 14.0 - 10.0,
+        None,
+    );
+    let note_height = note.size().y + 20.0;
+    // The note follows the rows; many rows scroll above it.
+    let rows_height = (waiting.len() as f32 * 48.0 - 12.0)
+        .min(inner.height() - note_height - 12.0)
+        .max(36.0);
+    let list = Rect::from_min_size(inner.min, Vec2::new(inner.width(), rows_height));
+    let mut remove = None;
+    in_rect(ui, list, |ui| {
+        egui::ScrollArea::vertical()
+            .id_salt("later-list")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                let top = ui.cursor().min;
+                let total = waiting.len() as f32 * 48.0 - 12.0;
+                ui.allocate_exact_size(Vec2::new(list.width(), total), egui::Sense::hover());
+                for (index, skin) in waiting.iter().enumerate() {
+                    let row = Rect::from_min_size(
+                        Pos2::new(top.x, top.y + index as f32 * 48.0),
+                        Vec2::new(list.width(), 36.0),
+                    );
+                    let icon_box = Rect::from_min_size(row.min, Vec2::splat(36.0));
+                    draw::rounded(
+                        ui.painter(),
+                        icon_box,
+                        egui::CornerRadius::same(8),
+                        tokens.info_soft,
+                        None,
+                    );
+                    fonts::icon(
+                        ui.painter(),
+                        icon_box.center(),
+                        icons::CLOCK_3,
+                        16.0,
+                        tokens.info,
+                    );
+                    let button = Button::new(ButtonKind::Ghost, tl!("Remove")).icon(icons::X);
+                    let width = button.measure(ui);
+                    let place = Rect::from_min_size(
+                        Pos2::new(row.max.x - width, row.center().y - 20.0),
+                        Vec2::new(width, 40.0),
+                    );
+                    if in_rect(ui, place, |ui| button.show(ui).clicked()) {
+                        remove = Some(skin.clone());
+                    }
+                    let x = row.min.x + 36.0 + 14.0;
+                    let room = place.min.x - 12.0 - x;
+                    let title = format!("{} · {}", crate::later::label(skin), skin.look);
+                    let style = Text::body(14.0, 600, tokens.text);
+                    let shown = fonts::ellipsize(ui.painter(), &title, style, room);
+                    fonts::draw(ui.painter(), Pos2::new(x, row.min.y), &shown, style);
+                    super::label_node(
+                        ui,
+                        Rect::from_min_max(
+                            Pos2::new(x, row.min.y),
+                            Pos2::new(place.min.x, row.max.y),
+                        ),
+                        ("later", index),
+                        &title,
+                    );
+                    let sub = fmt(
+                        tl!("Goes on by itself once the game downloads M{n} · from {pack}"),
+                        &[
+                            ("n", &skin.modification.to_string()),
+                            ("pack", &skin.pack_name),
+                        ],
+                    );
+                    let style = Text::body(12.0, 400, tokens.text_3);
+                    let shown = fonts::ellipsize(ui.painter(), &sub, style, room);
+                    fonts::draw(ui.painter(), Pos2::new(x, row.min.y + 21.0), &shown, style);
+                }
+            });
+    });
+    let note_rect = Rect::from_min_size(
+        Pos2::new(inner.min.x, list.max.y + 12.0),
+        Vec2::new(inner.width(), note_height),
+    );
+    draw::rounded(
+        ui.painter(),
+        note_rect,
+        egui::CornerRadius::same(10),
+        tokens.surface_2,
+        None,
+    );
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(note_rect.min.x + 12.0 + 7.0, note_rect.center().y),
+        icons::INFO,
+        14.0,
+        tokens.text_3,
+    );
+    ui.painter().galley(
+        Pos2::new(note_rect.min.x + 12.0 + 14.0 + 10.0, note_rect.min.y + 10.0),
+        note,
+        tokens.text_2,
+    );
+    if let Some(skin) = remove {
+        app.remove_later(&skin);
     }
 }
 

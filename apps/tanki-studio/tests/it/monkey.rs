@@ -57,6 +57,8 @@ struct Run {
 fn run(seed: u64, steps: usize) -> Run {
     let env = env(&format!("monkey-{seed}"));
     let mut h = harness_with_pack(&env);
+    // The pack is the monkeys' material: its import toast (with Undo) is not part of the run.
+    h.state_mut().toasts.clear();
     let files: Vec<PathBuf> = env
         .cache
         .hull_files

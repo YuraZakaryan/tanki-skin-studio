@@ -6,5 +6,5 @@
 pub use tanki_apply::{apply, process, recognize};
 pub use tanki_cache::{cache, targets};
 pub use tanki_pack::{archive, pack};
-pub use tanki_state::{paths, session, state};
+pub use tanki_state::{later, paths, session, state};
 pub use tanki_update as update;

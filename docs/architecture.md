@@ -36,8 +36,8 @@ design pixel by pixel.
 
 ## Screens
 
-`apps/tanki-studio/src/views/` holds one file per screen (overview, garage, resources, packs, info, empty
-state, splash) and per overlay (dialogs, command palette, toasts, the "Apply to all items" wizard); `shell.rs`
+`apps/tanki-studio/src/views/` holds one file per screen (overview, garage, resources, packs, info (the Item
+page), settings, empty state, splash) and per overlay (dialogs, command palette, toasts, the "Apply to all items" wizard); `shell.rs`
 is the sidebar and page frame.
 
 - State lives in `app.rs`; everything the user can do is a method in `actions.rs`, called by buttons, the
@@ -46,7 +46,10 @@ is the sidebar and page frame.
 - The view model (`model.rs`: resource rows, garage items, backup entries, sizes, times) is plain data with
   unit tests. "Apply to all items" has its own (`bulk.rs`): the looks shared by the packs' skins, the plan
   of what goes where, and the run, which writes item by item on its own thread through `tanki-apply`
-  transactions tagged with one batch.
+  transactions tagged with one batch. Its cells for a modification not in the cache yet go on later
+  (`later.rs`): the choice is queued in the state store (`tanki_state::later`), the cache is looked at
+  again on its own (at launch, when the window comes back, every 5 minutes or hourly; a cheap stamp of
+  the folder decides whether to read it), and the queued skins that are due go on as one batch.
 - Responsive: the sidebar becomes an icon rail below 1100 points, two-column pages stack below 860 points
   of content width and scroll, long text is clipped to its box. The window cannot be smaller than 820 × 520.
 

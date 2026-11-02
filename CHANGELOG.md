@@ -13,12 +13,29 @@ All notable changes are recorded here. The format follows
   look, gathered from every installed pack, the active one first. Pick a look, then choose for each
   modification M0–M3 whether it changes and which skin it gets (its own, or another
   modification's), and even per item; a table shows every item and modification with what happens
-  and why one is skipped (no such skin, no such modification in the cache, already on, incomplete).
+  and why one is skipped (no such skin, already on, incomplete).
   The last step lists every change and what is skipped before anything is written. The run goes
   item by item off the window's thread, with a progress list and **Stop after this item**; every
   write is a transaction with a backup, and an item that fails is put back as it was while the
   others go on. **Undo all** puts the run back, and in **Packs → Backups** the run is one entry
   that undoes it. Open it from the Garage's **Apply to all items** button or the command palette.
+- **Skins that go on later.** A modification the game has not downloaded yet is not skipped: Apply
+  to all items marks it **Goes on later** and remembers the skin. Once the game downloads it (open it
+  in the game's garage) and the game is closed, the Studio puts the skin on by itself, through the
+  same backed-up transactions, and the Garage says so with **Undo**; the Garage in the sidebar shows
+  a badge until then. **Packs → Go on later** lists what waits, each with **Remove**, and the Item
+  page marks such a modification. Nothing is written ahead: cache file names carry a revision only
+  the server knows.
+- **Settings** page, at the bottom of the sidebar as in Windows apps: how often the cache is read
+  again (**Automatic**: at launch, when you come back to the window and every 5 minutes, only reading
+  the files when something changed; **Every hour**; **Manual**), the last check and **Rescan now**,
+  the skins that go on later, theme and language, and **About** with the version, **Check for
+  updates** and links to the source, the releases and the issues.
+
+### Changed
+
+- The sidebar's **Info** is now **Item**: the page is about the item in focus (its modifications,
+  skin variants, pack and manual labelling). What the app itself is moved to **Settings → About**.
 
 ## [0.4.0] - 2026-11-01
 

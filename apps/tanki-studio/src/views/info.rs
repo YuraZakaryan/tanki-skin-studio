@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Info: the item in focus, its modifications in the cache, matching skin variants, the pack the
+//! Item: the item in focus, its modifications in the cache, matching skin variants, the pack the
 //! skins come from, and the form to label an unrecognised resource by hand.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Ui, Vec2};
@@ -25,8 +25,8 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     widgets::top_bar(
         ui,
         shell::top_bar_rect(main),
-        tl!("Info"),
-        tl!("Item, labeling and pack source"),
+        tl!("Item"),
+        tl!("Modifications, skin variants, pack and manual labeling"),
         |ui| {
             if Button::new(ButtonKind::Primary, tl!("Apply"))
                 .icon(icons::CHECK)
@@ -207,6 +207,20 @@ fn modifications(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         })
         .count();
     let meta = fmt(tl!("{found} of 4 found"), &[("found", &found.to_string())]);
+    // A modification not in the cache may wait for a skin (see `crate::later`).
+    let root = app
+        .scan
+        .as_ref()
+        .map(|s| s.root.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let waiting: Vec<Option<tanki_core::later::LaterSkin>> = (0..4u8)
+        .map(|k| {
+            let selection = app.selection.as_ref().filter(|_| label_row.is_none());
+            selection.and_then(|selection| {
+                crate::later::waiting(&app.later, &root, &selection.kind, &selection.id, k).cloned()
+            })
+        })
+        .collect();
     let body = widgets::panel(ui, rect, tl!("Modifications"), Some(&meta));
     let list = body.shrink2(Vec2::new(8.0, 8.0));
     let mut open = None;
@@ -221,6 +235,7 @@ fn modifications(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 .map_or_else(|| "—".to_owned(), |m| format!("#{}", marker_id(m)));
             let mut entry = ListRow::new(icons::LAYERS, name, &meta);
             let size_text;
+            let later_text;
             match row {
                 Some(row) => {
                     size_text = tn(row.files as u64, "{n} file", "{n} files");
@@ -228,6 +243,10 @@ fn modifications(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 }
                 None => {
                     entry = entry.chip(ChipKind::Neutral, tl!("Not in cache")).size("—");
+                    if let Some(skin) = waiting.get(index).and_then(Option::as_ref) {
+                        later_text = fmt(tl!("Later: {look}"), &[("look", &skin.look)]);
+                        entry = entry.note(ChipKind::Info, icons::CLOCK_3, &later_text);
+                    }
                 }
             }
             if entry.show(ui).clicked()

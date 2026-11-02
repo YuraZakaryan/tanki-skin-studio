@@ -13,6 +13,7 @@ pub mod dev;
 pub mod errors;
 pub mod icon;
 pub mod instance;
+pub mod later;
 pub mod logging;
 pub mod model;
 pub mod previews;

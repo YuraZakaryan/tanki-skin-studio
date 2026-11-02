@@ -50,6 +50,36 @@ pub fn paint_chip(ui: &Ui, rect: Rect, kind: ChipKind, label: &str) {
     );
 }
 
+/// A chip with an icon in place of the dot, its right edge at `right`, vertically centred on
+/// `center_y`. Returns its width.
+pub fn icon_chip_at_right(
+    ui: &Ui,
+    right: f32,
+    center_y: f32,
+    kind: ChipKind,
+    icon: char,
+    label: &str,
+) -> f32 {
+    let tokens = Tokens::get(ui.ctx());
+    let (fill, ink) = colors(&tokens, kind);
+    let style = Text::body(12.0, 600, ink);
+    let width = 10.0 + 12.0 + 6.0 + fonts::width(ui.painter(), label, style) + 10.0;
+    let rect = Rect::from_min_size(
+        Pos2::new(right - width, center_y - 12.0),
+        Vec2::new(width, 24.0),
+    );
+    draw::rounded(ui.painter(), rect, CornerRadius::same(12), fill, None);
+    fonts::icon(
+        ui.painter(),
+        Pos2::new(rect.min.x + 10.0 + 6.0, center_y),
+        icon,
+        12.0,
+        ink,
+    );
+    fonts::draw_left(ui.painter(), rect.min.x + 28.0, center_y, label, style);
+    width
+}
+
 /// A chip in the layout flow.
 pub fn chip(ui: &mut Ui, kind: ChipKind, label: &str) {
     let width = chip_width(ui, label);
