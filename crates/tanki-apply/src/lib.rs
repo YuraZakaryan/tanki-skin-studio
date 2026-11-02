@@ -5,5 +5,7 @@
 pub mod apply;
 pub mod backups;
 pub mod geometry;
+pub mod paint;
 pub mod process;
 pub mod recognize;
+pub mod sprite;

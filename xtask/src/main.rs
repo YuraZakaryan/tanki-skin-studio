@@ -457,6 +457,9 @@ struct Scene {
     looks: bool,
     /// Run with no pack in the library.
     no_packs: bool,
+    /// Run on the paints fixture (`tanki_testkit::build_paints`): a pack of paints and a cache
+    /// whose paints were found by their pictures.
+    paints: bool,
     /// Run on the design's own sample (`tanki_testkit::build_design_sample`): 1 with the skins
     /// its items wear already, 2 with the backups of the Packs frame.
     design: u8,
@@ -480,6 +483,7 @@ const SCENE: Scene = Scene {
     incomplete_skin: false,
     looks: false,
     no_packs: false,
+    paints: false,
     design: 0,
     checks: &[],
 };
@@ -646,6 +650,26 @@ const SCENES: &[Scene] = &[
             has("the dialog surface", DARK_SURFACE_2, 2, 40_000),
             has("the download bar's lime fill", PRIMARY, 6, 300),
         ],
+        ..SCENE
+    },
+    // Paints: a paint of the cache selected, every paint of the pack offered in its place.
+    Scene {
+        name: "garage-paints",
+        page: "garage",
+        actions: "select:paint",
+        paints: true,
+        size: "1000x720",
+        checks: &[has("the lime selected paint card", PRIMARY, 6, 300)],
+        ..SCENE
+    },
+    Scene {
+        name: "garage-paints-light",
+        page: "garage",
+        actions: "select:paint",
+        paints: true,
+        size: "1000x720",
+        lang: "ru",
+        theme: "light",
         ..SCENE
     },
     // "Apply to all items": the Garage's button, then each step of the wizard, in Russian dark
@@ -2223,6 +2247,23 @@ fn looks_data(work: &Path) -> Result<(tanki_testkit::LooksFixture, PathBuf)> {
     Ok((looks, data))
 }
 
+/// The paints fixture: its asset folder made into a pack and imported, and the paints of its cache
+/// found by their pictures and labelled, as the app does on start.
+fn paints_data(work: &Path) -> Result<(tanki_testkit::PaintsFixture, PathBuf)> {
+    let paints = tanki_testkit::build_paints(work)?;
+    let data = work.join("data");
+    let built = work.join("pack");
+    tanki_core::archive::build_model_pack(&paints.archive, &built)?;
+    let pack = import_pack(&built, &data.join("packs"))?;
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    store.save_pack(&pack)?;
+    let scan = tanki_core::cache::scan_cache(&paints.cache, Some("air-cache"))?;
+    for r in tanki_core::recognize::recognise_by_content(&scan, &[pack]) {
+        store.save_user_target("air-cache", &r.marker, &r.kind, &r.id, &r.grade)?;
+    }
+    Ok((paints, data))
+}
+
 fn e2e_ui(args: &[String]) -> Result<()> {
     cargo(&["build", "--locked", "-p", "tanki-studio"])?;
     let exe = studio_exe();
@@ -2247,6 +2288,7 @@ fn e2e_ui(args: &[String]) -> Result<()> {
     let no_packs_data = work.join("data-no-packs");
     let (sample, sample_data) = design_data(&work.join("design"), true)?;
     let (sample_backups, sample_backups_data) = design_backups(&work.join("design-backups"))?;
+    let (paints, paints_data) = paints_data(&work.join("paints"))?;
 
     let shots = root().join("target/e2e-ui");
     std::fs::create_dir_all(&shots)?;
@@ -2271,6 +2313,8 @@ fn e2e_ui(args: &[String]) -> Result<()> {
             &sample_backups.cache
         } else if scene.looks {
             &looks.cache
+        } else if scene.paints {
+            &paints.cache
         } else {
             &cache.root
         };
@@ -2280,6 +2324,8 @@ fn e2e_ui(args: &[String]) -> Result<()> {
             &sample_backups_data
         } else if scene.looks {
             &looks_data
+        } else if scene.paints {
+            &paints_data
         } else if scene.no_packs {
             &no_packs_data
         } else if scene.incomplete_skin {

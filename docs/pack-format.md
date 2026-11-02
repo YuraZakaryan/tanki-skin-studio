@@ -31,9 +31,27 @@ A pack is a `.tankipack` ZIP or a folder containing `manifest.json`. A cloned Gi
 }
 ```
 
-The placeholder hashes above must be replaced with actual SHA-256 digests. For a Railgun variant, use `{"kind":"turret","id":"railgun","grade":"m3"}`. Supported apply roles today are `model`, `details`, `details_alpha`, and `lightmap`. PNG `details` is converted into JPEG color and alpha resources. If `details` is a JPEG, provide `details_alpha` separately when alpha must change. Preview can be PNG or JPEG. Other role names can be stored in a pack but cannot yet be applied.
+The placeholder hashes above must be replaced with actual SHA-256 digests. For a Railgun variant, use `{"kind":"turret","id":"railgun","grade":"m3"}`. Supported apply roles today are `model`, `details`, `details_alpha`, `lightmap` and, for a paint, `image`. PNG `details` is converted into JPEG color and alpha resources. If `details` is a JPEG, provide `details_alpha` separately when alpha must change. Preview can be PNG or JPEG. Other role names can be stored in a pack but cannot yet be applied.
 
-A target category describes the game item (`hull`, `turret`, later `paint`, `map`, `interface`, `currency`, `effect`, `sound`). A skin is a variant of that item. The adapter decides which local cache files represent it. Items are recognised by their content (see the README), and `games` names the cache format, `air-cache`, never a game.
+A target category describes the game item (`hull`, `turret`, `paint`, later `map`, `interface`, `currency`, `effect`, `sound`). A skin is a variant of that item. The adapter decides which local cache files represent it. Items are recognised by their content (see the README), and `games` names the cache format, `air-cache`, never a game.
+
+## Paints
+
+A paint is `{"kind":"paint","id":"<name>","grade":"default"}` with one `image` resource: its picture,
+a texture or the sheet of an animated paint's frames (equal square frames left to right, then top to
+bottom). Any paint can take any paint's place in the cache. What is written takes the shape of the
+picture it replaces, as the client cuts that one by what the server says:
+
+- over a still paint, a still picture: an animated paint gives its most typical frame (a sheet would
+  show all its frames at once);
+- over an animated paint, a sheet of the replaced one's size, frame size and frame count: an
+  animated paint's frames retimed into it (frame `i` of `n` is its frame `⌊i·m/n⌋` of `m`), or a
+  still paint in every frame.
+
+A sheet and its frame are found in the picture itself: the frames are the same picture a little
+changed, so a cell correlates with the next one far more than with the window half a cell on, a row's
+last cell is as alike to the next row's first, and a frame is more alike to the next than to the frame
+half the animation on (a repeated motif is equally alike near and far). Nothing in the pack says it.
 
 ## Folders without a manifest
 
@@ -48,7 +66,10 @@ depth, and every folder holding a model or a picture is read from its path, word
 - what is said at and below the item is the modification or edition: `M3`, `XT`, `XT M0` → `xt-m0`,
   `ALT/M2` → `alt-m2`, `Prime`;
 - words between the kind folder and the item name the skin: `Hulls/Neon/Wasp/M3` is the `neon` variant;
-- filing folders (`textures`, `model`, `files`...) say nothing, and folders of one skin are joined.
+- filing folders (`textures`, `model`, `files`...) say nothing, and folders of one skin are joined;
+- a folder right below a paints folder (`paints`, `colors`, `colormaps`) is a paint named after it:
+  `Inventory/Paints/Inferno` is the paint `inferno`, its picture `image.jpg` (or the one picture named
+  `image`, `texture`, `colormap`), its preview `preview.png`.
 
 Examples that all work: `Flash/Hulls/New/Wasp/M3`, `2.0/hulls/wasp/m0`, `Weapons/Railgun/XT`, `tanks/wasp`,
 `Smoky XT`. When the folder has real kind folders, a folder named only after an item elsewhere

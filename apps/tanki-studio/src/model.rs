@@ -15,6 +15,15 @@ pub fn target_name(id: &str, grade: &str) -> String {
     format!("{} {}", target_title(id), grade.to_uppercase())
 }
 
+/// What an item is called: "Wasp M3" for a modification, "Inferno" for a paint, which has none.
+pub fn item_name(kind: &str, id: &str, grade: &str) -> String {
+    if kind == "paint" {
+        target_title(id)
+    } else {
+        target_name(id, grade)
+    }
+}
+
 /// "wasp" -> "Wasp".
 pub fn target_title(id: &str) -> String {
     let mut chars = id.chars();
@@ -146,8 +155,8 @@ pub struct ResourceRow {
 impl ResourceRow {
     /// What the list shows as the title.
     pub fn title(&self) -> String {
-        if let Some((_, id, grade)) = &self.target {
-            return target_name(id, grade);
+        if let Some((kind, id, grade)) = &self.target {
+            return item_name(kind, id, grade);
         }
         if let Some(file) = &self.lone_file
             && file.contains('.')

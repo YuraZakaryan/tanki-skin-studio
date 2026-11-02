@@ -721,3 +721,75 @@ fn language_theme_size_and_session_survive_a_restart_without_clobbering_each_oth
     assert_eq!(store.theme()?.as_deref(), Some("light"));
     Ok(())
 }
+
+#[test]
+fn paints_are_imported_found_by_their_picture_and_take_each_others_place() -> Result<()> {
+    use tanki_core::{
+        apply::{list_backups, restore_all},
+        archive::build_model_pack,
+        recognize::recognise_by_content,
+        sprite::sheet,
+    };
+    let root = scratch("paints");
+    let fixture = tanki_testkit::build_paints(&root)?;
+    let data = root.join("data");
+    let summary = build_model_pack(&fixture.archive, &root.join("src-pack"))?;
+    assert_eq!((summary.items, summary.variants), (3, 3), "{summary:?}");
+    let pack = import_pack(&root.join("src-pack"), &data.join("packs"))?;
+    let paint = |id: &str| {
+        pack.manifest
+            .items
+            .iter()
+            .find(|i| i.target.kind == "paint" && i.target.id == id)
+            .unwrap_or_else(|| panic!("{id} is a paint of the pack"))
+    };
+    assert_eq!(paint("storm").variants[0].resources[0].role, "image");
+
+    // The cache's copies are other bytes, the same pictures: found by how they look.
+    let scan = scan_cache(&fixture.cache, Some("air-cache"))?;
+    let found = recognise_by_content(&scan, std::slice::from_ref(&pack));
+    let named: Vec<(&str, &str, &str)> = found
+        .iter()
+        .map(|r| (r.marker.as_str(), r.id.as_str(), r.grade.as_str()))
+        .collect();
+    assert_eq!(
+        named,
+        [
+            (fixture.ember_marker.as_str(), "ember", "m0"),
+            (fixture.moss_marker.as_str(), "moss", "m0"),
+        ],
+        "the picture of another size is no paint"
+    );
+    let store = StateStore::open(&data.join("state.sqlite"))?;
+    for r in &found {
+        store.save_user_target(&scan.game, &r.marker, &r.kind, &r.id, &r.grade)?;
+    }
+    let scan = scan_cache(&fixture.cache, Some("air-cache"))?;
+    let ember = tanki_core::pack::PackTarget {
+        kind: "paint".into(),
+        id: "ember".into(),
+        grade: "m0".into(),
+    };
+    let original = fs::read(&fixture.ember_file)?;
+    let backups = data.join("backups");
+
+    // Moss in Ember's place: a still JPEG over a still paint is written as it is.
+    let moss = &paint("moss").variants[0];
+    apply_variant(&scan, &pack, &ember, moss, &backups)?;
+    let moss_bytes = fs::read(pack.path.join(&moss.resources[0].path))?;
+    assert_eq!(fs::read(&fixture.ember_file)?, moss_bytes);
+
+    // Storm, animated, in Ember's place: Ember is a still paint, so one frame of Storm.
+    let storm = &paint("storm").variants[0];
+    apply_variant(&scan, &pack, &ember, storm, &backups)?;
+    let written = image::load_from_memory(&fs::read(&fixture.ember_file)?)?;
+    assert_eq!((written.width(), written.height()), (32, 32));
+    assert_eq!(sheet(&written), None, "a still picture");
+    assert_eq!(list_backups(&backups)?.len(), 2);
+
+    // Everything back: Ember's own bytes.
+    restore_all(&backups)?;
+    assert_eq!(fs::read(&fixture.ember_file)?, original);
+    fs::remove_dir_all(root)?;
+    Ok(())
+}

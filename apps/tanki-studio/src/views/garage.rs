@@ -20,7 +20,7 @@ use tanki_ui::{
 use super::{scroll_page, shell};
 use crate::{
     app::{Page, Selection, StateFilter, Studio, TABS},
-    model::{grade_code, target_name, target_title},
+    model::{grade_code, item_name, target_title},
 };
 
 pub fn kind_label(kind: &str) -> &'static str {
@@ -197,11 +197,17 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         );
         return;
     };
-    let meta = format!(
-        "{} · {}",
-        target_title(&selection.id),
-        grade_code(selection.grade).to_uppercase()
-    );
+    // A paint has no modifications: no selector, and its name alone.
+    let paint = selection.kind == "paint";
+    let meta = if paint {
+        target_title(&selection.id)
+    } else {
+        format!(
+            "{} · {}",
+            target_title(&selection.id),
+            grade_code(selection.grade).to_uppercase()
+        )
+    };
     let body = widgets::panel(ui, rect, tl!("My tank"), Some(&meta));
     let stage = body.shrink(14.0);
     draw::radial(
@@ -234,7 +240,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         tl!("{name} recognised"),
         &[(
             "name",
-            &target_name(&selection.id, grade_code(selection.grade)),
+            &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
         )],
     );
     let present = row.is_some();
@@ -247,7 +253,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 tl!("{name} not in cache"),
                 &[(
                     "name",
-                    &target_name(&selection.id, grade_code(selection.grade)),
+                    &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
                 )],
             ),
         )
@@ -298,9 +304,10 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         app.go(Page::Info);
     }
     // Preview: the chosen variant's picture, else the cache texture, else a placeholder icon.
+    let selector_room = if paint { 0.0 } else { 30.0 + 12.0 };
     let center = Rect::from_min_max(
         Pos2::new(stage.min.x + 18.0, stage.min.y + 54.0),
-        Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - 30.0 - 12.0),
+        Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector_room),
     );
     let ctx = ui.ctx().clone();
     let variant_texture = app.chosen_variant(&selection).and_then(|(i, v)| {
@@ -314,11 +321,13 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let has_variant = chosen.is_some();
     let in_game = chosen.is_some() && chosen == app.applied_variant(&selection);
     let worn = app.in_game_name(&selection);
-    let (texture, caption) = match (
-        variant_texture,
-        has_variant,
-        row.as_ref().and_then(|r| r.picture_group.clone()),
-    ) {
+    // A paint's own picture stands for it when the game has no garage picture of it.
+    let picture = row.as_ref().and_then(|r| {
+        r.picture_group
+            .clone()
+            .or_else(|| paint.then(|| r.preview_group.clone()).flatten())
+    });
+    let (texture, caption) = match (variant_texture, has_variant, picture) {
         (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
         (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
         // A skin of the pack that came without a picture: say so instead of showing another picture.
@@ -380,7 +389,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                     ),
                     &[(
                         "name",
-                        &target_name(&selection.id, grade_code(selection.grade)),
+                        &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
                     )],
                 );
                 let width = (center.width() - 48.0).clamp(120.0, 420.0);
@@ -395,6 +404,9 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                     .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
             }
         }
+    }
+    if paint {
+        return;
     }
     // Modification selector, centred at the bottom.
     let label = tl!("Modification").to_uppercase();
@@ -448,7 +460,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let chosen = app.chosen_variant(&selection);
     let applied_now = app.applied_variant(&selection);
     let in_game = chosen.is_some() && chosen == applied_now;
-    let target = target_name(&selection.id, grade_code(selection.grade));
+    let target = item_name(&selection.kind, &selection.id, grade_code(selection.grade));
     // The model and texture files the selected item has in the cache: a skin that does not bring
     // every one of them cannot be applied (the preview is optional).
     let cache_files = app
@@ -514,11 +526,26 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                     };
                     let resources: Vec<&str> =
                         v.resources.iter().map(|r| r.role.as_str()).collect();
-                    let meta = format!(
-                        "{} · {}",
-                        pack_item.target.grade.to_uppercase(),
-                        resources.join(" + ")
-                    );
+                    // A paint says whether it is animated: in place of a still paint it stands
+                    // still, in place of an animated one it plays (`tanki_core::paint`).
+                    let meta = if pack_item.target.kind == "paint" {
+                        app.paint_frames_of(v).map_or_else(
+                            || tl!("Paint").to_owned(),
+                            |n| {
+                                tn(
+                                    u64::from(n),
+                                    "Animated · {n} frame",
+                                    "Animated · {n} frames",
+                                )
+                            },
+                        )
+                    } else {
+                        format!(
+                            "{} · {}",
+                            pack_item.target.grade.to_uppercase(),
+                            resources.join(" + ")
+                        )
+                    };
                     let selected = chosen == Some((*item, *variant));
                     let incomplete = !missing(app, (*item, *variant)).is_empty();
                     // The skin in the game now says so; a skin that cannot be applied says why.

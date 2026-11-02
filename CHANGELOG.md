@@ -6,6 +6,15 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Paints.** The Garage's **Paints** tab lists the paints of your cache, found by their picture,
+  and any paint of the pack can take any paint's place, undone like any skin. Plain folders of
+  skins bring their paints along (`Paints/<name>/image.jpg`).
+- **Animated paints are handled by themselves.** The frames of an animated paint are found in its
+  picture: in place of a still paint it shows its most typical frame, in place of an animated one
+  it plays, retimed into that paint's frames. The list marks animated paints with their frame count.
+
 ### Changed
 
 - **Apply to all items turns on only the modifications a look has its own skin for.** A look with

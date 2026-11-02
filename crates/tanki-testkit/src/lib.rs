@@ -830,3 +830,92 @@ pub fn design_sample_worn() -> Vec<SampleWorn> {
     worn.push(("arctic-ops", "isida", "xt-m2", 2));
     worn
 }
+
+/// The paints of [`build_paints`]: still Ember and Moss, animated Storm (a sheet of 16 frames of
+/// 32), and where the cache keeps Ember and Moss.
+pub struct PaintsFixture {
+    /// The asset folder: `Inventory/Paints/<name>/image.jpg` and `preview.png`.
+    pub archive: PathBuf,
+    pub cache: PathBuf,
+    /// The cache markers of Ember and Moss (`/a/b/c/d/`).
+    pub ember_marker: String,
+    pub moss_marker: String,
+    /// Ember's picture in the cache.
+    pub ember_file: PathBuf,
+}
+
+/// A smooth, irregular pattern, different for each `seed`: a paint no other paint looks like.
+fn paint_pixel(seed: f32, x: f32, y: f32) -> [u8; 3] {
+    let v = |phase: f32| {
+        (128.0
+            + 50.0 * ((x + 7.0 * seed) / (4.0 + seed)).sin() * ((y - 3.0 * seed) / 6.3).cos()
+            + 35.0 * ((x + 2.0 * y + phase) / (9.0 + seed)).sin())
+        .clamp(0.0, 255.0) as u8
+    };
+    [v(0.0), v(2.1 * seed), v(4.2)]
+}
+
+fn paint_jpeg(image: &image::RgbImage, quality: u8) -> Vec<u8> {
+    let mut out = Vec::new();
+    JpegEncoder::new_with_quality(&mut out, quality)
+        .encode_image(&DynamicImage::ImageRgb8(image.clone()))
+        .expect("encode jpeg");
+    out
+}
+
+/// An asset folder with three paints, and a cache holding Ember and Moss as the server saves them
+/// (the same pictures, encoded again), plus a picture of another size that is no paint.
+pub fn build_paints(work: &Path) -> Result<PaintsFixture> {
+    let archive = work.join("Assets");
+    let cache_dir = work.join("cache");
+    fs::create_dir_all(&cache_dir)?;
+    let cache = cache_dir.canonicalize()?;
+    let still = |seed: f32| {
+        image::RgbImage::from_fn(64, 64, |x, y| {
+            image::Rgb(paint_pixel(seed, x as f32, y as f32))
+        })
+    };
+    let storm = image::RgbImage::from_fn(128, 128, |x, y| {
+        let t = ((y / 32) * 4 + x / 32) as f32;
+        image::Rgb(paint_pixel(
+            5.0,
+            (x % 32) as f32 + 1.5 * t,
+            (y % 32) as f32 + 0.7 * t,
+        ))
+    });
+    let paints = [
+        ("Ember", still(1.0)),
+        ("Moss", still(3.0)),
+        ("Storm", storm),
+    ];
+    for (name, picture) in &paints {
+        let dir = archive.join("Inventory").join("Paints").join(name);
+        fs::create_dir_all(&dir)?;
+        fs::write(dir.join("image.jpg"), paint_jpeg(picture, 95))?;
+        fs::write(dir.join("preview.png"), png(164, 106, [40, 60, 80, 255]))?;
+    }
+    let ember_marker = id_marker(6000);
+    let moss_marker = id_marker(6002);
+    let ember_file = write_cache_file(
+        &cache,
+        &format!("http://cache.test{ember_marker}111/image.jpg"),
+        &paint_jpeg(&paints[0].1, 80),
+    )?;
+    write_cache_file(
+        &cache,
+        &format!("http://cache.test{moss_marker}111/image.jpg"),
+        &paint_jpeg(&paints[1].1, 80),
+    )?;
+    write_cache_file(
+        &cache,
+        &format!("http://cache.test{}111/image.jpg", id_marker(6004)),
+        &jpeg(100, 40, [200, 200, 200]),
+    )?;
+    Ok(PaintsFixture {
+        archive,
+        cache,
+        ember_marker,
+        moss_marker,
+        ember_file,
+    })
+}

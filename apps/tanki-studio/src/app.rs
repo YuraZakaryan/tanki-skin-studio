@@ -4,7 +4,7 @@
 //! [`crate::actions`]; drawing lives in [`crate::views`].
 
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, BTreeSet, HashMap},
     path::PathBuf,
     time::{Duration, Instant},
 };
@@ -115,6 +115,10 @@ impl Page {
 
 /// Garage categories (the kind of item).
 pub const TABS: [&str; 3] = ["hull", "turret", "paint"];
+
+/// What reading the packs' paint pictures found: every picture read, and the frame count of those
+/// that are sheets of an animation.
+pub type PaintSurvey = (BTreeSet<String>, BTreeMap<String, u32>);
 
 /// The item and modification shown in the Garage and Info pages.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -565,6 +569,13 @@ pub struct Studio {
     pub recognition: Option<std::sync::mpsc::Receiver<Vec<tanki_core::recognize::Recognition>>>,
     /// The cache folder the pending search is for: an answer for another cache is dropped.
     pub recognition_root: Option<PathBuf>,
+    /// The frame count of each animated paint of the packs, by the hash of its picture. Reading a
+    /// sheet takes a moment, so the packs' paints are read on a thread of their own (or at once
+    /// when `background_recognition` is off) and the marks show when they are there.
+    pub paint_frames: BTreeMap<String, u32>,
+    pub paint_survey: Option<std::sync::mpsc::Receiver<PaintSurvey>>,
+    /// The pictures read already, animated or not.
+    pub paints_read: BTreeSet<String>,
     pub recognition_announce: bool,
     /// Packs are imported on their own thread with a progress card. Tests turn this off to get
     /// the pack at once.
@@ -723,6 +734,9 @@ impl Studio {
             recognised_on_start: false,
             background_recognition: true,
             recognition: None,
+            paint_frames: BTreeMap::new(),
+            paint_survey: None,
+            paints_read: BTreeSet::new(),
             recognition_root: None,
             recognition_announce: false,
             background_import: true,
@@ -938,15 +952,16 @@ impl Studio {
     }
 
     /// Variants of the active pack for the item `kind`/`id`, as (item index, variant index). Every
-    /// modification of the item counts, so any M0..M3 skin can be put on any cache modification.
-    /// Ordered as `model::variant_order` says: M0..M3, then the special editions, each by name.
+    /// modification of the item counts, so any M0..M3 skin can be put on any cache modification;
+    /// every paint counts for a paint, as any paint can take any paint's place. Ordered as
+    /// `model::variant_order` says: M0..M3, then the special editions, each by name.
     pub fn pack_variants(&self, kind: &str, id: &str) -> Vec<(usize, usize)> {
         let Some(pack) = &self.active_pack else {
             return Vec::new();
         };
         let mut found = Vec::new();
         for (i, item) in pack.manifest.items.iter().enumerate() {
-            if item.target.kind == kind && item.target.id == id {
+            if item.target.kind == kind && (kind == "paint" || item.target.id == id) {
                 found.extend((0..item.variants.len()).map(|v| (i, v)));
             }
         }

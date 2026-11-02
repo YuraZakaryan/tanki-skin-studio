@@ -31,11 +31,12 @@ use tanki_ui::theme::ThemePreference;
 use crate::{
     app::{
         BulkRun, BulkStep, BulkWizard, CacheChoice, Dialog, ImportJob, Imported, ItemState,
-        LastCheck, LaterDone, Page, PendingApply, RowFilter, Selection, Studio, ToastAction,
+        LastCheck, LaterDone, Page, PaintSurvey, PendingApply, RowFilter, Selection, Studio,
+        ToastAction,
     },
     bulk,
     later::{self, RescanMode},
-    model::{caches_to_ask, grade_code, grade_index, target_name},
+    model::{caches_to_ask, grade_code, grade_index, item_name},
 };
 
 impl Studio {
@@ -498,18 +499,26 @@ impl Studio {
         };
         // The files go to the modification selected in the cache, whichever modification the skin is
         // of, but only when the skin is of that item: a Railgun skin never goes onto a selected Wasp
-        // (the palette and scripted runs name a pack item directly).
+        // (the palette and scripted runs name a pack item directly). Any paint goes onto any paint.
+        let paint = pack_item.target.kind == "paint";
         let cache_target = match &self.selection {
-            Some(s) if s.kind == pack_item.target.kind && s.id == pack_item.target.id => {
+            Some(s)
+                if s.kind == pack_item.target.kind && (paint || s.id == pack_item.target.id) =>
+            {
                 PackTarget {
                     kind: s.kind.clone(),
                     id: s.id.clone(),
                     grade: grade_code(s.grade).to_owned(),
                 }
             }
+            // A paint has no modifications: its picture is the cache's only one.
+            _ if paint => PackTarget {
+                grade: grade_code(0).to_owned(),
+                ..pack_item.target.clone()
+            },
             _ => pack_item.target.clone(),
         };
-        let target = target_name(&cache_target.id, &cache_target.grade);
+        let target = item_name(&cache_target.kind, &cache_target.id, &cache_target.grade);
         // A skin that does not bring every model and texture file of the item is never applied
         // (the Apply button is off for it; this covers the palette and scripted runs too).
         let missing = self
@@ -700,7 +709,7 @@ impl Studio {
         for backup in &pending {
             let name = backup.tx.target.as_ref().map_or_else(
                 || backup.tx.pack_id.clone(),
-                |t| target_name(&t.id, &t.grade),
+                |t| item_name(&t.kind, &t.id, &t.grade),
             );
             if !items.contains(&name) {
                 items.push(name);
@@ -861,6 +870,73 @@ impl Studio {
             let found = recognise_by_content(&scan, &packs);
             self.apply_recognition(found);
         }
+    }
+
+    /// Read the paint pictures of the packs not read yet, to mark the animated ones (see
+    /// [`Studio::paint_frames`]). Returns whether a reading is pending.
+    pub fn survey_paints(&mut self) -> bool {
+        if let Some(receiver) = &self.paint_survey {
+            match receiver.try_recv() {
+                Ok((read, frames)) => {
+                    self.paint_survey = None;
+                    self.paints_read.extend(read);
+                    self.paint_frames.extend(frames);
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => return true,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => self.paint_survey = None,
+            }
+        }
+        let pictures: Vec<(String, std::path::PathBuf)> = self
+            .packs
+            .iter()
+            .flat_map(|pack| {
+                pack.manifest
+                    .items
+                    .iter()
+                    .filter(|item| item.target.kind == "paint")
+                    .flat_map(|item| &item.variants)
+                    .flat_map(|variant| &variant.resources)
+                    .filter(|r| r.role == "image" && !self.paints_read.contains(&r.sha256))
+                    .map(|r| (r.sha256.clone(), pack.path.join(&r.path)))
+            })
+            .collect();
+        if pictures.is_empty() {
+            return false;
+        }
+        let read = move || -> PaintSurvey {
+            let mut frames = std::collections::BTreeMap::new();
+            for (hash, path) in &pictures {
+                if let Some(sheet) = image::open(path)
+                    .ok()
+                    .and_then(|picture| tanki_core::sprite::sheet(&picture))
+                {
+                    frames.insert(hash.clone(), sheet.frames);
+                }
+            }
+            (pictures.into_iter().map(|(hash, _)| hash).collect(), frames)
+        };
+        if self.background_recognition {
+            let (sender, receiver) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let _ = sender.send(read());
+            });
+            self.paint_survey = Some(receiver);
+            true
+        } else {
+            let (read, frames) = read();
+            self.paints_read.extend(read);
+            self.paint_frames.extend(frames);
+            false
+        }
+    }
+
+    /// The frame count of an animated paint variant, when its picture was read and is a sheet.
+    pub fn paint_frames_of(&self, variant: &tanki_core::pack::PackVariant) -> Option<u32> {
+        variant
+            .resources
+            .iter()
+            .find(|r| r.role == "image")
+            .and_then(|r| self.paint_frames.get(&r.sha256).copied())
     }
 
     /// Take the answer of the background search when it is there. Returns whether one is pending.

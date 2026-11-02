@@ -9,6 +9,11 @@
 //! (which differs per modification). The garage preview of every item is cached as a picture and
 //! the packs ship the same picture, so the preview names the item *and* its modification; the client
 //! stores it on the id right after the model's. Only unambiguous matches are reported.
+//!
+//! A paint is one picture (`image.jpg`, alone on its id). The cache keeps the server's copy, saved
+//! again, so a pack's paint is found by how it looks, not by its bytes: the same size, and the same
+//! picture shrunk to a few pixels. Plain colours and twin pictures are left out: a picture that
+//! looks like two paints, or a paint that looks like two pictures, names neither.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -278,9 +283,132 @@ fn grade_by_look(index: &Index, item: &(String, String), look: &Look) -> Option<
     (distance <= SAME_LOOK && clear).then_some(grade)
 }
 
-/// Match the cache's resources against what the packs ship. Resources that are already recognised
-/// (built in or labelled) are skipped, and so is everything that would be a guess.
+/// Match the cache's resources against what the packs ship: hulls, turrets and paints. Resources
+/// that are already recognised (built in or labelled) are skipped, and so is everything that would
+/// be a guess.
 pub fn recognise_by_content(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
+    let mut found = recognise_items(scan, packs);
+    found.extend(recognise_paints(scan, packs));
+    found.sort_by(|a, b| a.marker.cmp(&b.marker));
+    found
+}
+
+/// How far (mean absolute difference per channel, 0..255, of the pictures shrunk to
+/// [`LOOK_SIDE`]) a cache picture may be from a pack's paint and still be it, and how much farther
+/// the next paint must be. Measured on a real cache against a public pack: a paint saved again by
+/// the server differs from the pack's by under 1, other pictures of the same size by more than 4.
+const SAME_PAINT: f32 = 2.5;
+const PAINT_MARGIN: f32 = 2.0;
+
+/// The size of a picture, read from its header alone.
+fn picture_size(bytes: &[u8]) -> Option<(u32, u32)> {
+    image::ImageReader::new(std::io::Cursor::new(bytes))
+        .with_guessed_format()
+        .ok()?
+        .into_dimensions()
+        .ok()
+}
+
+/// The packs' paints by the size of their picture: each paint's id and its picture shrunk.
+type PaintsBySize = BTreeMap<(u32, u32), Vec<(String, Vec<u8>)>>;
+
+/// Paints in the cache: each pack paint's picture against every picture alone on its id (see the
+/// module docs).
+fn recognise_paints(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
+    // The same paint in two packs counts once.
+    let mut paints = PaintsBySize::new();
+    for pack in packs {
+        for item in pack
+            .manifest
+            .items
+            .iter()
+            .filter(|i| i.target.kind == "paint")
+        {
+            for resource in item
+                .variants
+                .iter()
+                .flat_map(|v| &v.resources)
+                .filter(|r| r.role == "image")
+            {
+                let Ok(bytes) = read_pack_resource(pack, &resource.path) else {
+                    continue;
+                };
+                let (Some(size), Some(look)) = (picture_size(&bytes), tiny(&bytes, false)) else {
+                    continue;
+                };
+                let same = paints.entry(size).or_default();
+                if !same.iter().any(|(id, _)| *id == item.target.id) {
+                    same.push((item.target.id.clone(), look));
+                }
+            }
+        }
+    }
+    if paints.is_empty() {
+        return Vec::new();
+    }
+    // Pictures alone on their id, not yet recognised: every revision of a marker must agree.
+    let mut groups: BTreeMap<&str, Vec<&tanki_cache::cache::CachedResource>> = BTreeMap::new();
+    for resource in &scan.resources {
+        groups
+            .entry(resource.group.as_str())
+            .or_default()
+            .push(resource);
+    }
+    let mut by_marker: BTreeMap<String, BTreeSet<Option<String>>> = BTreeMap::new();
+    for (group, files) in groups {
+        let [picture] = files[..] else {
+            continue;
+        };
+        if picture.role != "image.jpg" || identify(&scan.game, group).is_some() {
+            continue;
+        }
+        let Some(marker) = marker_for_group(group) else {
+            continue;
+        };
+        let Ok(bytes) = std::fs::read(&picture.path) else {
+            continue;
+        };
+        let Some(candidates) = picture_size(&bytes).and_then(|size| paints.get(&size)) else {
+            continue;
+        };
+        let paint = tiny(&bytes, false).and_then(|look| {
+            let mut ranked: Vec<(&str, f32)> = candidates
+                .iter()
+                .map(|(id, reference)| (id.as_str(), preview_distance(&look, reference)))
+                .collect();
+            ranked.sort_by(|a, b| a.1.total_cmp(&b.1));
+            let (id, distance) = *ranked.first()?;
+            let clear = ranked
+                .get(1)
+                .is_none_or(|(_, next)| next - distance >= PAINT_MARGIN);
+            (distance <= SAME_PAINT && clear).then(|| id.to_owned())
+        });
+        by_marker.entry(marker).or_default().insert(paint);
+    }
+    // A marker whose revisions agree on one paint; a paint found on one marker only.
+    let mut markers_of: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (marker, verdicts) in by_marker {
+        if let [Some(id)] = &verdicts.into_iter().collect::<Vec<_>>()[..] {
+            markers_of.entry(id.clone()).or_default().push(marker);
+        }
+    }
+    markers_of
+        .into_iter()
+        .filter_map(|(id, markers)| match &markers[..] {
+            [marker] => Some(Recognition {
+                marker: marker.clone(),
+                kind: "paint".to_owned(),
+                id,
+                grade: "m0".to_owned(),
+                evidence: "picture",
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Hulls and turrets in the cache (see the module docs).
+fn recognise_items(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Recognition> {
     let index = index(packs);
     if index.models.is_empty()
         && index.geometries.is_empty()
@@ -510,7 +638,6 @@ pub fn recognise_by_content(scan: &CacheScan, packs: &[InstalledPack]) -> Vec<Re
             }
         }
     }
-    out.sort_by(|a, b| a.marker.cmp(&b.marker));
     out
 }
 

@@ -24,6 +24,9 @@ impl eframe::App for Studio {
         if self.finish_recognition() {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }
+        if self.survey_paints() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(200));
+        }
         if self.finish_import() {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }

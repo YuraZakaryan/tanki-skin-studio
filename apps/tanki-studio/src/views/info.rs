@@ -18,7 +18,7 @@ use tanki_ui::{
 use super::{scroll_page, shell};
 use crate::{
     app::{Page, Studio},
-    model::{grade_code, marker_id, target_name, target_title},
+    model::{grade_code, item_name, marker_id, target_title},
 };
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
@@ -217,10 +217,12 @@ fn modifications(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .items
             .iter()
             .find(|i| i.kind == selection.kind && i.id == selection.id);
-        (0..4)
+        // A paint is one picture, with no modifications.
+        let count = if selection.kind == "paint" { 1 } else { 4 };
+        (0..count)
             .map(|i| {
                 (
-                    target_name(&selection.id, grade_code(i)),
+                    item_name(&selection.kind, &selection.id, grade_code(i)),
                     item.and_then(|it| it.markers[i].clone()),
                 )
             })
@@ -301,7 +303,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         (Some(pack), Some(s)) => Some(format!(
             "{} · {}",
             pack.manifest.name,
-            target_name(&s.id, grade_code(s.grade))
+            item_name(&s.kind, &s.id, grade_code(s.grade))
         )),
         _ => None,
     };

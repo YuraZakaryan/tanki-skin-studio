@@ -144781,6 +144781,2586 @@
 					]
 				}
 			]
+		},
+		{
+			"type": "frame",
+			"id": "JDD0E",
+			"x": 76440,
+			"y": 3000,
+			"name": "Garage · paints / Dark",
+			"theme": {
+				"mode": "dark"
+			},
+			"clip": true,
+			"width": 1440,
+			"height": 900,
+			"fill": "$bg",
+			"children": [
+				{
+					"id": "UAekA",
+					"type": "ref",
+					"ref": "ImzM7",
+					"height": "fill_container",
+					"descendants": {
+						"2Pmcxn": {
+							"id": "LWZy5d",
+							"type": "ref",
+							"ref": "k0ZyB8",
+							"name": "Гараж",
+							"width": "fill_container",
+							"descendants": {
+								"Z3fxoN": {
+									"icon": "warehouse"
+								},
+								"yJ6Th": {
+									"content": "Garage"
+								},
+								"drFzr": {
+									"content": "24",
+									"enabled": true
+								}
+							}
+						},
+						"qsHpOg/Ctrdj": {
+							"content": "3,549",
+							"enabled": true
+						},
+						"B3uZDu/Ctrdj": {
+							"content": "3",
+							"enabled": true
+						},
+						"JHfO8": {
+							"content": "Game cache"
+						},
+						"j6wxv": {
+							"content": "macOS · 3,549 files"
+						},
+						"Gmbi8/zbRX2": {
+							"content": "Cache found"
+						},
+						"JDwyY": {
+							"fill": "$surface-2"
+						},
+						"ToPwU": {
+							"fill": "$primary"
+						},
+						"NggTy": {
+							"fill": "$text"
+						},
+						"KPV8S": {
+							"fill": "#00000000"
+						},
+						"kRj0m": {
+							"fill": "$text-3"
+						},
+						"PY1hV": {
+							"content": "Русский",
+							"fill": "$text-3"
+						},
+						"USULF": {
+							"fill": "#00000000"
+						},
+						"LInex": {
+							"fill": "$text-3"
+						},
+						"P12EA": {
+							"content": "Light",
+							"fill": "$text-3"
+						},
+						"YXrxM": {
+							"fill": "#00000000"
+						},
+						"waUOM": {
+							"fill": "$text-3"
+						},
+						"kN8TM": {
+							"content": "Dark",
+							"fill": "$text-3"
+						}
+					}
+				},
+				{
+					"type": "frame",
+					"id": "E9la8",
+					"name": "Main",
+					"width": "fill_container",
+					"height": "fill_container",
+					"layout": "vertical",
+					"children": [
+						{
+							"id": "3SZhe",
+							"type": "ref",
+							"ref": "z7ppN1",
+							"width": "fill_container",
+							"descendants": {
+								"FmyyG": {
+									"content": "Garage"
+								},
+								"VpbfJ": {
+									"content": "Client items and skins from the active pack"
+								},
+								"W4VMZl": {
+									"children": [
+										{
+											"id": "ZCSs4",
+											"type": "ref",
+											"ref": "x4rgyY",
+											"name": "Restore",
+											"descendants": {
+												"t2fMYq": {
+													"icon": "rotate-ccw"
+												},
+												"z1BWX": {
+													"content": "Restore"
+												}
+											}
+										},
+										{
+											"id": "6hXgW",
+											"type": "ref",
+											"ref": "vEcaL",
+											"name": "Apply",
+											"enabled": false,
+											"descendants": {
+												"Ikbdd": {
+													"icon": "zap"
+												},
+												"aIZBy": {
+													"content": "Apply skin"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "frame",
+							"id": "jmLb3",
+							"name": "Content",
+							"width": "fill_container",
+							"height": "fill_container",
+							"layout": "vertical",
+							"gap": 24,
+							"padding": 32,
+							"children": [
+								{
+									"type": "frame",
+									"id": "kQS2o",
+									"name": "Top Row",
+									"width": "fill_container",
+									"height": "fill_container",
+									"gap": 24,
+									"children": [
+										{
+											"id": "TXNSv",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "My Tank",
+											"width": "fill_container",
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "MY TANK"
+												},
+												"f5wuT": {
+													"content": "Inferno"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"padding": 14,
+													"children": [
+														{
+															"type": "frame",
+															"id": "9I80S",
+															"name": "Preview Stage",
+															"width": "fill_container",
+															"height": "fill_container",
+															"fill": {
+																"type": "gradient",
+																"gradientType": "radial",
+																"enabled": true,
+																"rotation": 0,
+																"size": {
+																	"width": 1,
+																	"height": 1
+																},
+																"colors": [
+																	{
+																		"color": "$surface-3",
+																		"position": 0
+																	},
+																	{
+																		"color": "$stage",
+																		"position": 1
+																	}
+																]
+															},
+															"cornerRadius": 12,
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"strokeAlignment": "inner",
+															"layout": "vertical",
+															"padding": 18,
+															"children": [
+																{
+																	"type": "frame",
+																	"id": "97F7j",
+																	"name": "Chips",
+																	"width": "fill_container",
+																	"gap": 8,
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"id": "Cw7Tz",
+																			"type": "ref",
+																			"ref": "op3pN",
+																			"name": "Recognised",
+																			"descendants": {
+																				"zbRX2": {
+																					"content": "Inferno recognised"
+																				}
+																			}
+																		},
+																		{
+																			"id": "B6cuc",
+																			"type": "ref",
+																			"ref": "v29jFI",
+																			"name": "Revision",
+																			"descendants": {
+																				"e62hp4": {
+																					"content": "revision 2"
+																				}
+																			}
+																		},
+																		{
+																			"type": "frame",
+																			"id": "inWAE",
+																			"name": "Spacer",
+																			"width": "fill_container",
+																			"height": 1
+																		},
+																		{
+																			"id": "xpp6O",
+																			"type": "ref",
+																			"ref": "x4rgyY",
+																			"name": "Details",
+																			"height": 28,
+																			"descendants": {
+																				"t2fMYq": {
+																					"icon": "scan-search"
+																				},
+																				"z1BWX": {
+																					"content": "Details"
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"type": "frame",
+																	"id": "IuIUn",
+																	"name": "Center",
+																	"width": "fill_container",
+																	"height": "fill_container",
+																	"layout": "vertical",
+																	"gap": 12,
+																	"justifyContent": "center",
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"type": "icon",
+																			"id": "xZKH1",
+																			"name": "Icon",
+																			"width": 72,
+																			"height": 72,
+																			"icon": "image",
+																			"library": "lucide",
+																			"fill": "$text-3"
+																		},
+																		{
+																			"type": "text",
+																			"id": "pb0DJ",
+																			"name": "Caption",
+																			"fill": "$text-3",
+																			"content": "Current look in the game",
+																			"fontFamily": "$font-mono",
+																			"fontSize": 12,
+																			"fontWeight": "normal"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											}
+										},
+										{
+											"id": "XADiH",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "Skin Variants",
+											"width": 440,
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "SKIN VARIANTS"
+												},
+												"f5wuT": {
+													"content": "Tanki Model Archive"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"gap": 10,
+													"children": [
+														{
+															"id": "KEiwl",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Inferno"
+																},
+																"NDlyz": {
+																	"content": "Paint"
+																},
+																"S9m4V": {
+																	"enabled": false
+																},
+																"S9m4V/lhvkG": {
+																	"content": "Apply"
+																}
+															}
+														},
+														{
+															"id": "NhTa7",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Galaxy"
+																},
+																"NDlyz": {
+																	"content": "Animated · 18 frames"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"id": "F8Hlb",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Moss"
+																},
+																"NDlyz": {
+																	"content": "Paint"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"type": "frame",
+															"id": "kIveb",
+															"name": "Spacer",
+															"width": "fill_container",
+															"height": "fill_container"
+														},
+														{
+															"id": "0IIXb",
+															"type": "ref",
+															"ref": "vEcaL",
+															"name": "Apply Wide",
+															"width": "fill_container",
+															"height": 46,
+															"descendants": {
+																"Ikbdd": {
+																	"icon": "zap"
+																},
+																"aIZBy": {
+																	"content": "Apply to Inferno"
+																}
+															}
+														},
+														{
+															"type": "text",
+															"id": "He7h9",
+															"name": "Hint",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Close the game before replacing.",
+															"fontFamily": "$font-body",
+															"fontSize": 12,
+															"fontWeight": "normal"
+														}
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"id": "Bl8yt",
+									"type": "ref",
+									"ref": "pWQbK",
+									"name": "Items",
+									"width": "fill_container",
+									"descendants": {
+										"vEfkk": {
+											"content": "ITEMS"
+										},
+										"f5wuT": {
+											"content": "24 items"
+										},
+										"gKejC": {
+											"gap": 14,
+											"children": [
+												{
+													"type": "frame",
+													"id": "Lobkd",
+													"name": "Tabs",
+													"gap": 6,
+													"children": [
+														{
+															"id": "nmoVP",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Корпуса",
+															"descendants": {
+																"prCEM": {
+																	"content": "Hulls"
+																}
+															}
+														},
+														{
+															"id": "D6Uhm",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Пушки",
+															"descendants": {
+																"prCEM": {
+																	"content": "Turrets"
+																}
+															}
+														},
+														{
+															"id": "0sWZj",
+															"type": "ref",
+															"ref": "ZVJ9X",
+															"name": "Краски",
+															"descendants": {
+																"u5qFu": {
+																	"content": "Paints"
+																}
+															}
+														}
+													]
+												},
+												{
+													"type": "frame",
+													"id": "phtYq",
+													"name": "Cards",
+													"width": "fill_container",
+													"gap": 16,
+													"children": [
+														{
+															"id": "VuTsx",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"strokeWidth": 2,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Inferno"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "pRAOc",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Green",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Green"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "ZDYGz",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Galaxy"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "A13pQ",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Moss"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "MOU1h",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Marine",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Marine"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														}
+													]
+												}
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "frame",
+			"id": "bFDLm",
+			"x": 76440,
+			"y": 4020,
+			"name": "Garage · paints / Light",
+			"theme": {
+				"mode": "light"
+			},
+			"clip": true,
+			"width": 1440,
+			"height": 900,
+			"fill": "$bg",
+			"children": [
+				{
+					"id": "HhPqv",
+					"type": "ref",
+					"ref": "ImzM7",
+					"height": "fill_container",
+					"descendants": {
+						"2Pmcxn": {
+							"id": "xSV3L9",
+							"type": "ref",
+							"ref": "k0ZyB8",
+							"name": "Гараж",
+							"width": "fill_container",
+							"descendants": {
+								"Z3fxoN": {
+									"icon": "warehouse"
+								},
+								"yJ6Th": {
+									"content": "Garage"
+								},
+								"drFzr": {
+									"content": "24",
+									"enabled": true
+								}
+							}
+						},
+						"qsHpOg/Ctrdj": {
+							"content": "3,549",
+							"enabled": true
+						},
+						"B3uZDu/Ctrdj": {
+							"content": "3",
+							"enabled": true
+						},
+						"JHfO8": {
+							"content": "Game cache"
+						},
+						"j6wxv": {
+							"content": "macOS · 3,549 files"
+						},
+						"Gmbi8/zbRX2": {
+							"content": "Cache found"
+						},
+						"JDwyY": {
+							"fill": "$surface-2"
+						},
+						"ToPwU": {
+							"fill": "$primary"
+						},
+						"NggTy": {
+							"fill": "$text"
+						},
+						"KPV8S": {
+							"fill": "#00000000"
+						},
+						"kRj0m": {
+							"fill": "$text-3"
+						},
+						"PY1hV": {
+							"content": "Русский",
+							"fill": "$text-3"
+						},
+						"USULF": {
+							"fill": "#00000000"
+						},
+						"LInex": {
+							"fill": "$text-3"
+						},
+						"P12EA": {
+							"fill": "$text-3",
+							"content": "Light"
+						},
+						"YXrxM": {
+							"fill": "#00000000"
+						},
+						"waUOM": {
+							"fill": "$text-3"
+						},
+						"kN8TM": {
+							"fill": "$text-3",
+							"content": "Dark"
+						}
+					}
+				},
+				{
+					"type": "frame",
+					"id": "hAWAV",
+					"name": "Main",
+					"width": "fill_container",
+					"height": "fill_container",
+					"layout": "vertical",
+					"children": [
+						{
+							"id": "IOX9t",
+							"type": "ref",
+							"ref": "z7ppN1",
+							"width": "fill_container",
+							"descendants": {
+								"FmyyG": {
+									"content": "Garage"
+								},
+								"VpbfJ": {
+									"content": "Client items and skins from the active pack"
+								},
+								"W4VMZl": {
+									"children": [
+										{
+											"id": "h7NKK",
+											"type": "ref",
+											"ref": "x4rgyY",
+											"name": "Restore",
+											"descendants": {
+												"t2fMYq": {
+													"icon": "rotate-ccw"
+												},
+												"z1BWX": {
+													"content": "Restore"
+												}
+											}
+										},
+										{
+											"id": "y3FkL",
+											"type": "ref",
+											"ref": "vEcaL",
+											"name": "Apply",
+											"enabled": false,
+											"descendants": {
+												"Ikbdd": {
+													"icon": "zap"
+												},
+												"aIZBy": {
+													"content": "Apply skin"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "frame",
+							"id": "AK1jX",
+							"name": "Content",
+							"width": "fill_container",
+							"height": "fill_container",
+							"layout": "vertical",
+							"gap": 24,
+							"padding": 32,
+							"children": [
+								{
+									"type": "frame",
+									"id": "mNHMt",
+									"name": "Top Row",
+									"width": "fill_container",
+									"height": "fill_container",
+									"gap": 24,
+									"children": [
+										{
+											"id": "NAlzs",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "My Tank",
+											"width": "fill_container",
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "MY TANK"
+												},
+												"f5wuT": {
+													"content": "Inferno"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"padding": 14,
+													"children": [
+														{
+															"type": "frame",
+															"id": "1YQaB",
+															"name": "Preview Stage",
+															"width": "fill_container",
+															"height": "fill_container",
+															"fill": {
+																"type": "gradient",
+																"gradientType": "radial",
+																"enabled": true,
+																"rotation": 0,
+																"size": {
+																	"width": 1,
+																	"height": 1
+																},
+																"colors": [
+																	{
+																		"color": "$surface-3",
+																		"position": 0
+																	},
+																	{
+																		"color": "$stage",
+																		"position": 1
+																	}
+																]
+															},
+															"cornerRadius": 12,
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"strokeAlignment": "inner",
+															"layout": "vertical",
+															"padding": 18,
+															"children": [
+																{
+																	"type": "frame",
+																	"id": "tSqsS",
+																	"name": "Chips",
+																	"width": "fill_container",
+																	"gap": 8,
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"id": "TzhRw",
+																			"type": "ref",
+																			"ref": "op3pN",
+																			"name": "Recognised",
+																			"descendants": {
+																				"zbRX2": {
+																					"content": "Inferno recognised"
+																				}
+																			}
+																		},
+																		{
+																			"id": "IUrj6",
+																			"type": "ref",
+																			"ref": "v29jFI",
+																			"name": "Revision",
+																			"descendants": {
+																				"e62hp4": {
+																					"content": "revision 2"
+																				}
+																			}
+																		},
+																		{
+																			"type": "frame",
+																			"id": "MDtLf",
+																			"name": "Spacer",
+																			"width": "fill_container",
+																			"height": 1
+																		},
+																		{
+																			"id": "jjH1g",
+																			"type": "ref",
+																			"ref": "x4rgyY",
+																			"name": "Details",
+																			"height": 28,
+																			"descendants": {
+																				"t2fMYq": {
+																					"icon": "scan-search"
+																				},
+																				"z1BWX": {
+																					"content": "Details"
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"type": "frame",
+																	"id": "6PJZU",
+																	"name": "Center",
+																	"width": "fill_container",
+																	"height": "fill_container",
+																	"layout": "vertical",
+																	"gap": 12,
+																	"justifyContent": "center",
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"type": "icon",
+																			"id": "5IZrk",
+																			"name": "Icon",
+																			"width": 72,
+																			"height": 72,
+																			"icon": "image",
+																			"library": "lucide",
+																			"fill": "$text-3"
+																		},
+																		{
+																			"type": "text",
+																			"id": "0TMYj",
+																			"name": "Caption",
+																			"fill": "$text-3",
+																			"content": "Current look in the game",
+																			"fontFamily": "$font-mono",
+																			"fontSize": 12,
+																			"fontWeight": "normal"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											}
+										},
+										{
+											"id": "Xvfpp",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "Skin Variants",
+											"width": 440,
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "SKIN VARIANTS"
+												},
+												"f5wuT": {
+													"content": "Tanki Model Archive"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"gap": 10,
+													"children": [
+														{
+															"id": "67LcH",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Inferno"
+																},
+																"NDlyz": {
+																	"content": "Paint"
+																},
+																"S9m4V": {
+																	"enabled": false
+																},
+																"S9m4V/lhvkG": {
+																	"content": "Apply"
+																}
+															}
+														},
+														{
+															"id": "a9DMr",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Galaxy"
+																},
+																"NDlyz": {
+																	"content": "Animated · 18 frames"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"id": "wgbiV",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Moss"
+																},
+																"NDlyz": {
+																	"content": "Paint"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"type": "frame",
+															"id": "xSjcu",
+															"name": "Spacer",
+															"width": "fill_container",
+															"height": "fill_container"
+														},
+														{
+															"id": "JIdN5",
+															"type": "ref",
+															"ref": "vEcaL",
+															"name": "Apply Wide",
+															"width": "fill_container",
+															"height": 46,
+															"descendants": {
+																"Ikbdd": {
+																	"icon": "zap"
+																},
+																"aIZBy": {
+																	"content": "Apply to Inferno"
+																}
+															}
+														},
+														{
+															"type": "text",
+															"id": "DlV8S",
+															"name": "Hint",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Close the game before replacing.",
+															"fontFamily": "$font-body",
+															"fontSize": 12,
+															"fontWeight": "normal"
+														}
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"id": "vxhmP",
+									"type": "ref",
+									"ref": "pWQbK",
+									"name": "Items",
+									"width": "fill_container",
+									"descendants": {
+										"vEfkk": {
+											"content": "ITEMS"
+										},
+										"f5wuT": {
+											"content": "24 items"
+										},
+										"gKejC": {
+											"gap": 14,
+											"children": [
+												{
+													"type": "frame",
+													"id": "fMm3m",
+													"name": "Tabs",
+													"gap": 6,
+													"children": [
+														{
+															"id": "ReXg0",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Корпуса",
+															"descendants": {
+																"prCEM": {
+																	"content": "Hulls"
+																}
+															}
+														},
+														{
+															"id": "BkKCj",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Пушки",
+															"descendants": {
+																"prCEM": {
+																	"content": "Turrets"
+																}
+															}
+														},
+														{
+															"id": "Vov9j",
+															"type": "ref",
+															"ref": "ZVJ9X",
+															"name": "Краски",
+															"descendants": {
+																"u5qFu": {
+																	"content": "Paints"
+																}
+															}
+														}
+													]
+												},
+												{
+													"type": "frame",
+													"id": "jMDeg",
+													"name": "Cards",
+													"width": "fill_container",
+													"gap": 16,
+													"children": [
+														{
+															"id": "BEm7m",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"strokeWidth": 2,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Inferno"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "KUgQB",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Green",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Green"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "UIEPy",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Galaxy"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "PMjlI",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Moss"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "S9Ja7",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Marine",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Marine"
+																},
+																"br3La": {
+																	"content": "Paint"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														}
+													]
+												}
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "frame",
+			"id": "0HGDD",
+			"x": 76440,
+			"y": 5040,
+			"name": "Гараж · краски / Dark · RU",
+			"theme": {
+				"mode": "dark"
+			},
+			"clip": true,
+			"width": 1440,
+			"height": 900,
+			"fill": "$bg",
+			"children": [
+				{
+					"id": "6j13u",
+					"type": "ref",
+					"ref": "ImzM7",
+					"height": "fill_container",
+					"descendants": {
+						"l1Ljzu/XWA86": {
+							"content": "Обзор"
+						},
+						"2Pmcxn": {
+							"id": "uuuI7a",
+							"type": "ref",
+							"ref": "k0ZyB8",
+							"name": "Гараж",
+							"width": "fill_container",
+							"descendants": {
+								"Z3fxoN": {
+									"icon": "warehouse"
+								},
+								"yJ6Th": {
+									"content": "Гараж"
+								},
+								"drFzr": {
+									"content": "24",
+									"enabled": true
+								}
+							}
+						},
+						"qsHpOg/XWA86": {
+							"content": "Ресурсы"
+						},
+						"qsHpOg/Ctrdj": {
+							"content": "3 549",
+							"enabled": true
+						},
+						"B3uZDu/XWA86": {
+							"content": "Паки"
+						},
+						"B3uZDu/Ctrdj": {
+							"content": "3",
+							"enabled": true
+						},
+						"V5qrup/XWA86": {
+							"content": "Настройки"
+						},
+						"wPDVWN/XWA86": {
+							"content": "О программе"
+						},
+						"JHfO8": {
+							"content": "Кэш игры"
+						},
+						"j6wxv": {
+							"content": "macOS · 3 549 файлов"
+						},
+						"JDwyY": {
+							"fill": "#00000000"
+						},
+						"ToPwU": {
+							"fill": "$text-3"
+						},
+						"NggTy": {
+							"fill": "$text-3"
+						},
+						"KPV8S": {
+							"fill": "$surface-2"
+						},
+						"kRj0m": {
+							"fill": "$primary"
+						},
+						"PY1hV": {
+							"fill": "$text"
+						},
+						"USULF": {
+							"fill": "#00000000"
+						},
+						"LInex": {
+							"fill": "$text-3"
+						},
+						"P12EA": {
+							"fill": "$text-3"
+						},
+						"YXrxM": {
+							"fill": "#00000000"
+						},
+						"waUOM": {
+							"fill": "$text-3"
+						},
+						"kN8TM": {
+							"fill": "$text-3"
+						},
+						"x6Q1A": {
+							"content": "Системная"
+						}
+					}
+				},
+				{
+					"type": "frame",
+					"id": "LiZVZ",
+					"name": "Main",
+					"width": "fill_container",
+					"height": "fill_container",
+					"layout": "vertical",
+					"children": [
+						{
+							"id": "q1bpn",
+							"type": "ref",
+							"ref": "z7ppN1",
+							"width": "fill_container",
+							"descendants": {
+								"FmyyG": {
+									"content": "Гараж"
+								},
+								"VpbfJ": {
+									"content": "Предметы клиента и скины активного пака"
+								},
+								"W4VMZl": {
+									"children": [
+										{
+											"id": "0aBvj",
+											"type": "ref",
+											"ref": "x4rgyY",
+											"name": "Restore",
+											"descendants": {
+												"t2fMYq": {
+													"icon": "rotate-ccw"
+												},
+												"z1BWX": {
+													"content": "Восстановить"
+												}
+											}
+										},
+										{
+											"id": "EayOr",
+											"type": "ref",
+											"ref": "vEcaL",
+											"name": "Apply",
+											"enabled": false,
+											"descendants": {
+												"Ikbdd": {
+													"icon": "zap"
+												},
+												"aIZBy": {
+													"content": "Применить скин"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "frame",
+							"id": "59Q6G",
+							"name": "Content",
+							"width": "fill_container",
+							"height": "fill_container",
+							"layout": "vertical",
+							"gap": 24,
+							"padding": 32,
+							"children": [
+								{
+									"type": "frame",
+									"id": "KMJPZ",
+									"name": "Top Row",
+									"width": "fill_container",
+									"height": "fill_container",
+									"gap": 24,
+									"children": [
+										{
+											"id": "MtWEo",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "My Tank",
+											"width": "fill_container",
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "МОЙ ТАНК"
+												},
+												"f5wuT": {
+													"content": "Inferno"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"padding": 14,
+													"children": [
+														{
+															"type": "frame",
+															"id": "pZxpw",
+															"name": "Preview Stage",
+															"width": "fill_container",
+															"height": "fill_container",
+															"fill": {
+																"type": "gradient",
+																"gradientType": "radial",
+																"enabled": true,
+																"rotation": 0,
+																"size": {
+																	"width": 1,
+																	"height": 1
+																},
+																"colors": [
+																	{
+																		"color": "$surface-3",
+																		"position": 0
+																	},
+																	{
+																		"color": "$stage",
+																		"position": 1
+																	}
+																]
+															},
+															"cornerRadius": 12,
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"strokeAlignment": "inner",
+															"layout": "vertical",
+															"padding": 18,
+															"children": [
+																{
+																	"type": "frame",
+																	"id": "IxiHS",
+																	"name": "Chips",
+																	"width": "fill_container",
+																	"gap": 8,
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"id": "46qC2",
+																			"type": "ref",
+																			"ref": "op3pN",
+																			"name": "Recognised",
+																			"descendants": {
+																				"zbRX2": {
+																					"content": "Inferno распознан"
+																				}
+																			}
+																		},
+																		{
+																			"id": "DHQfO",
+																			"type": "ref",
+																			"ref": "v29jFI",
+																			"name": "Revision",
+																			"descendants": {
+																				"e62hp4": {
+																					"content": "ревизия 2"
+																				}
+																			}
+																		},
+																		{
+																			"type": "frame",
+																			"id": "knWRK",
+																			"name": "Spacer",
+																			"width": "fill_container",
+																			"height": 1
+																		},
+																		{
+																			"id": "Hx7YV",
+																			"type": "ref",
+																			"ref": "x4rgyY",
+																			"name": "Details",
+																			"height": 28,
+																			"descendants": {
+																				"t2fMYq": {
+																					"icon": "scan-search"
+																				},
+																				"z1BWX": {
+																					"content": "Подробнее"
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"type": "frame",
+																	"id": "AkkTs",
+																	"name": "Center",
+																	"width": "fill_container",
+																	"height": "fill_container",
+																	"layout": "vertical",
+																	"gap": 12,
+																	"justifyContent": "center",
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"type": "icon",
+																			"id": "qRA2E",
+																			"name": "Icon",
+																			"width": 72,
+																			"height": 72,
+																			"icon": "image",
+																			"library": "lucide",
+																			"fill": "$text-3"
+																		},
+																		{
+																			"type": "text",
+																			"id": "fGRHc",
+																			"name": "Caption",
+																			"fill": "$text-3",
+																			"content": "Как сейчас выглядит в игре",
+																			"fontFamily": "$font-mono",
+																			"fontSize": 12,
+																			"fontWeight": "normal"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											}
+										},
+										{
+											"id": "Kamtn",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "Skin Variants",
+											"width": 440,
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "ВАРИАНТЫ СКИНА"
+												},
+												"f5wuT": {
+													"content": "Tanki Model Archive"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"gap": 10,
+													"children": [
+														{
+															"id": "bKt7a",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Inferno"
+																},
+																"NDlyz": {
+																	"content": "Краска"
+																},
+																"S9m4V": {
+																	"enabled": false
+																},
+																"S9m4V/lhvkG": {
+																	"content": "Применить"
+																}
+															}
+														},
+														{
+															"id": "8g2bO",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Galaxy"
+																},
+																"NDlyz": {
+																	"content": "Анимированная · 18 кадров"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"id": "YtDMw",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Moss"
+																},
+																"NDlyz": {
+																	"content": "Краска"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"type": "frame",
+															"id": "TfU25",
+															"name": "Spacer",
+															"width": "fill_container",
+															"height": "fill_container"
+														},
+														{
+															"id": "s6KQ6",
+															"type": "ref",
+															"ref": "vEcaL",
+															"name": "Apply Wide",
+															"width": "fill_container",
+															"height": 46,
+															"descendants": {
+																"Ikbdd": {
+																	"icon": "zap"
+																},
+																"aIZBy": {
+																	"content": "Применить к Inferno"
+																}
+															}
+														},
+														{
+															"type": "text",
+															"id": "DsOYg",
+															"name": "Hint",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Закройте игру перед заменой.",
+															"fontFamily": "$font-body",
+															"fontSize": 12,
+															"fontWeight": "normal"
+														}
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"id": "OiAXp",
+									"type": "ref",
+									"ref": "pWQbK",
+									"name": "Items",
+									"width": "fill_container",
+									"descendants": {
+										"vEfkk": {
+											"content": "ПРЕДМЕТЫ"
+										},
+										"f5wuT": {
+											"content": "24 предмета"
+										},
+										"gKejC": {
+											"gap": 14,
+											"children": [
+												{
+													"type": "frame",
+													"id": "w9Nt2",
+													"name": "Tabs",
+													"gap": 6,
+													"children": [
+														{
+															"id": "8DQGs",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Корпуса",
+															"descendants": {
+																"prCEM": {
+																	"content": "Корпуса"
+																}
+															}
+														},
+														{
+															"id": "i4iB4",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Пушки",
+															"descendants": {
+																"prCEM": {
+																	"content": "Пушки"
+																}
+															}
+														},
+														{
+															"id": "8nFTf",
+															"type": "ref",
+															"ref": "ZVJ9X",
+															"name": "Краски",
+															"descendants": {
+																"u5qFu": {
+																	"content": "Краски"
+																}
+															}
+														}
+													]
+												},
+												{
+													"type": "frame",
+													"id": "JHScJ",
+													"name": "Cards",
+													"width": "fill_container",
+													"gap": 16,
+													"children": [
+														{
+															"id": "gxr3S",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"strokeWidth": 2,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Inferno"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "9q2K7",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Green",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Green"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "1NzJO",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Galaxy"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "QCITd",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Moss"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "yapY2",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Marine",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Marine"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														}
+													]
+												}
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "frame",
+			"id": "TFYi4",
+			"x": 76440,
+			"y": 6060,
+			"name": "Гараж · краски / Light · RU",
+			"theme": {
+				"mode": "light"
+			},
+			"clip": true,
+			"width": 1440,
+			"height": 900,
+			"fill": "$bg",
+			"children": [
+				{
+					"id": "XeBeQ",
+					"type": "ref",
+					"ref": "ImzM7",
+					"height": "fill_container",
+					"descendants": {
+						"l1Ljzu/XWA86": {
+							"content": "Обзор"
+						},
+						"2Pmcxn": {
+							"id": "NNt73I",
+							"type": "ref",
+							"ref": "k0ZyB8",
+							"name": "Гараж",
+							"width": "fill_container",
+							"descendants": {
+								"Z3fxoN": {
+									"icon": "warehouse"
+								},
+								"yJ6Th": {
+									"content": "Гараж"
+								},
+								"drFzr": {
+									"content": "24",
+									"enabled": true
+								}
+							}
+						},
+						"qsHpOg/XWA86": {
+							"content": "Ресурсы"
+						},
+						"qsHpOg/Ctrdj": {
+							"content": "3 549",
+							"enabled": true
+						},
+						"B3uZDu/XWA86": {
+							"content": "Паки"
+						},
+						"B3uZDu/Ctrdj": {
+							"content": "3",
+							"enabled": true
+						},
+						"V5qrup/XWA86": {
+							"content": "Настройки"
+						},
+						"wPDVWN/XWA86": {
+							"content": "О программе"
+						},
+						"JHfO8": {
+							"content": "Кэш игры"
+						},
+						"j6wxv": {
+							"content": "macOS · 3 549 файлов"
+						},
+						"JDwyY": {
+							"fill": "#00000000"
+						},
+						"ToPwU": {
+							"fill": "$text-3"
+						},
+						"NggTy": {
+							"fill": "$text-3"
+						},
+						"KPV8S": {
+							"fill": "$surface-2"
+						},
+						"kRj0m": {
+							"fill": "$primary"
+						},
+						"PY1hV": {
+							"fill": "$text"
+						},
+						"USULF": {
+							"fill": "#00000000"
+						},
+						"LInex": {
+							"fill": "$text-3"
+						},
+						"P12EA": {
+							"fill": "$text-3"
+						},
+						"YXrxM": {
+							"fill": "#00000000"
+						},
+						"waUOM": {
+							"fill": "$text-3"
+						},
+						"kN8TM": {
+							"fill": "$text-3"
+						},
+						"x6Q1A": {
+							"content": "Системная"
+						}
+					}
+				},
+				{
+					"type": "frame",
+					"id": "5h7SR",
+					"name": "Main",
+					"width": "fill_container",
+					"height": "fill_container",
+					"layout": "vertical",
+					"children": [
+						{
+							"id": "BtcZG",
+							"type": "ref",
+							"ref": "z7ppN1",
+							"width": "fill_container",
+							"descendants": {
+								"FmyyG": {
+									"content": "Гараж"
+								},
+								"VpbfJ": {
+									"content": "Предметы клиента и скины активного пака"
+								},
+								"W4VMZl": {
+									"children": [
+										{
+											"id": "fsfID",
+											"type": "ref",
+											"ref": "x4rgyY",
+											"name": "Restore",
+											"descendants": {
+												"t2fMYq": {
+													"icon": "rotate-ccw"
+												},
+												"z1BWX": {
+													"content": "Восстановить"
+												}
+											}
+										},
+										{
+											"id": "wR05z",
+											"type": "ref",
+											"ref": "vEcaL",
+											"name": "Apply",
+											"enabled": false,
+											"descendants": {
+												"Ikbdd": {
+													"icon": "zap"
+												},
+												"aIZBy": {
+													"content": "Применить скин"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "frame",
+							"id": "s4K6p",
+							"name": "Content",
+							"width": "fill_container",
+							"height": "fill_container",
+							"layout": "vertical",
+							"gap": 24,
+							"padding": 32,
+							"children": [
+								{
+									"type": "frame",
+									"id": "KroX6",
+									"name": "Top Row",
+									"width": "fill_container",
+									"height": "fill_container",
+									"gap": 24,
+									"children": [
+										{
+											"id": "icBlY",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "My Tank",
+											"width": "fill_container",
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "МОЙ ТАНК"
+												},
+												"f5wuT": {
+													"content": "Inferno"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"padding": 14,
+													"children": [
+														{
+															"type": "frame",
+															"id": "ahCJ9",
+															"name": "Preview Stage",
+															"width": "fill_container",
+															"height": "fill_container",
+															"fill": {
+																"type": "gradient",
+																"gradientType": "radial",
+																"enabled": true,
+																"rotation": 0,
+																"size": {
+																	"width": 1,
+																	"height": 1
+																},
+																"colors": [
+																	{
+																		"color": "$surface-3",
+																		"position": 0
+																	},
+																	{
+																		"color": "$stage",
+																		"position": 1
+																	}
+																]
+															},
+															"cornerRadius": 12,
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"strokeAlignment": "inner",
+															"layout": "vertical",
+															"padding": 18,
+															"children": [
+																{
+																	"type": "frame",
+																	"id": "0BNvQ",
+																	"name": "Chips",
+																	"width": "fill_container",
+																	"gap": 8,
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"id": "IGMeR",
+																			"type": "ref",
+																			"ref": "op3pN",
+																			"name": "Recognised",
+																			"descendants": {
+																				"zbRX2": {
+																					"content": "Inferno распознан"
+																				}
+																			}
+																		},
+																		{
+																			"id": "OyZME",
+																			"type": "ref",
+																			"ref": "v29jFI",
+																			"name": "Revision",
+																			"descendants": {
+																				"e62hp4": {
+																					"content": "ревизия 2"
+																				}
+																			}
+																		},
+																		{
+																			"type": "frame",
+																			"id": "D9vAn",
+																			"name": "Spacer",
+																			"width": "fill_container",
+																			"height": 1
+																		},
+																		{
+																			"id": "pBKH8",
+																			"type": "ref",
+																			"ref": "x4rgyY",
+																			"name": "Details",
+																			"height": 28,
+																			"descendants": {
+																				"t2fMYq": {
+																					"icon": "scan-search"
+																				},
+																				"z1BWX": {
+																					"content": "Подробнее"
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"type": "frame",
+																	"id": "qdJD7",
+																	"name": "Center",
+																	"width": "fill_container",
+																	"height": "fill_container",
+																	"layout": "vertical",
+																	"gap": 12,
+																	"justifyContent": "center",
+																	"alignItems": "center",
+																	"children": [
+																		{
+																			"type": "icon",
+																			"id": "fQg41",
+																			"name": "Icon",
+																			"width": 72,
+																			"height": 72,
+																			"icon": "image",
+																			"library": "lucide",
+																			"fill": "$text-3"
+																		},
+																		{
+																			"type": "text",
+																			"id": "43Q3e",
+																			"name": "Caption",
+																			"fill": "$text-3",
+																			"content": "Как сейчас выглядит в игре",
+																			"fontFamily": "$font-mono",
+																			"fontSize": 12,
+																			"fontWeight": "normal"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											}
+										},
+										{
+											"id": "zuOI9",
+											"type": "ref",
+											"ref": "pWQbK",
+											"name": "Skin Variants",
+											"width": 440,
+											"height": "fill_container",
+											"descendants": {
+												"vEfkk": {
+													"content": "ВАРИАНТЫ СКИНА"
+												},
+												"f5wuT": {
+													"content": "Tanki Model Archive"
+												},
+												"gKejC": {
+													"height": "fill_container",
+													"gap": 10,
+													"children": [
+														{
+															"id": "dVyXl",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Inferno"
+																},
+																"NDlyz": {
+																	"content": "Краска"
+																},
+																"S9m4V": {
+																	"enabled": false
+																},
+																"S9m4V/lhvkG": {
+																	"content": "Применить"
+																}
+															}
+														},
+														{
+															"id": "IyFqn",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Galaxy"
+																},
+																"NDlyz": {
+																	"content": "Анимированная · 18 кадров"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"id": "nwLdn",
+															"type": "ref",
+															"ref": "Y1YDWT",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"descendants": {
+																"BUVOK": {
+																	"content": "Moss"
+																},
+																"NDlyz": {
+																	"content": "Краска"
+																},
+																"S9m4V": {
+																	"enabled": false
+																}
+															}
+														},
+														{
+															"type": "frame",
+															"id": "fdal7",
+															"name": "Spacer",
+															"width": "fill_container",
+															"height": "fill_container"
+														},
+														{
+															"id": "0hQL3",
+															"type": "ref",
+															"ref": "vEcaL",
+															"name": "Apply Wide",
+															"width": "fill_container",
+															"height": 46,
+															"descendants": {
+																"Ikbdd": {
+																	"icon": "zap"
+																},
+																"aIZBy": {
+																	"content": "Применить к Inferno"
+																}
+															}
+														},
+														{
+															"type": "text",
+															"id": "X4XuR",
+															"name": "Hint",
+															"fill": "$text-3",
+															"textGrowth": "fixed-width",
+															"width": "fill_container",
+															"content": "Закройте игру перед заменой.",
+															"fontFamily": "$font-body",
+															"fontSize": 12,
+															"fontWeight": "normal"
+														}
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"id": "vVeJo",
+									"type": "ref",
+									"ref": "pWQbK",
+									"name": "Items",
+									"width": "fill_container",
+									"descendants": {
+										"vEfkk": {
+											"content": "ПРЕДМЕТЫ"
+										},
+										"f5wuT": {
+											"content": "24 предмета"
+										},
+										"gKejC": {
+											"gap": 14,
+											"children": [
+												{
+													"type": "frame",
+													"id": "5oc9I",
+													"name": "Tabs",
+													"gap": 6,
+													"children": [
+														{
+															"id": "NreGD",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Корпуса",
+															"descendants": {
+																"prCEM": {
+																	"content": "Корпуса"
+																}
+															}
+														},
+														{
+															"id": "9SPJU",
+															"type": "ref",
+															"ref": "gGv5t",
+															"name": "Пушки",
+															"descendants": {
+																"prCEM": {
+																	"content": "Пушки"
+																}
+															}
+														},
+														{
+															"id": "thYfr",
+															"type": "ref",
+															"ref": "ZVJ9X",
+															"name": "Краски",
+															"descendants": {
+																"u5qFu": {
+																	"content": "Краски"
+																}
+															}
+														}
+													]
+												},
+												{
+													"type": "frame",
+													"id": "P6Xko",
+													"name": "Cards",
+													"width": "fill_container",
+													"gap": 16,
+													"children": [
+														{
+															"id": "lRSjm",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Inferno",
+															"width": "fill_container",
+															"stroke": "$primary",
+															"strokeWidth": 2,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Inferno"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "lBsGv",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Green",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Green"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "A3KqX",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Galaxy",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Galaxy"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "KDf6k",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Moss",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Moss"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														},
+														{
+															"id": "ORdG2",
+															"type": "ref",
+															"ref": "Y2wfl6",
+															"name": "Marine",
+															"width": "fill_container",
+															"stroke": "$border",
+															"strokeWidth": 1,
+															"descendants": {
+																"cAhXs": {
+																	"height": 84
+																},
+																"WWke2": {
+																	"content": "Marine"
+																},
+																"lahaW": {
+																	"enabled": false
+																},
+																"br3La": {
+																	"content": "Краска"
+																},
+																"MgCaT": {
+																	"icon": "paintbrush"
+																}
+															}
+														}
+													]
+												}
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
 		}
 	],
 	"themes": {

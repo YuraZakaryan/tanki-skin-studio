@@ -13,7 +13,7 @@ use tanki_ui::{draw, fonts, fonts::Text, icons, theme::Tokens, widgets};
 use crate::{
     app::Studio,
     commands::{COMMANDS, Command, shortcut_label},
-    model::{format_bytes, grade_code, target_name},
+    model::{format_bytes, grade_code, item_name},
 };
 
 #[derive(Default)]
@@ -72,7 +72,7 @@ fn collect(app: &Studio, query: &str) -> Vec<Hit> {
     let mut hits = Vec::new();
     for item in &app.items {
         for grade in 0..4 {
-            let title = target_name(&item.id, grade_code(grade));
+            let title = item_name(&item.kind, &item.id, grade_code(grade));
             let Some(s) = score(&title, &needle) else {
                 continue;
             };

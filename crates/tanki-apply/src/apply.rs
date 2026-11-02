@@ -108,6 +108,10 @@ fn replacements(pack: &InstalledPack, variant: &PackVariant) -> Result<HashMap<S
             "details_alpha" => {
                 map.insert("details_alpha.jpg".into(), bytes);
             }
+            // A paint's picture, fitted to each picture it replaces when written (see `paint`).
+            "image" => {
+                map.insert("image.jpg".into(), bytes);
+            }
             other => anyhow::bail!("unsupported resource role for apply: {other}"),
         }
     }
@@ -173,12 +177,14 @@ fn atomic_replace(target: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// The model and texture files of an item in the cache, which a skin replaces.
+/// The model and texture files of an item in the cache, which a skin replaces, and a paint's
+/// picture.
 pub const SKIN_FILES: &[&str] = &[
     "object.3ds",
     "lightmap.jpg",
     "details.jpg",
     "details_alpha.jpg",
+    "image.jpg",
 ];
 
 /// The cache files the variant would write, from its roles alone (nothing is read).
@@ -201,6 +207,9 @@ fn produced_files(variant: &PackVariant) -> BTreeSet<&'static str> {
             }
             "details_alpha" => {
                 files.insert("details_alpha.jpg");
+            }
+            "image" => {
+                files.insert("image.jpg");
             }
             _ => {}
         }
@@ -257,6 +266,30 @@ pub fn apply_variant(
         backup_root,
         &ApplyNote::default(),
     )
+}
+
+/// The game's own bytes of the cache file `path`: the file as it is, unless a replacement not
+/// restored yet still sits in it, then the original the oldest such replacement saved. A paint is
+/// fitted to the picture the game gave it, not to a paint put on it before.
+fn original(backup_root: &Path, path: &Path) -> Result<Vec<u8>> {
+    let current = fs::read(path)?;
+    let pending = if backup_root.exists() {
+        pending_restores(backup_root)?
+    } else {
+        Vec::new()
+    };
+    let changes: Vec<(&Path, &FileChange)> = pending
+        .iter()
+        .flat_map(|b| b.tx.changes.iter().map(move |c| (b.dir.as_path(), c)))
+        .filter(|(_, change)| change.target == path)
+        .collect();
+    // Newest first: the newest write is still in the file, or the game wrote over it since.
+    match (changes.first(), changes.last()) {
+        (Some((_, newest)), Some((dir, oldest))) if newest.after_sha256 == hash(&current) => {
+            checked_original(dir, oldest)
+        }
+        _ => Ok(current),
+    }
 }
 
 /// A new backup folder named after `stamp` (nanoseconds), or the next free number when a folder of
@@ -320,7 +353,12 @@ pub fn apply_variant_in(
     let mut targets = Vec::<(PathBuf, Vec<u8>)>::new();
     for r in groups {
         if let Some(bytes) = replacement.get(&r.role) {
-            targets.push((r.path.clone(), bytes.clone()));
+            let bytes = if r.role == "image.jpg" {
+                crate::paint::fit(bytes, &original(backup_root, &r.path)?)?
+            } else {
+                bytes.clone()
+            };
+            targets.push((r.path.clone(), bytes));
         }
     }
     anyhow::ensure!(!targets.is_empty(), "target resources missing");

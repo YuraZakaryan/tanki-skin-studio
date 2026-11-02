@@ -10,14 +10,19 @@
 //! the style of a variant; the words below the item (`M3`, `XT M0`, `ALT`, `Prime`) are its
 //! modification or edition; the words between the kind folder and the item (`Hulls/Neon/Wasp`)
 //! name the skin.
+//!
+//! Paints have no catalog: every folder right below a paints folder (`Inventory/Paints/Inferno`)
+//! is one paint, named by the folder. A paint has no modifications, and any paint can take any
+//! paint's place, so its variant is the paint itself.
 
 use strsim::damerau_levenshtein;
 
-/// Hull or turret.
+/// Hull, turret or paint.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Kind {
     Hull,
     Turret,
+    Paint,
 }
 
 impl Kind {
@@ -25,6 +30,7 @@ impl Kind {
         match self {
             Kind::Hull => "hull",
             Kind::Turret => "turret",
+            Kind::Paint => "paint",
         }
     }
 }
@@ -66,6 +72,19 @@ const TURRETS: &[(&str, &[&str])] = &[
 const HULL_WORDS: &[&str] = &["hull", "hulls", "tank", "tanks", "body", "bodies", "corpus"];
 const TURRET_WORDS: &[&str] = &[
     "turret", "turrets", "weapon", "weapons", "gun", "guns", "cannon", "cannons",
+];
+/// A folder named with one of these holds paints, one folder each.
+const PAINT_WORDS: &[&str] = &[
+    "paint",
+    "paints",
+    "color",
+    "colors",
+    "colour",
+    "colours",
+    "colormap",
+    "colormaps",
+    "coloring",
+    "colorings",
 ];
 const STYLE_WORDS: &[&str] = &["old", "new", "legacy", "classic", "original"];
 /// Words that organise files and say nothing about the skin (`Wasp/M3/textures/details.png`).
@@ -203,10 +222,43 @@ struct ItemAt {
     note: Option<String>,
 }
 
+/// The paint a folder is: the folder right below the nearest paints folder (a folder named only
+/// with paint words), with everything below it.
+fn paint(parts: &[String], all: &[Vec<String>]) -> Option<Identity> {
+    let at = (0..all.len()).rev().find(|&i| {
+        !all[i].is_empty() && all[i].iter().all(|w| PAINT_WORDS.contains(&w.as_str()))
+    })?;
+    let depth = at + 1;
+    let folder = parts.get(depth)?;
+    let id = slug(folder);
+    if id.is_empty() {
+        return None;
+    }
+    let name = all[depth]
+        .iter()
+        .map(|w| title(w))
+        .collect::<Vec<_>>()
+        .join(" ");
+    Some(Identity {
+        kind: Kind::Paint,
+        id: id.clone(),
+        name: name.clone(),
+        grade: "default".to_owned(),
+        variant: id,
+        variant_name: name,
+        depth,
+        strong: true,
+        note: None,
+    })
+}
+
 /// Read a folder path (`parts[0]` is the folder the user chose, the rest the folders below it).
 /// `None` when nothing in it names a hull or a turret.
 pub(super) fn interpret(parts: &[String]) -> Option<Identity> {
     let all: Vec<Vec<String>> = parts.iter().map(|part| words(part)).collect();
+    if let Some(paint) = paint(parts, &all) {
+        return Some(paint);
+    }
     let kind_at = (0..all.len())
         .rev()
         .find(|&i| all[i].iter().any(|w| kind_word(w).is_some()));
