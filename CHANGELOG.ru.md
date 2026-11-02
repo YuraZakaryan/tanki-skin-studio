@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-02
+
 ### Добавлено
 
 - **Страница «Резервные копии»** (Настройки → Резервные копии): сколько занимают копии и сколько
@@ -119,6 +121,7 @@
   предупреждения переносятся внутри своей плашки, а диалог расширяется под свои кнопки (в окне
   обновления «Пропустить эту версию» выходила за край).
 
-[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.3.0...v0.4.0
