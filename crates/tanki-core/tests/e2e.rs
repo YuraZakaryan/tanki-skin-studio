@@ -809,6 +809,8 @@ fn paints_are_imported_found_by_their_picture_and_take_each_others_place() -> Re
     // Everything back: Ember's own bytes.
     restore_all(&backups)?;
     assert_eq!(fs::read(&fixture.ember_file)?, original);
+    // Windows will not remove a database that is still open.
+    drop(store);
     fs::remove_dir_all(root)?;
     Ok(())
 }
