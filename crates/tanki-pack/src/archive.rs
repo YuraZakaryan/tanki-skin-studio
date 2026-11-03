@@ -26,7 +26,7 @@ use sha2::{Digest, Sha256};
 use crate::pack::{PackItem, PackManifest, PackResource, PackTarget, PackVariant, load_pack};
 
 use layout::{Identity, interpret, slug};
-use roles::{UNSUPPORTED, classify, ext, files_of, is_asset, is_junk, name_of};
+use roles::{UNSUPPORTED, classify_for, ext, files_of, is_asset, is_junk, name_of};
 
 /// Entries read when telling whether a folder is an archive at all (a choice of a big folder
 /// must stay quick), and when building the pack.
@@ -187,12 +187,15 @@ pub fn is_model_archive(source: &Path) -> bool {
     let Ok(root) = source.canonicalize() else {
         return false;
     };
-    survey(&root, SURVEY_LIMIT).groups.values().any(|group| {
-        group
-            .dirs
-            .iter()
-            .any(|dir| !classify(&files_of(dir)).is_empty())
-    })
+    survey(&root, SURVEY_LIMIT)
+        .groups
+        .iter()
+        .any(|(key, group)| {
+            group
+                .dirs
+                .iter()
+                .any(|dir| !classify_for(key.kind, &files_of(dir)).is_empty())
+        })
 }
 
 fn copy_resource(from: &Path, pack_dir: &Path, relative: &str, role: &str) -> Result<PackResource> {
@@ -235,7 +238,7 @@ pub fn build_model_pack(source: &Path, pack_dir: &Path) -> Result<ArchiveSummary
                 *summary.unsupported.entry(extension).or_default() += 1;
             }
         }
-        let picked = classify(&files);
+        let picked = classify_for(key.kind, &files);
         if picked.is_empty() {
             continue;
         }
@@ -257,12 +260,18 @@ pub fn build_model_pack(source: &Path, pack_dir: &Path) -> Result<ArchiveSummary
             .as_deref()
             .map(|p| format!("details.{}", ext(p)))
             .unwrap_or_default();
+        let image_name = picked
+            .image
+            .as_deref()
+            .map(|p| format!("image.{}", ext(p)))
+            .unwrap_or_default();
         let mut resources = Vec::new();
         for (role, path, stored) in [
             ("model", &picked.model, "object.3ds"),
             ("lightmap", &picked.lightmap, "lightmap.jpg"),
             ("details", &picked.details, details_name.as_str()),
             ("details_alpha", &picked.details_alpha, "details_alpha.jpg"),
+            ("image", &picked.image, image_name.as_str()),
         ] {
             if let Some(path) = path {
                 resources.push(copy_resource(

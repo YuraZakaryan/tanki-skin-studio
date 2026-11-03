@@ -15,7 +15,7 @@ use tanki_ui::{
 };
 
 use super::{scroll_page, shell};
-use crate::{app::Studio, model::target_name};
+use crate::{app::Studio, model::item_name};
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     widgets::top_bar(
@@ -387,7 +387,7 @@ fn pack_items(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
                 for item in &pack.manifest.items {
-                    let name = target_name(&item.target.id, &item.target.grade);
+                    let name = item_name(&item.target.kind, &item.target.id, &item.target.grade);
                     let meta = tn(item.variants.len() as u64, "{n} variant", "{n} variants");
                     let icon = super::garage::kind_icon(&item.target.kind);
                     let kind = super::garage::kind_label(&item.target.kind);

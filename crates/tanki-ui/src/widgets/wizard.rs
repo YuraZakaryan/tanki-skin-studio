@@ -21,7 +21,8 @@ pub struct WizardSpec<'a> {
     pub current: usize,
     /// The accessible name of the × button.
     pub close_label: &'a str,
-    /// Whether the × button, Esc and a click outside close it (not while work is under way).
+    /// Whether the × button, Esc and a click outside close it (not while work is under way). While
+    /// a list is open, Esc and a click outside close the list; the × stays.
     pub closable: bool,
     /// The size it wants; a smaller window gets a smaller dialog, 16 points from its edges.
     pub size: Vec2,
@@ -143,6 +144,9 @@ pub fn wizard(
     let screen = ctx.content_rect();
     let rect = wizard_rect(ctx, spec.size);
     let mut event = ModalEvent::None;
+    // Taken before the body: a list closed by this frame's Esc or click is gone by the end of it,
+    // and the same Esc or click must not close the wizard too.
+    let list_open = egui::Popup::is_any_open(ctx);
     Area::new(Id::unique(("wizard", spec.id)))
         .order(Order::Foreground)
         .fixed_pos(screen.min)
@@ -169,7 +173,9 @@ pub fn wizard(
             inside.widget_info(move || {
                 egui::WidgetInfo::labeled(egui::Role::Dialog, true, title.clone())
             });
+            // A click outside an open list closes the list, not the wizard behind it.
             if spec.closable
+                && !list_open
                 && scrim.clicked()
                 && !scrim.double_clicked()
                 && !inside.hovered()
@@ -304,7 +310,7 @@ pub fn wizard(
         });
     // Taken, so a dialog that closing opens (a question) does not see the same Esc and close too.
     if spec.closable
-        && !egui::Popup::is_any_open(ctx)
+        && !list_open
         && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
     {
         event = ModalEvent::Dismissed;

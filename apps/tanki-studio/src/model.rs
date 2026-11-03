@@ -15,8 +15,21 @@ pub fn target_name(id: &str, grade: &str) -> String {
     format!("{} {}", target_title(id), grade.to_uppercase())
 }
 
+/// What an item is called: "Wasp M3" for a modification, "Inferno" for a paint, which has none.
+pub fn item_name(kind: &str, id: &str, grade: &str) -> String {
+    if kind == "paint" {
+        target_title(id)
+    } else {
+        target_name(id, grade)
+    }
+}
+
 /// "wasp" -> "Wasp".
 pub fn target_title(id: &str) -> String {
+    // A paint the cache has and no pack names (`tanki_core::recognize::unnamed_paint`).
+    if let Some(number) = id.strip_prefix("unnamed-") {
+        return tanki_i18n::fmt(tanki_i18n::tl!("Paint #{n}"), &[("n", number)]);
+    }
     let mut chars = id.chars();
     let head = chars
         .next()
@@ -146,8 +159,8 @@ pub struct ResourceRow {
 impl ResourceRow {
     /// What the list shows as the title.
     pub fn title(&self) -> String {
-        if let Some((_, id, grade)) = &self.target {
-            return target_name(id, grade);
+        if let Some((kind, id, grade)) = &self.target {
+            return item_name(kind, id, grade);
         }
         if let Some(file) = &self.lone_file
             && file.contains('.')

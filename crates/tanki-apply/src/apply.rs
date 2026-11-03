@@ -108,15 +108,43 @@ fn replacements(pack: &InstalledPack, variant: &PackVariant) -> Result<HashMap<S
             "details_alpha" => {
                 map.insert("details_alpha.jpg".into(), bytes);
             }
+            // A paint's picture, fitted to each picture it replaces when written (see `paint`).
+            "image" => {
+                map.insert("image.jpg".into(), bytes);
+            }
             other => anyhow::bail!("unsupported resource role for apply: {other}"),
         }
     }
     Ok(map)
 }
-/// The cache files a variant would overwrite, with the size of each replacement, sorted by name.
-/// Lets the UI list exactly what an apply will touch before the user confirms it.
-pub fn planned_files(pack: &InstalledPack, variant: &PackVariant) -> Result<Vec<(String, u64)>> {
-    let mut files: Vec<(String, u64)> = replacements(pack, variant)?
+
+/// The one skin file an item may lack: the game reads a transparency only for the items that have
+/// one in the cache. A skin's alpha (its own file, or made from a PNG) is written where the item
+/// has it and left out elsewhere, where it would have nothing to replace.
+const OPTIONAL_FILE: &str = "details_alpha.jpg";
+
+/// [`replacements`] narrowed to what the item, with these skin files in the cache, takes.
+fn replacements_for(
+    pack: &InstalledPack,
+    variant: &PackVariant,
+    cache_files: &BTreeSet<String>,
+) -> Result<HashMap<String, Vec<u8>>> {
+    let mut map = replacements(pack, variant)?;
+    if !cache_files.contains(OPTIONAL_FILE) {
+        map.remove(OPTIONAL_FILE);
+    }
+    Ok(map)
+}
+
+/// The cache files a variant would overwrite on an item with these skin files in the cache
+/// ([`cache_skin_files`]), with the size of each replacement, sorted by name. Lets the UI list
+/// exactly what an apply will touch before the user confirms it.
+pub fn planned_files(
+    pack: &InstalledPack,
+    variant: &PackVariant,
+    cache_files: &BTreeSet<String>,
+) -> Result<Vec<(String, u64)>> {
+    let mut files: Vec<(String, u64)> = replacements_for(pack, variant, cache_files)?
         .into_iter()
         .map(|(name, bytes)| (name, bytes.len() as u64))
         .collect();
@@ -149,12 +177,14 @@ fn atomic_replace(target: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// The model and texture files of an item in the cache, which a skin replaces.
+/// The model and texture files of an item in the cache, which a skin replaces, and a paint's
+/// picture.
 pub const SKIN_FILES: &[&str] = &[
     "object.3ds",
     "lightmap.jpg",
     "details.jpg",
     "details_alpha.jpg",
+    "image.jpg",
 ];
 
 /// The cache files the variant would write, from its roles alone (nothing is read).
@@ -177,6 +207,9 @@ fn produced_files(variant: &PackVariant) -> BTreeSet<&'static str> {
             }
             "details_alpha" => {
                 files.insert("details_alpha.jpg");
+            }
+            "image" => {
+                files.insert("image.jpg");
             }
             _ => {}
         }
@@ -235,6 +268,30 @@ pub fn apply_variant(
     )
 }
 
+/// The game's own bytes of the cache file `path`: the file as it is, unless a replacement not
+/// restored yet still sits in it, then the original the oldest such replacement saved. A paint is
+/// fitted to the picture the game gave it, not to a paint put on it before.
+fn original(backup_root: &Path, path: &Path) -> Result<Vec<u8>> {
+    let current = fs::read(path)?;
+    let pending = if backup_root.exists() {
+        pending_restores(backup_root)?
+    } else {
+        Vec::new()
+    };
+    let changes: Vec<(&Path, &FileChange)> = pending
+        .iter()
+        .flat_map(|b| b.tx.changes.iter().map(move |c| (b.dir.as_path(), c)))
+        .filter(|(_, change)| change.target == path)
+        .collect();
+    // Newest first: the newest write is still in the file, or the game wrote over it since.
+    match (changes.first(), changes.last()) {
+        (Some((_, newest)), Some((dir, oldest))) if newest.after_sha256 == hash(&current) => {
+            checked_original(dir, oldest)
+        }
+        _ => Ok(current),
+    }
+}
+
 /// A new backup folder named after `stamp` (nanoseconds), or the next free number when a folder of
 /// that name exists: two replacements in the same clock tick (a batch on a coarse clock) must
 /// never share a folder, or the second would overwrite the first one's originals. Ids keep their
@@ -275,7 +332,7 @@ pub fn apply_variant_in(
         "the skin is incomplete: the pack has no {} for it; every file except the preview is needed",
         missing.join(", ")
     );
-    let replacement = replacements(pack, variant)?;
+    let replacement = replacements_for(pack, variant, &cache_skin_files(scan, target))?;
     anyhow::ensure!(
         !replacement.is_empty(),
         "variant has no applicable resources"
@@ -296,7 +353,12 @@ pub fn apply_variant_in(
     let mut targets = Vec::<(PathBuf, Vec<u8>)>::new();
     for r in groups {
         if let Some(bytes) = replacement.get(&r.role) {
-            targets.push((r.path.clone(), bytes.clone()));
+            let bytes = if r.role == "image.jpg" {
+                crate::paint::fit(bytes, &original(backup_root, &r.path)?)?
+            } else {
+                bytes.clone()
+            };
+            targets.push((r.path.clone(), bytes));
         }
     }
     anyhow::ensure!(!targets.is_empty(), "target resources missing");
@@ -1040,6 +1102,130 @@ mod tests {
             !written.contains("batch"),
             "a single replacement writes no batch"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn an_item_without_a_transparency_takes_a_png_skin_and_gives_it_back() -> Result<()> {
+        let root = std::env::temp_dir().join(format!(
+            "tanki-apply-alpha-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        ));
+        let cache = root.join("cache");
+        let pack_dir = root.join("pack");
+        fs::create_dir_all(&cache)?;
+        fs::create_dir_all(&pack_dir)?;
+        // Version 111 of the item has no transparency in the cache; version 222 has one.
+        let mut originals = Vec::new();
+        for (version, files) in [
+            ("111", &["object.3ds", "lightmap.jpg", "details.jpg"][..]),
+            (
+                "222",
+                &[
+                    "object.3ds",
+                    "lightmap.jpg",
+                    "details.jpg",
+                    "details_alpha.jpg",
+                ][..],
+            ),
+        ] {
+            for file in files {
+                let name =
+                    STANDARD.encode(format!("http://example.test/0/0/10/14/{version}/{file}"));
+                let old = format!("original {version} {file}").into_bytes();
+                fs::write(cache.join(&name), &old)?;
+                originals.push((cache.join(name), old));
+            }
+        }
+        let mut png = Vec::new();
+        DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(
+            2,
+            2,
+            image::Rgba([200, 40, 40, 128]),
+        ))
+        .write_to(&mut std::io::Cursor::new(&mut png), ImageFormat::Png)?;
+        fs::write(pack_dir.join("details.png"), &png)?;
+        fs::write(pack_dir.join("model.3ds"), b"new model")?;
+        fs::write(pack_dir.join("lightmap.jpg"), b"new lightmap")?;
+        let target = PackTarget {
+            kind: "hull".into(),
+            id: "wasp".into(),
+            grade: "m3".into(),
+        };
+        let resource = |role: &str, path: &str, bytes: &[u8]| PackResource {
+            role: role.into(),
+            path: path.into(),
+            sha256: hash(bytes),
+        };
+        let variant = PackVariant {
+            id: "painted".into(),
+            name: "Painted".into(),
+            preview: None,
+            resources: vec![
+                resource("model", "model.3ds", b"new model"),
+                resource("lightmap", "lightmap.jpg", b"new lightmap"),
+                resource("details", "details.png", &png),
+            ],
+        };
+        let pack = InstalledPack {
+            path: pack_dir,
+            manifest: PackManifest {
+                format_version: 1,
+                id: "test".into(),
+                name: "Test".into(),
+                version: "1".into(),
+                author: String::new(),
+                license: String::new(),
+                games: vec!["air-cache".into()],
+                items: vec![PackItem {
+                    target: target.clone(),
+                    variants: vec![variant.clone()],
+                }],
+            },
+        };
+        let names = |files: &BTreeSet<String>| -> Result<Vec<String>> {
+            Ok(planned_files(&pack, &variant, files)?
+                .into_iter()
+                .map(|(name, _)| name)
+                .collect())
+        };
+        let without: BTreeSet<String> = ["object.3ds", "lightmap.jpg", "details.jpg"]
+            .map(String::from)
+            .into();
+        assert_eq!(
+            names(&without)?,
+            ["details.jpg", "lightmap.jpg", "object.3ds"],
+            "an item with no transparency is not told one will be written"
+        );
+
+        // Only version 222 has a transparency: it is the only one that gets one.
+        let scan = scan_cache(&cache, Some("air-cache"))?;
+        assert!(
+            names(&cache_skin_files(&scan, &target))?.contains(&"details_alpha.jpg".to_owned())
+        );
+        let tx = apply_variant(&scan, &pack, &target, &variant, &root.join("backups"))?;
+        assert_eq!(tx.changes.len(), 7);
+        let alpha = |version: &str| {
+            cache.join(STANDARD.encode(format!(
+                "http://example.test/0/0/10/14/{version}/details_alpha.jpg"
+            )))
+        };
+        assert!(!alpha("111").exists(), "no transparency is added");
+        assert_ne!(fs::read(alpha("222"))?, b"original 222 details_alpha.jpg");
+        restore_transaction(&root.join("backups").join(&tx.id), &tx)?;
+        for (path, old) in &originals {
+            assert_eq!(fs::read(path)?, *old, "{} is back", path.display());
+        }
+        assert_eq!(fs::read_dir(&cache)?.count(), originals.len());
+
+        // An item that has no transparency at all takes the skin too.
+        fs::remove_file(alpha("222"))?;
+        let scan = scan_cache(&cache, Some("air-cache"))?;
+        let tx = apply_variant(&scan, &pack, &target, &variant, &root.join("backups"))?;
+        assert_eq!(tx.changes.len(), 6);
+        assert!(!alpha("111").exists() && !alpha("222").exists());
+        fs::remove_dir_all(root)?;
         Ok(())
     }
 }

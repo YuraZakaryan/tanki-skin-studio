@@ -16,7 +16,7 @@ use tanki_ui::{
 use super::{scroll_page, shell};
 use crate::{
     app::Studio,
-    model::{Filter, ResourceRow, format_bytes, row_matches, target_name, thousands},
+    model::{Filter, ResourceRow, format_bytes, item_name, row_matches, thousands},
 };
 
 pub fn filter_label(filter: Filter) -> &'static str {
@@ -33,8 +33,8 @@ pub fn filter_label(filter: Filter) -> &'static str {
 }
 
 fn kind_chip(row: &ResourceRow) -> (ChipKind, String) {
-    if let Some((_, id, grade)) = &row.target {
-        return (ChipKind::Success, target_name(id, grade));
+    if let Some((kind, id, grade)) = &row.target {
+        return (ChipKind::Success, item_name(kind, id, grade));
     }
     let label = match row.kind.as_str() {
         "image" => tl!("Image"),

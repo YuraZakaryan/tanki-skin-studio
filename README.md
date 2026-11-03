@@ -89,6 +89,11 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
   - a 16 × 16 "look" of its textures;
   - its Garage preview picture;
   - the order of its modification blocks, anchored by items already known.
+
+  A paint is a picture alone on its id, its garage preview on the next one. It is named by its
+  picture (the same size and 16 × 16 look as a pack's paint) or by its preview, which still names a
+  paint the server saved anew; a paint no pack has is listed as **Paint #…**, and any paint can
+  take its place.
 - **Never guesses.** When two candidates are too close, the match is dropped, not picked. You can
   label any item by hand, and the label covers all of its modifications.
 
@@ -121,9 +126,16 @@ point it at, and only after you confirm; online it only asks GitHub for its own 
 
 - **Any modification's skin fits the modification you selected.** An M0 skin can go on your M3 tank,
   as long as it is the same item.
+- **Any paint fits any paint.** Pick a paint in the Garage's **Paints** tab and put any paint of
+  the pack in its place. An animated paint (a sheet of frames) is found and laid out by itself: in
+  place of a still paint it shows its most typical frame, in place of an animated one it plays,
+  retimed into the replaced paint's frames. Animated paints are marked in the list. Whether a paint
+  moves is your game's server's call, not the cache's: it plays only where the server animates the
+  paint it replaces, and the Garage says so when you pick one.
 - **An incomplete skin cannot be applied.** If a pack is missing any file the item needs (model,
-  details, alpha, lightmap; only the preview is optional), the skin is marked **Incomplete**, Apply
-  is disabled, and the missing file is named. Nothing is half-written.
+  details, lightmap; only the preview, and an alpha the item has none of, are optional), the skin
+  is marked **Incomplete**, Apply is disabled, and the missing file is named. Nothing is
+  half-written.
 
 <p align="center">
   <img src="docs/images/incomplete.png" alt="The Garage with the Wasp Red variant marked Incomplete, the Apply button disabled and the red reason: this skin has no object.3ds in the pack" width="100%">
@@ -392,7 +404,7 @@ The test hooks (`TANKI_VIEW`, `TANKI_SHOT`, `TANKI_ACTIONS` and others) are docu
 
 **Where it stands (October 2026), honestly:** early, but complete for its main job.
 
-- **Works today on macOS:** finding the game cache, recognising hulls and turrets, importing
+- **Works today on macOS:** finding the game cache, recognising hulls, turrets and paints, importing
   packs and plain skin folders, applying and restoring, the full interface in English and Russian.
 - **Windows:** the app builds and the full test suite passes on Windows in CI. It has not yet had
   the same hands-on use as on macOS.

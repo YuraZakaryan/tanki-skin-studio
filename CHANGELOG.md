@@ -6,6 +6,35 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Paints.** The Garage's **Paints** tab lists the paints of your cache, named by their picture or
+  their garage preview, and those no pack has as **Paint #…**; any paint of the pack can take any
+  paint's place, undone like any skin. Plain folders of
+  skins bring their paints along (`Paints/<name>/image.jpg`).
+- **Animated paints are handled by themselves.** The frames of an animated paint are found in its
+  picture: in place of a still paint it shows its most typical frame, in place of an animated one
+  it plays, retimed into that paint's frames. The list marks animated paints with their frame count,
+  and picking one says that it moves only where your game's server animates the paint it replaces.
+
+### Changed
+
+- **Apply to all items turns on only the modifications a look has its own skin for.** A look with
+  one skin for all modifications, or none made for M0, no longer puts the same skin on every
+  modification by default: those start off, and turning one on puts on the skin its list shows.
+
+### Fixed
+
+- **Skins go on items that have no transparency in the cache.** A skin whose texture is a PNG, or
+  that brings its own transparency, stopped with "The cache is missing a file this skin replaces"
+  on such items, alone and in Apply to all items. The transparency is now written only where the
+  item has one; the confirmation lists only the files that will change.
+- **Apply to all items keeps its × while a list is open.** The close button disappeared while a
+  list (what a modification gets) was open; Esc and a click outside still close the list first.
+- **Hulls show a tank** in Apply to all items, not a car.
+- **Each item is pictured once** on a look's card: a look of one item shows one picture, not the
+  same one three times.
+
 ## [0.6.0] - 2026-11-02
 
 ### Added

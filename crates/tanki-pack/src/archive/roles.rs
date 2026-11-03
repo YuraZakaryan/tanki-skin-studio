@@ -7,6 +7,8 @@
 //! called, a texture by a word in its name (`lightmaps.jpg`, `Wasp_diffuse.png`), the preview by
 //! being the one remaining picture or the one of the size the garage shows. Anything ambiguous is
 //! left out and reported: a wrong file is worse than none.
+//!
+//! A paint is one picture (`image.jpg`, a texture or a sheet of animation frames) and its preview.
 
 use std::{
     fs,
@@ -142,6 +144,8 @@ pub(super) struct Picked {
     pub lightmap: Option<PathBuf>,
     pub details: Option<PathBuf>,
     pub details_alpha: Option<PathBuf>,
+    /// A paint's picture.
+    pub image: Option<PathBuf>,
     pub preview: Option<PathBuf>,
     /// The preview is a picture without a preview name (the only one left, or the only one of the
     /// preview size): worth a line in the report.
@@ -155,6 +159,7 @@ impl Picked {
             && self.lightmap.is_none()
             && self.details.is_none()
             && self.details_alpha.is_none()
+            && self.image.is_none()
     }
 
     pub(super) fn uses(&self, path: &Path) -> bool {
@@ -163,10 +168,60 @@ impl Picked {
             &self.lightmap,
             &self.details,
             &self.details_alpha,
+            &self.image,
             &self.preview,
         ]
         .iter()
         .any(|picked| picked.as_deref() == Some(path))
+    }
+}
+
+/// [`classify`] or [`classify_paint`], as the item's kind (`hull`, `turret`, `paint`) asks.
+pub(super) fn classify_for(kind: &str, files: &[PathBuf]) -> Picked {
+    if kind == "paint" {
+        classify_paint(files)
+    } else {
+        classify(files)
+    }
+}
+
+/// Words a paint's picture may be named with, when it is not `image`.
+const PAINT_IMAGE_WORDS: &[&str] = &["image", "texture", "colormap", "paint", "color", "colour"];
+const PREVIEW_WORDS: &[&str] = &["preview", "icon", "thumb"];
+
+/// A paint's picture and preview among its folder's files: `image.jpg` (or `.png`) and
+/// `preview.png` by name, else the one picture named like each. Extra pictures (`image_r.jpg`,
+/// another version) are left out and reported.
+pub(super) fn classify_paint(files: &[PathBuf]) -> Picked {
+    let named = |names: &[&str]| {
+        files
+            .iter()
+            .find(|p| names.iter().any(|n| name_of(p).eq_ignore_ascii_case(n)))
+            .cloned()
+    };
+    let preview = named(&["preview.png", "preview.jpg"]).or_else(|| {
+        only(
+            files
+                .iter()
+                .filter(|p| is_image(p) && has_word(p, PREVIEW_WORDS))
+                .cloned(),
+        )
+    });
+    let image = named(&["image.jpg", "image.jpeg", "image.png"]).or_else(|| {
+        let rest = files
+            .iter()
+            .filter(|p| is_image(p) && Some(p.as_path()) != preview.as_deref());
+        only(
+            rest.clone()
+                .filter(|p| has_word(p, PAINT_IMAGE_WORDS))
+                .cloned(),
+        )
+        .or_else(|| only(rest.cloned()))
+    });
+    Picked {
+        image,
+        preview,
+        ..Picked::default()
     }
 }
 
@@ -256,6 +311,7 @@ pub(super) fn classify(files: &[PathBuf]) -> Picked {
         lightmap,
         details,
         details_alpha,
+        image: None,
         preview,
         preview_guessed,
     }

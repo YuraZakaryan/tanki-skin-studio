@@ -16,7 +16,7 @@ use tanki_ui::{
 
 use crate::{
     app::{CacheChoice, DeleteWhat, Dialog, PendingApply, Retry, Studio},
-    model::{format_bytes, home_path, target_name},
+    model::{format_bytes, home_path, item_name},
 };
 use tanki_core::backups::RoomPlan;
 
@@ -1035,7 +1035,7 @@ fn plan_skins(plan: &RoomPlan) -> String {
     for entry in &plan.needed {
         let name = entry.tx.target.as_ref().map_or_else(
             || entry.tx.variant_name.clone(),
-            |t| target_name(&t.id, &t.grade),
+            |t| item_name(&t.kind, &t.id, &t.grade),
         );
         if !names.contains(&name) {
             names.push(name);

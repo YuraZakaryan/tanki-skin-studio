@@ -16,7 +16,7 @@ use crate::{
     actions::bulk_busy,
     app::{DeleteWhat, Dialog, Retry, Studio, Worn},
     bulk::Task,
-    model::{format_bytes, grade_code, target_name},
+    model::{format_bytes, grade_code, item_name},
 };
 
 /// Settings key of the limit: bytes, or `none`.
@@ -104,7 +104,7 @@ pub fn lines(stored: &[Stored], pack_name: impl Fn(&str) -> String) -> Vec<Line>
         let target = tx
             .target
             .as_ref()
-            .map(|t| target_name(&t.id, &t.grade))
+            .map(|t| item_name(&t.kind, &t.id, &t.grade))
             .unwrap_or_default();
         let (what, title) = match &tx.batch {
             Some(batch) => (LineKey::Run(batch.clone()), batch.name.clone()),

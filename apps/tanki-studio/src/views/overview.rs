@@ -16,7 +16,7 @@ use tanki_ui::{
 use super::{scroll_page, shell};
 use crate::{
     app::Studio,
-    model::{format_bytes, target_name, thousands},
+    model::{format_bytes, item_name, thousands},
 };
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
@@ -214,7 +214,7 @@ fn active_pack(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         .manifest
         .items
         .iter()
-        .map(|i| target_name(&i.target.id, &i.target.grade))
+        .map(|i| item_name(&i.target.kind, &i.target.id, &i.target.grade))
         .collect();
     let author = if pack.manifest.author.trim().is_empty() {
         String::new()
