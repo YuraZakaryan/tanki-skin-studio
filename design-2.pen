@@ -20108,7 +20108,7 @@
               "ref": "zrPc2",
               "name": "Modal · 3D preview",
               "x": 480,
-              "y": 286,
+              "y": 320,
               "width": 480,
               "descendants": {
                 "LAk1h": {
@@ -20123,7 +20123,7 @@
                   "padding": [
                     0,
                     24,
-                    20,
+                    24,
                     24
                   ],
                   "children": [
@@ -20354,7 +20354,8 @@
                   ]
                 },
                 "rbctd": {
-                  "justifyContent": "space_between"
+                  "justifyContent": "space_between",
+                  "enabled": false
                 },
                 "rDq4X": {
                   "padding": [
@@ -20426,7 +20427,7 @@
               "ref": "zrPc2",
               "name": "Modal · 3D preview",
               "x": 480,
-              "y": 286,
+              "y": 320,
               "width": 480,
               "descendants": {
                 "LAk1h": {
@@ -20441,7 +20442,7 @@
                   "padding": [
                     0,
                     24,
-                    20,
+                    24,
                     24
                   ],
                   "children": [
@@ -20672,7 +20673,8 @@
                   ]
                 },
                 "rbctd": {
-                  "justifyContent": "space_between"
+                  "justifyContent": "space_between",
+                  "enabled": false
                 },
                 "rDq4X": {
                   "padding": [
@@ -20744,7 +20746,7 @@
               "ref": "zrPc2",
               "name": "Modal · 3D preview",
               "x": 480,
-              "y": 286,
+              "y": 320,
               "width": 480,
               "descendants": {
                 "LAk1h": {
@@ -20759,7 +20761,7 @@
                   "padding": [
                     0,
                     24,
-                    20,
+                    24,
                     24
                   ],
                   "children": [
@@ -20990,7 +20992,8 @@
                   ]
                 },
                 "rbctd": {
-                  "justifyContent": "space_between"
+                  "justifyContent": "space_between",
+                  "enabled": false
                 },
                 "rDq4X": {
                   "padding": [
@@ -21062,7 +21065,7 @@
               "ref": "zrPc2",
               "name": "Modal · 3D preview",
               "x": 480,
-              "y": 286,
+              "y": 320,
               "width": 480,
               "descendants": {
                 "LAk1h": {
@@ -21077,7 +21080,7 @@
                   "padding": [
                     0,
                     24,
-                    20,
+                    24,
                     24
                   ],
                   "children": [
@@ -21308,7 +21311,8 @@
                   ]
                 },
                 "rbctd": {
-                  "justifyContent": "space_between"
+                  "justifyContent": "space_between",
+                  "enabled": false
                 },
                 "rDq4X": {
                   "padding": [
@@ -21375,7 +21379,7 @@
               "ref": "zrPc2",
               "name": "Modal · 3D preview",
               "x": 480,
-              "y": 286,
+              "y": 320,
               "width": 480,
               "descendants": {
                 "LAk1h": {
@@ -21390,7 +21394,7 @@
                   "padding": [
                     0,
                     24,
-                    20,
+                    24,
                     24
                   ],
                   "children": [
@@ -21627,7 +21631,8 @@
                   ]
                 },
                 "rbctd": {
-                  "justifyContent": "space_between"
+                  "justifyContent": "space_between",
+                  "enabled": false
                 },
                 "rDq4X": {
                   "padding": [
