@@ -18,7 +18,7 @@ use egui_kittest::{
     kittest::{NodeT, Queryable},
 };
 use tanki_core::apply::{list_backups, restore_transaction};
-use tanki_studio::app::{Dialog, Page, Studio};
+use tanki_studio::app::{Dialog, Page, Selection, Studio};
 use tanki_testkit::{PackOptions, build_pack_dir};
 
 use crate::common::{Env, contents, env, harness};
@@ -282,6 +282,54 @@ fn run(seed: u64, steps: usize) -> (usize, usize) {
                     }
                 }
             }
+            // The way a player puts a skin on, through the interface: the game closed and the cache
+            // there, the fixture pack active, the Garage, the item, its skin, Apply, then the
+            // confirmation's Apply; a skin already in the game is taken off first. Random clicks
+            // alone reach that rarely, and every replacement made must undo.
+            15 => {
+                if cache_gone {
+                    hide_cache(&root, &hidden, &mut cache_gone);
+                    h.state_mut().rescan();
+                }
+                h.state_mut().game_processes_override = Some(Vec::new());
+                let pack = h
+                    .state()
+                    .packs
+                    .iter()
+                    .position(|p| p.manifest.id == "fixture-pack");
+                match pack {
+                    Some(index) => h.state_mut().select_pack(index),
+                    None => h.state_mut().handle_dropped(vec![inputs.good_zip.clone()]),
+                }
+                h.run_steps(3);
+                h.state_mut().dialog = None;
+                let app = h.state_mut();
+                app.go(Page::Garage);
+                let wasp = Selection {
+                    kind: "hull".into(),
+                    id: "wasp".into(),
+                    grade: 3,
+                };
+                if app.applied_variant(&wasp).is_some() {
+                    app.restore_original();
+                }
+                app.selection = Some(wasp);
+                h.run_steps(3);
+                click(&h, "Wasp Red");
+                h.run_steps(2);
+                for label in ["Apply to Wasp M3", "Применить к Wasp M3"] {
+                    click(&h, label);
+                }
+                h.run_steps(3);
+                if matches!(h.state().dialog, Some(Dialog::Confirm(_))) {
+                    for label in ["Apply", "Применить"] {
+                        if let Some(node) = h.query_all_by_label(label).last() {
+                            node.click();
+                            break;
+                        }
+                    }
+                }
+            }
             9..=14 => {
                 let keys: Vec<String> = buttons(&h)
                     .into_iter()
@@ -342,6 +390,7 @@ fn the_app_survives_chaos_and_every_replacement_undoes() {
     let (seeds, steps) = seeds_and_steps();
     for seed in seeds {
         let (p, r) = run(seed, steps);
+        assert!(r > 0, "seed {seed}: the monkey applied skins");
         pages = pages.max(p);
         replacements += r;
     }
