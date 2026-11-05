@@ -9,6 +9,16 @@ use std::f32::consts::{PI, TAU};
 use glam::{Mat4, Vec2, Vec3, camera::rh};
 use tanki_model::Bounds;
 
+/// The directions the studio's lights come from (unit vectors toward the lights): the key above and
+/// to the left of the camera, so the shape reads; the fill low on the other side, so the shadows
+/// keep their detail; the rim from behind, so the silhouette stands out from the background.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Lights {
+    pub key: Vec3,
+    pub fill: Vec3,
+    pub rim: Vec3,
+}
+
 /// Where the camera stands: around the vertical axis, above the ground, and how far.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pose {
@@ -187,12 +197,17 @@ impl OrbitCamera {
         rh::proj::directx::perspective(FOV_Y, aspect, near, far) * view
     }
 
-    /// The direction the key light comes from: above and to the left of the camera, so the side
-    /// facing the viewer is lit and the shape reads.
-    pub fn light(&self) -> Vec3 {
+    /// The studio's three lights, which move with the camera so the model is always lit the same
+    /// way from where it is seen.
+    pub fn lights(&self) -> Lights {
         let toward = self.direction();
-        let right = toward.cross(Vec3::Z).normalize_or_zero();
-        (toward + right * 0.6 + Vec3::Z * 1.1).normalize_or(Vec3::Z)
+        // The viewer's left: the camera looks along -toward with Z up.
+        let left = toward.cross(Vec3::Z).normalize_or_zero();
+        Lights {
+            key: (toward + left * 1.3 + Vec3::Z * 1.2).normalize_or(Vec3::Z),
+            fill: (toward - left * 0.9 + Vec3::Z * 0.25).normalize_or(Vec3::Z),
+            rim: (-toward + Vec3::Z * 0.8).normalize_or(Vec3::Z),
+        }
     }
 
     fn touched(&mut self) {

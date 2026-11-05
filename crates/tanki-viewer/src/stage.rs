@@ -330,7 +330,7 @@ fn view(camera: &OrbitCamera, size: [u32; 2]) -> View {
     View {
         view_proj: camera.view_projection(aspect),
         eye: camera.eye(),
-        light: camera.light(),
+        lights: camera.lights(),
     }
 }
 

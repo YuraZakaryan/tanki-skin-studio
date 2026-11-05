@@ -156,7 +156,16 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | A stage without a GPU is unavailable and harmless (the Garage shows the flat picture) | unit `a_stage_without_a_gpu_is_unavailable_and_harmless` |
 | The cache look is the newest revision with every file; a replaced file changes its key; a variant without a model (or paint) has none; a painted hull is the hull's files with the paint's picture | unit `tanki-apply` `look` |
 | A look becomes a textured part; the separate alpha picture becomes the details' alpha; a broken model or texture is an error and is not tried again | unit `tanki-studio` `preview3d` |
-| The 3D preview is on until turned off; both choices survive a restart | e2e `the_3d_preview_is_on_until_turned_off_and_both_choices_survive_a_restart` |
+| The 3D preview is on until turned off; both choices survive a restart | e2e `the_3d_preview_is_on_until_turned_off_and_both_choices_survive_a_restart`, it `the_3d_preview_is_on_by_default_and_settings_turn_it_off_for_good` |
+| Studio light: the top catches the key light and the sides are told apart; the contact shadow sits at the model and fades out; bright paint rolls off toward white keeping its hue; 4× anti-aliasing softens edges; the same view draws the same picture and home comes back to it | unit `tanki-viewer` `gpu` visual checks (`TANKI_VISUAL_DIR=<dir>` saves the pictures) |
+| With a GPU, the Garage draws the item where the flat picture was; the toolbar is there and Details stays clear of it | it `the_garage_draws_the_item_in_3d_where_the_flat_picture_was` |
+| A drag turns the model, the drag hint gives way to the caption, Home brings the first view back; the wheel zooms and never scrolls the page | it `dragging_turns_the_model…`, `the_wheel_zooms_the_stage…` |
+| A picked skin compares with the game (two different halves), the divider follows a drag, auto-turn toggles, a PNG is saved with a clear background; with no skin picked, Compare is disabled | it `a_picked_skin_compares_with_the_game…`, `without_a_picked_skin_there_is_nothing_to_compare` |
+| Quick settings turn 3D off (flat picture, only the settings button left) and on, lead to Settings; Escape and × close them; each quality still draws and survives a restart | it `quick_settings_…`, `escape_and_the_close_button_…`, `quality_choices_…` |
+| A model that cannot be read shows the flat picture and is not read again; a modification the cache lacks has no stage; hull and turret get their own scenes | it `a_model_that_cannot_be_read_…`, `every_modification_and_the_turret_…` |
+| A paint is shown on the hull last looked at; without any hull model it keeps its flat picture | it `a_paint_is_shown_on_the_hull_last_looked_at`, `a_paint_without_any_hull_model_…` |
+| Toolbar, Details and stage never overlap from 820 to 1920 px wide | it `the_toolbar_details_and_stage_never_overlap_at_any_window_size` |
+| Monkey: 300 random clicks, drags, wheels, keys, item and size changes on the 3D preview; no stray dialog, the camera stays finite, every state renders | it `a_monkey_on_the_3d_preview_breaks_nothing` |
 
 ## Interface
 

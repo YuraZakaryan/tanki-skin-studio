@@ -14,7 +14,7 @@ pub mod quality;
 pub mod scene;
 pub mod stage;
 
-pub use camera::OrbitCamera;
+pub use camera::{Lights, OrbitCamera};
 pub use quality::{Quality, QualityPreference, Tier};
 pub use scene::{Image, Material, Part, Scene};
 pub use stage::{Stage, StageView};

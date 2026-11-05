@@ -109,7 +109,18 @@ fn the_model_centre_projects_to_the_middle_and_fits_the_picture() {
         assert!((0.0..1.0).contains(&ndc.z));
     }
     assert!(camera.eye().distance(camera.centre) > camera.radius);
-    assert!(camera.light().z > 0.0);
+    let lights = camera.lights();
+    assert!(lights.key.z > 0.0 && lights.fill.z > 0.0 && lights.rim.z > 0.0);
+    let toward = camera.eye() - camera.centre;
+    assert!(lights.key.dot(toward) > 0.0, "the key lights the side seen");
+    assert!(lights.rim.dot(toward) < 0.0, "the rim comes from behind");
+    let flat = |v: Vec3| Vec3::new(v.x, v.y, 0.0);
+    let side = |v: Vec3| flat(v).cross(flat(toward)).z.signum();
+    assert_ne!(
+        side(lights.key),
+        side(lights.fill),
+        "key and fill on either side"
+    );
 }
 
 #[test]

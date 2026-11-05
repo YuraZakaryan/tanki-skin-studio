@@ -177,6 +177,9 @@ pub struct PackOptions {
     /// Leave the model out of the Wasp skin (textures only, like an archive's incomplete
     /// edition), so it cannot be applied.
     pub hull_without_model: bool,
+    /// Ship drawable synthetic models ([`three_ds::hull_3ds`], [`three_ds::turret_3ds`]) instead
+    /// of placeholder bytes, for the 3D preview.
+    pub real_models: bool,
 }
 
 impl Default for PackOptions {
@@ -188,6 +191,7 @@ impl Default for PackOptions {
             corrupt_checksum: false,
             with_hornet: false,
             hull_without_model: false,
+            real_models: false,
         }
     }
 }
@@ -212,11 +216,16 @@ pub fn build_pack_dir(dir: &Path, options: &PackOptions) -> Result<PathBuf> {
     let alpha = jpeg(16, 16, [255, 255, 255]);
     let hull_preview = png(64, 48, HULL_PREVIEW);
     let turret_preview = png(64, 48, TURRET_PREVIEW);
-    fs::write(dir.join("hull/model.3ds"), HULL_MODEL)?;
+    let (hull_model, turret_model) = if options.real_models {
+        (three_ds::hull_3ds(), three_ds::turret_3ds())
+    } else {
+        (HULL_MODEL.to_vec(), TURRET_MODEL.to_vec())
+    };
+    fs::write(dir.join("hull/model.3ds"), &hull_model)?;
     fs::write(dir.join("hull/details.png"), &hull_png)?;
     fs::write(dir.join("hull/lightmap.jpg"), &lightmap)?;
     fs::write(dir.join("hull/preview.png"), &hull_preview)?;
-    fs::write(dir.join("turret/model.3ds"), TURRET_MODEL)?;
+    fs::write(dir.join("turret/model.3ds"), &turret_model)?;
     fs::write(dir.join("turret/details.jpg"), &turret_jpg)?;
     fs::write(dir.join("turret/details_alpha.jpg"), &alpha)?;
     fs::write(dir.join("turret/lightmap.jpg"), &lightmap)?;
@@ -224,7 +233,7 @@ pub fn build_pack_dir(dir: &Path, options: &PackOptions) -> Result<PathBuf> {
     let hull_model_sum = if options.corrupt_checksum {
         "0".repeat(64)
     } else {
-        sha256(HULL_MODEL)
+        sha256(&hull_model)
     };
     let mut manifest = json!({
         "format_version": 1,
@@ -251,7 +260,7 @@ pub fn build_pack_dir(dir: &Path, options: &PackOptions) -> Result<PathBuf> {
                 "variants": [{
                     "id": "blue", "name": "Railgun Blue", "preview": "turret/preview.png",
                     "resources": [
-                        {"role": "model", "path": "turret/model.3ds", "sha256": sha256(TURRET_MODEL)},
+                        {"role": "model", "path": "turret/model.3ds", "sha256": sha256(&turret_model)},
                         {"role": "details", "path": "turret/details.jpg", "sha256": sha256(&turret_jpg)},
                         {"role": "details_alpha", "path": "turret/details_alpha.jpg", "sha256": sha256(&alpha)},
                         {"role": "lightmap", "path": "turret/lightmap.jpg", "sha256": sha256(&lightmap)}
@@ -319,6 +328,29 @@ pub fn zip_dir(dir: &Path, out: &Path, extra: &[(&str, &[u8])]) -> Result<PathBu
     }
     writer.finish()?;
     Ok(out.to_path_buf())
+}
+
+/// Put drawable synthetic models in the cache fixture's model files (hull and turret, every
+/// revision), so the 3D preview has something to draw. Boxes only, no game shapes.
+pub fn give_models(fixture: &CacheFixture) -> Result<()> {
+    let model = |files: &[PathBuf], bytes: &[u8]| -> Result<()> {
+        for file in files {
+            // A cache file's name is its URL in base64, which may hold a `/`.
+            let url = file
+                .strip_prefix(&fixture.root)
+                .ok()
+                .and_then(|name| name.to_str())
+                .and_then(|name| STANDARD.decode(name).ok())
+                .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+                .unwrap_or_default();
+            if url.ends_with("object.3ds") {
+                fs::write(file, bytes)?;
+            }
+        }
+        Ok(())
+    };
+    model(&fixture.hull_files, &three_ds::hull_3ds())?;
+    model(&fixture.turret_files, &three_ds::turret_3ds())
 }
 
 /// A unique scratch directory under the system temp dir.

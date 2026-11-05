@@ -35,4 +35,6 @@ winresource = "0.1.34"
 tanki-testkit = { path = "../../crates/tanki-testkit" }
 egui = "0.37.0"
 base64.workspace = true
-egui_kittest = { version = "0.37.0", features = ["eframe"] }
+# `wgpu`: the 3D preview's tests hand the app a real GPU (`common::gpu_harness`).
+egui_kittest = { version = "0.37.0", features = ["eframe", "wgpu"] }
+pollster = "1.0.1"

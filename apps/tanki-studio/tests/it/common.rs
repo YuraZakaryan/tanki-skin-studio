@@ -34,38 +34,67 @@ pub fn harness_with_caches(env: &Env, caches: Vec<PathBuf>) -> Harness<'static, 
 
 /// The app opened on the data folder `data` with these cache folders found on the machine.
 pub fn harness_in(data: PathBuf, caches: Vec<PathBuf>) -> Harness<'static, Studio> {
+    build(data, caches, false)
+}
+
+/// Whether this machine has a GPU adapter (some CI runners have none).
+pub fn has_gpu() -> bool {
+    let instance = eframe::wgpu::Instance::default();
+    pollster::block_on(instance.request_adapter(&eframe::wgpu::RequestAdapterOptions::default()))
+        .is_ok()
+}
+
+/// `harness` with a real GPU, so the Garage draws in 3D and `render` shows it. `None` (the test
+/// skips with a note) on a machine without an adapter.
+pub fn gpu_harness(env: &Env) -> Option<Harness<'static, Studio>> {
+    if !has_gpu() {
+        eprintln!("no GPU adapter here: skipped");
+        return None;
+    }
+    Some(build(
+        env.work.join("data"),
+        vec![env.cache.root.clone()],
+        true,
+    ))
+}
+
+fn build(data: PathBuf, caches: Vec<PathBuf>, gpu: bool) -> Harness<'static, Studio> {
     let roots: Vec<(String, PathBuf)> = caches
         .into_iter()
         .map(|root| ("air-cache".to_owned(), root))
         .collect();
-    let mut harness = Harness::builder()
-        .with_size(egui::vec2(1440.0, 900.0))
-        .build_eframe(move |cc| {
-            let store = StateStore::open(&data.join("state.sqlite")).expect("state store");
-            let mut session: SessionState = store.session();
-            session.sanitize(&Page::codes(), &TABS, &tanki_studio::model::Filter::codes());
-            let startup = Startup {
-                store,
-                session,
-                data,
-                roots: Some(roots),
-                skip_splash: true,
-            };
-            let mut app = Studio::new(cc, startup).expect("studio starts");
-            // A player's own running game must not change what a test sees.
-            app.game_processes_override = Some(Vec::new());
-            // A native file chooser would block the test.
-            app.file_dialogs = false;
-            // Tests want the answer of the content search at once, not a frame later.
-            app.background_recognition = false;
-            // …and the imported pack at once, not after a thread is done.
-            app.background_import = false;
-            // …and the result of "Apply to all items" too.
-            app.background_bulk = false;
-            // A test never asks GitHub: Check for updates (Settings, the palette) finds nothing.
-            app.updates.source = Some(std::sync::Arc::new(|| Ok(None)));
-            app
-        });
+    let mut builder = Harness::builder().with_size(egui::vec2(1440.0, 900.0));
+    if gpu {
+        builder = builder.wgpu();
+    }
+    let mut harness = builder.build_eframe(move |cc| {
+        let store = StateStore::open(&data.join("state.sqlite")).expect("state store");
+        let mut session: SessionState = store.session();
+        session.sanitize(&Page::codes(), &TABS, &tanki_studio::model::Filter::codes());
+        let startup = Startup {
+            store,
+            session,
+            data,
+            roots: Some(roots),
+            skip_splash: true,
+        };
+        let mut app = Studio::new(cc, startup).expect("studio starts");
+        // A player's own running game must not change what a test sees.
+        app.game_processes_override = Some(Vec::new());
+        // A native file chooser would block the test.
+        app.file_dialogs = false;
+        // Tests want the answer of the content search at once, not a frame later.
+        app.background_recognition = false;
+        // …and the imported pack at once, not after a thread is done.
+        app.background_import = false;
+        // …and the result of "Apply to all items" too.
+        app.background_bulk = false;
+        // A test never asks GitHub: Check for updates (Settings, the palette) finds nothing.
+        app.updates.source = Some(std::sync::Arc::new(|| Ok(None)));
+        // The 3D scenes are built at once, not on a thread.
+        app.preview.background = false;
+        app
+    });
     harness.run_steps(4);
     harness
 }

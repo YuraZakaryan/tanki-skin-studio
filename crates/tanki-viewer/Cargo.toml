@@ -16,6 +16,7 @@ glam = { version = "0.34.1", features = ["bytemuck"] }
 tanki-model = { path = "../tanki-model" }
 
 [dev-dependencies]
+image.workspace = true
 pollster = "1.0.1"
 # The app gets its backends through eframe; headless tests pick theirs here.
 wgpu = "30.0.1"

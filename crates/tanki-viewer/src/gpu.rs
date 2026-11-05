@@ -10,7 +10,10 @@ use bytemuck::{Pod, Zeroable};
 use egui_wgpu::wgpu::{self, util::DeviceExt};
 use glam::{Mat4, Vec3};
 
-use crate::scene::{Image, Material, Scene};
+use crate::{
+    camera::Lights,
+    scene::{Image, Material, Scene},
+};
 
 /// The picture's format: sRGB like egui's own textures, so egui shows it with the right colours.
 pub const COLOUR: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
@@ -18,7 +21,9 @@ pub const COLOUR: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 const TEXTURE: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 const DEPTH: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 /// How dark the ground shadow is at its centre.
-const SHADOW_OPACITY: f32 = 0.45;
+const SHADOW_OPACITY: f32 = 0.5;
+/// The shadow reaches this far past the model's footprint, as a share of the footprint.
+const SHADOW_REACH: f32 = 1.3;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -34,7 +39,9 @@ struct GpuVertex {
 struct Globals {
     view_proj: [[f32; 4]; 4],
     eye: [f32; 4],
-    light: [f32; 4],
+    key: [f32; 4],
+    fill: [f32; 4],
+    rim: [f32; 4],
     shadow: [f32; 4],
     shadow_size: [f32; 4],
 }
@@ -53,7 +60,7 @@ struct PartUniform {
 pub struct View {
     pub view_proj: Mat4,
     pub eye: Vec3,
-    pub light: Vec3,
+    pub lights: Lights,
 }
 
 struct GpuPart {
@@ -262,8 +269,13 @@ impl Gpu {
                 bounds.min[2] - bounds.radius() * 0.002,
                 SHADOW_OPACITY,
             ],
-            // A little wider than the model, so the shadow fades out beyond its edges.
-            shadow_size: [size[0] * 0.62 + 1.0, size[1] * 0.58 + 1.0, 0.0, 0.0],
+            // Wider than the model, so the shadow fades out beyond its edges.
+            shadow_size: [
+                size[0] * 0.5 * SHADOW_REACH + 1.0,
+                size[1] * 0.5 * SHADOW_REACH + 1.0,
+                0.0,
+                0.0,
+            ],
         }
     }
 
@@ -391,7 +403,9 @@ impl Gpu {
         let globals = Globals {
             view_proj: view.view_proj.to_cols_array_2d(),
             eye: view.eye.extend(1.0).to_array(),
-            light: view.light.extend(0.0).to_array(),
+            key: view.lights.key.extend(0.0).to_array(),
+            fill: view.lights.fill.extend(0.0).to_array(),
+            rim: view.lights.rim.extend(0.0).to_array(),
             shadow: scene.map_or([0.0; 4], |s| s.shadow),
             shadow_size: scene.map_or([0.0; 4], |s| s.shadow_size),
         };

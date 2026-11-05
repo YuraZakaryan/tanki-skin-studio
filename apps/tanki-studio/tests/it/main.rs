@@ -16,6 +16,7 @@ mod import;
 mod monkey;
 mod navigation;
 mod preferences;
+mod preview3d;
 mod recognise;
 mod resources;
 mod updates;
