@@ -74,11 +74,11 @@ fn a_look_that_cannot_be_read_is_not_tried_again() {
     let mut preview = Preview3d::new(true, QualityPreference::Auto, Stage::new(None));
     preview.background = false;
     assert!(!preview.active(), "no GPU in a test");
-    let missing = LookSource::Cache(vec![(
+    let missing = Keyed::new(LookSource::Cache(vec![(
         "object.3ds".into(),
         PathBuf::from("/nowhere/object.3ds"),
         1,
-    )]);
+    )]));
     assert_eq!(
         preview.want(Preview3d::MAIN, Some(&missing)),
         SlotState::Unavailable

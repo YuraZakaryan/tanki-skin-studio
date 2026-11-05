@@ -44,15 +44,23 @@ struct Drawn {
 struct Slot {
     key: Option<String>,
     scene: Option<GpuScene>,
-    target: Option<Target>,
-    texture: Option<egui::TextureId>,
+    /// The pictures drawn into, each with its egui texture: one for the moving size and one for
+    /// the still one, so starting and stopping a turn never makes new textures.
+    targets: Vec<(Target, egui::TextureId)>,
+    /// The texture of the last picture drawn.
+    shown: Option<egui::TextureId>,
     drawn: Option<Drawn>,
 }
+
+/// Pictures kept per slot: the moving and the still one.
+const KEPT_TARGETS: usize = 2;
 
 pub struct Stage {
     render_state: Option<RenderState>,
     gpu: Option<Gpu>,
     detected: Quality,
+    /// Whether the adapter can draw the picture with 4× anti-aliasing (asked once).
+    msaa: bool,
     quality: Quality,
     camera: OrbitCamera,
     slots: [Slot; 2],
@@ -69,6 +77,7 @@ impl Stage {
             gpu: render_state.map(|state| Gpu::new(&state.device, &state.queue)),
             render_state: render_state.cloned(),
             detected,
+            msaa: render_state.is_some_and(|state| Gpu::supports_samples(&state.adapter, 4)),
             quality: detected,
             camera: OrbitCamera::default(),
             slots: Default::default(),
@@ -242,11 +251,7 @@ impl Stage {
         } else {
             (tier.samples, 1.0)
         };
-        let samples = if Gpu::supports_samples(&state.adapter, wanted) {
-            wanted
-        } else {
-            1
-        };
+        let samples = if wanted == 1 || self.msaa { wanted } else { 1 };
         let size = picture_size(pixels * scale, tier.max_side);
         let drawn = Drawn {
             size,
@@ -256,32 +261,31 @@ impl Stage {
         if entry.drawn == Some(drawn) {
             return;
         }
-        let fits = entry
-            .target
-            .as_ref()
-            .is_some_and(|t| t.size == size && t.samples == samples);
-        if !fits {
-            let target = gpu.target(size, samples);
-            let mut renderer = state.renderer.write();
-            match entry.texture {
-                Some(id) => renderer.update_egui_texture_from_wgpu_texture(
+        let index = match entry
+            .targets
+            .iter()
+            .position(|(t, _)| t.size == size && t.samples == samples)
+        {
+            Some(index) => index,
+            None => {
+                let target = gpu.target(size, samples);
+                let mut renderer = state.renderer.write();
+                if entry.targets.len() >= KEPT_TARGETS {
+                    let (_, old) = entry.targets.remove(0);
+                    renderer.free_texture(&old);
+                }
+                let id = renderer.register_native_texture(
                     &state.device,
                     &target.colour_view,
                     wgpu::FilterMode::Linear,
-                    id,
-                ),
-                None => {
-                    entry.texture = Some(renderer.register_native_texture(
-                        &state.device,
-                        &target.colour_view,
-                        wgpu::FilterMode::Linear,
-                    ));
-                }
+                );
+                entry.targets.push((target, id));
+                entry.targets.len() - 1
             }
-            entry.target = Some(target);
-        }
-        if let Some(target) = &entry.target {
+        };
+        if let Some((target, id)) = entry.targets.get(index) {
             gpu.draw(entry.scene.as_ref(), target, &drawn.view);
+            entry.shown = Some(*id);
             entry.drawn = Some(drawn);
         }
     }
@@ -297,7 +301,7 @@ impl Stage {
         let Some(entry) = self.slots.get(slot) else {
             return;
         };
-        let (Some(texture), Some(_)) = (entry.texture, &entry.scene) else {
+        let (Some(texture), Some(_)) = (entry.shown, &entry.scene) else {
             return;
         };
         let (from, to) = (*span.start(), *span.end());
@@ -317,8 +321,8 @@ impl Drop for Stage {
     fn drop(&mut self) {
         if let Some(state) = &self.render_state {
             let mut renderer = state.renderer.write();
-            for texture in self.slots.iter().filter_map(|slot| slot.texture) {
-                renderer.free_texture(&texture);
+            for (_, texture) in self.slots.iter().flat_map(|slot| &slot.targets) {
+                renderer.free_texture(texture);
             }
         }
     }

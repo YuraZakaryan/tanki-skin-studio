@@ -609,6 +609,9 @@ pub struct Studio {
     pub later_done: Option<LaterDone>,
     /// The Garage's 3D preview: the setting, the stage and its scenes.
     pub preview: crate::preview3d::Preview3d,
+    /// The skin files the selected item has in the cache, and for which item and scan: finding
+    /// them goes through the whole cache, too slow for every frame.
+    pub skin_files: Option<(String, std::collections::BTreeSet<String>)>,
 }
 
 /// A look at the cache: when (Unix seconds) and whether its files had changed.
@@ -774,6 +777,7 @@ impl Studio {
             was_focused: true,
             watch: true,
             later_done: None,
+            skin_files: None,
             preview: crate::preview3d::Preview3d::new(
                 preview_3d,
                 stage_quality,
@@ -992,6 +996,33 @@ impl Studio {
     pub fn variant_key(&self, item: usize, variant: usize) -> Option<String> {
         let (item, variant) = self.pack_variant(item, variant)?;
         Some(format!("{}:{}", item.target.grade, variant.id))
+    }
+
+    /// The model and texture files the item of `selection` has in the cache (see
+    /// [`tanki_core::apply::cache_skin_files`]), worked out again only for another item or scan.
+    pub fn item_skin_files(&mut self, selection: &Selection) -> BTreeSet<String> {
+        let input = format!("{}|{:?}", selection.key(), self.scanned_at);
+        if let Some((key, files)) = &self.skin_files
+            && *key == input
+        {
+            return files.clone();
+        }
+        let files = self
+            .scan
+            .as_ref()
+            .map(|scan| {
+                tanki_core::apply::cache_skin_files(
+                    scan,
+                    &PackTarget {
+                        kind: selection.kind.clone(),
+                        id: selection.id.clone(),
+                        grade: grade_code(selection.grade).to_owned(),
+                    },
+                )
+            })
+            .unwrap_or_default();
+        self.skin_files = Some((input, files.clone()));
+        files
     }
 
     pub fn pack_variant(&self, item: usize, variant: usize) -> Option<(&PackItem, &PackVariant)> {

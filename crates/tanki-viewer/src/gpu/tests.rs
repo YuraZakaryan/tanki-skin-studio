@@ -138,8 +138,12 @@ fn details_cover_the_paint_where_they_are_opaque() {
     );
 }
 
+/// The lightmap value that leaves a colour as it is: half brightness, lit up by the garage's exposure
+/// (1.8, see the shader).
+const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 1.8) as u8;
+
 #[test]
-fn a_half_bright_lightmap_leaves_the_colour_as_it_is() {
+fn a_neutral_lightmap_leaves_the_colour_as_it_is() {
     let Some((_, device, queue)) = device() else {
         eprintln!("no GPU adapter here: skipped");
         return;
@@ -148,7 +152,8 @@ fn a_half_bright_lightmap_leaves_the_colour_as_it_is() {
     let plain = gpu.upload(&tank([120, 120, 120]));
     let without = pixel(&picture(&mut gpu, Some(&plain), 1), 48, 32);
     let mut scene = tank([120, 120, 120]);
-    let half = Arc::new(Image::new(1, 1, vec![128, 128, 128, 255]).unwrap());
+    let n = NEUTRAL_LIGHTMAP;
+    let half = Arc::new(Image::new(1, 1, vec![n, n, n, 255]).unwrap());
     for part in &mut scene.parts {
         part.material.lightmap = Some(half.clone());
     }
@@ -304,15 +309,20 @@ fn bright_paint_rolls_off_toward_white_and_keeps_its_hue() {
         return;
     };
     let mut gpu = Gpu::new(&device, &queue);
-    let (mut scene, camera) = boxed([255, 60, 40]);
-    scene.parts[0].material.lightmap = Some(Arc::new(Image::new(1, 1, vec![255; 4]).unwrap()));
+    // A lightmap twice as bright as the neutral one: the red is pushed past white.
+    let (mut scene, camera) = boxed([230, 60, 40]);
+    let n = NEUTRAL_LIGHTMAP * 2;
+    scene.parts[0].material.lightmap =
+        Some(Arc::new(Image::new(1, 1, vec![n, n, n, 255]).unwrap()));
     let uploaded = gpu.upload(&scene);
     let image = draw(&mut gpu, &uploaded, &camera, 1);
     save("tone-bright", &image);
     let (tx, ty) = project(&camera, [0.0, 0.0, 120.0]);
     let top = pixel(&image, tx, ty);
-    assert!(top[0] < 255, "rolled off, not clipped: {top:?}");
-    assert!(top[0] > top[1] && top[0] > top[2], "still red: {top:?}");
+    assert!(
+        top[0] > top[1] + 60 && top[0] > top[2] + 60,
+        "still red, not washed out to white: {top:?}"
+    );
 }
 
 #[test]

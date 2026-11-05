@@ -3,11 +3,7 @@
 //! Garage: the selected item with its modifications and skin variants, and every item of the cache.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
-use tanki_core::{
-    apply::{cache_skin_files, missing_from},
-    look::{LookSource, cache_look, variant_look},
-    pack::PackTarget,
-};
+use tanki_core::apply::missing_from;
 use tanki_i18n::{fmt, tl, tl_ctx, tn};
 use tanki_ui::{
     draw, fonts,
@@ -343,32 +339,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         app.preview.hull = Some((selection.id.clone(), selection.grade));
     }
     let drawn_3d = app.preview.active() && {
-        let target = PackTarget {
-            kind: selection.kind.clone(),
-            id: selection.id.clone(),
-            grade: grade_code(selection.grade).to_owned(),
-        };
-        let in_cache = app.scan.as_ref().and_then(|scan| cache_look(scan, &target));
-        // A picked skin shows as itself or not at all (one without a model has its picture).
-        let main = match chosen {
-            Some((i, v)) => app.active_pack.as_ref().and_then(|pack| {
-                let variant = pack.manifest.items.get(i)?.variants.get(v)?;
-                variant_look(pack, variant)
-            }),
-            None => in_cache.clone(),
-        };
-        let (main, in_cache) = if paint {
-            let body = app.paint_body();
-            let painted = |look: Option<LookSource>| {
-                Some(LookSource::Painted {
-                    body: Box::new(body.clone()?),
-                    paint: Box::new(look?),
-                })
-            };
-            (painted(main), painted(in_cache))
-        } else {
-            (main, in_cache)
-        };
+        let (main, compared) = app.stage_looks(&selection, chosen, in_game);
         let caption = if in_game {
             tl!("In the game now").to_owned()
         } else if has_variant {
@@ -381,7 +352,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         };
         let looks = Looks {
             main,
-            compared: (has_variant && !in_game).then_some(in_cache).flatten(),
+            compared,
             item: format!("{}:{}", selection.kind, selection.id),
             caption,
         };
@@ -536,20 +507,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let target = item_name(&selection.kind, &selection.id, grade_code(selection.grade));
     // The model and texture files the selected item has in the cache: a skin that does not bring
     // every one of them cannot be applied (the preview is optional).
-    let cache_files = app
-        .scan
-        .as_ref()
-        .map(|scan| {
-            cache_skin_files(
-                scan,
-                &PackTarget {
-                    kind: selection.kind.clone(),
-                    id: selection.id.clone(),
-                    grade: grade_code(selection.grade).to_owned(),
-                },
-            )
-        })
-        .unwrap_or_default();
+    let cache_files = app.item_skin_files(&selection);
     let missing = |app: &Studio, (item, variant): (usize, usize)| {
         app.pack_variant(item, variant)
             .map(|(_, v)| missing_from(&cache_files, v))

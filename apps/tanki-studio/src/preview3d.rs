@@ -28,6 +28,34 @@ struct Job {
     receiver: mpsc::Receiver<Result<Scene, String>>,
 }
 
+/// The paint every item wears in 3D until a skin or a paint says otherwise: the plain green of the
+/// cache, the look a new tank has.
+pub const DEFAULT_PAINT: &str = "green";
+
+/// A look and its key, worked out once when what the Garage shows changes (finding an item's files
+/// goes through the whole cache, too slow for every frame).
+#[derive(Clone, Debug)]
+pub struct Keyed {
+    pub source: LookSource,
+    pub key: String,
+}
+
+impl Keyed {
+    pub fn new(source: LookSource) -> Keyed {
+        Keyed {
+            key: source.key(),
+            source,
+        }
+    }
+}
+
+/// The looks of the stage, and what they were worked out from.
+struct Memo {
+    input: String,
+    main: Option<Keyed>,
+    compared: Option<Keyed>,
+}
+
 /// What the stage can show for a slot right now.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SlotState {
@@ -57,6 +85,7 @@ pub struct Preview3d {
     framed: Option<String>,
     /// The hull last shown (id, modification): a paint is shown on it.
     pub hull: Option<(String, usize)>,
+    memo: Option<Memo>,
 }
 
 impl Preview3d {
@@ -76,6 +105,7 @@ impl Preview3d {
             failed: BTreeSet::new(),
             framed: None,
             hull: None,
+            memo: None,
         };
         preview.apply_quality();
         preview
@@ -98,25 +128,24 @@ impl Preview3d {
 
     /// Ask for `look` in a slot: built if it is not on the stage, not being built and not known to
     /// fail. `None` empties the slot.
-    pub fn want(&mut self, slot: usize, look: Option<&LookSource>) -> SlotState {
-        let Some(look) = look else {
+    pub fn want(&mut self, slot: usize, look: Option<&Keyed>) -> SlotState {
+        let Some(Keyed { source: look, key }) = look else {
             self.stage.unload(slot);
             if let Some(job) = self.jobs.get_mut(slot) {
                 *job = None;
             }
             return SlotState::Unavailable;
         };
-        let key = look.key();
         if self.stage.key(slot) == Some(key.as_str()) {
             return SlotState::Ready;
         }
-        if self.failed.contains(&key) {
+        if self.failed.contains(key) {
             return SlotState::Unavailable;
         }
         let Some(job) = self.jobs.get_mut(slot) else {
             return SlotState::Unavailable;
         };
-        if job.as_ref().is_some_and(|j| j.key == key) {
+        if job.as_ref().is_some_and(|j| &j.key == key) {
             return SlotState::Loading;
         }
         let (sender, receiver) = mpsc::channel();
@@ -200,6 +229,88 @@ impl Preview3d {
 }
 
 impl crate::app::Studio {
+    /// The looks the stage shows for `selection`: the picked skin (`chosen`), else the item as in
+    /// the game; and the item as in the game to compare with, while a picked skin is not in it.
+    /// A hull or turret wears the default paint under its details, a paint is shown on a hull.
+    /// Worked out again only when what they depend on changes.
+    pub fn stage_looks(
+        &mut self,
+        selection: &crate::app::Selection,
+        chosen: Option<(usize, usize)>,
+        in_game: bool,
+    ) -> (Option<Keyed>, Option<Keyed>) {
+        let input = format!(
+            "{}|{chosen:?}|{in_game}|{:?}|{:?}|{:?}",
+            selection.key(),
+            self.active_pack
+                .as_ref()
+                .map(|p| (&p.path, &p.manifest.version)),
+            self.scanned_at,
+            self.preview.hull,
+        );
+        if let Some(memo) = &self.preview.memo
+            && memo.input == input
+        {
+            return (memo.main.clone(), memo.compared.clone());
+        }
+        let target = PackTarget {
+            kind: selection.kind.clone(),
+            id: selection.id.clone(),
+            grade: crate::model::grade_code(selection.grade).to_owned(),
+        };
+        let in_cache = self
+            .scan
+            .as_ref()
+            .and_then(|scan| cache_look(scan, &target));
+        // A picked skin shows as itself or not at all (one without a model has its picture).
+        let main = match chosen {
+            Some((i, v)) => self.active_pack.as_ref().and_then(|pack| {
+                let variant = pack.manifest.items.get(i)?.variants.get(v)?;
+                tanki_core::look::variant_look(pack, variant)
+            }),
+            None => in_cache.clone(),
+        };
+        let painted = |body: Option<LookSource>, paint: Option<LookSource>| {
+            Some(LookSource::Painted {
+                body: Box::new(body?),
+                paint: Box::new(paint?),
+            })
+        };
+        let (main, in_cache) = if selection.kind == "paint" {
+            let body = self.paint_body();
+            (painted(body.clone(), main), painted(body, in_cache))
+        } else {
+            match self.default_paint() {
+                Some(green) => (
+                    painted(main, Some(green.clone())),
+                    painted(in_cache, Some(green)),
+                ),
+                None => (main, in_cache),
+            }
+        };
+        let compared = (chosen.is_some() && !in_game).then_some(in_cache).flatten();
+        let memo = Memo {
+            input,
+            main: main.map(Keyed::new),
+            compared: compared.map(Keyed::new),
+        };
+        let looks = (memo.main.clone(), memo.compared.clone());
+        self.preview.memo = Some(memo);
+        looks
+    }
+
+    /// The default paint's picture in the cache, when the cache has it.
+    fn default_paint(&self) -> Option<LookSource> {
+        cache_look(
+            self.scan.as_ref()?,
+            &PackTarget {
+                kind: "paint".into(),
+                id: DEFAULT_PAINT.into(),
+                grade: "m0".into(),
+            },
+        )
+    }
+
     /// The body a paint is shown on: the hull last shown, else the first hull with a model in the
     /// cache (its highest modification).
     pub fn paint_body(&self) -> Option<LookSource> {

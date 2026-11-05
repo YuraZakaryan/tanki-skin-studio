@@ -5,20 +5,19 @@
 //! by the same code), and the dialog itself.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
-use tanki_core::look::LookSource;
 use tanki_i18n::tl;
 use tanki_ui::{
     draw, fonts,
     fonts::Text,
     icons,
     theme::Tokens,
-    widgets::{self, Button, ButtonKind, ChipKind, GroupRow, ModalEvent, ModalSpec, Tint},
+    widgets::{self, ChipKind, GroupRow, ModalEvent, ModalSpec, Tint},
 };
 use tanki_viewer::{Quality, QualityPreference, StageView};
 
 use crate::{
-    app::{Dialog, Page, Studio},
-    preview3d::{Preview3d, SlotState},
+    app::{Dialog, Studio},
+    preview3d::{Keyed, Preview3d, SlotState},
 };
 
 const SEGMENTS: f32 = 32.0;
@@ -155,7 +154,7 @@ impl SettingsRows {
 
 // --- The quick dialog ---------------------------------------------------------------------------
 
-/// The stage's own settings: the same two rows as in Settings, and a way there.
+/// The stage's own settings: the same two rows as in Settings.
 pub fn dialog(app: &mut Studio, ctx: &egui::Context) {
     const WIDTH: f32 = 520.0;
     let probe = Ui::new(
@@ -170,31 +169,14 @@ pub fn dialog(app: &mut Studio, ctx: &egui::Context) {
         title: tl!("3D preview"),
         close_label: tl!("Close"),
         width: WIDTH,
-        body_height: height + 20.0,
+        body_height: height + 24.0,
     };
-    let mut all = false;
-    let mut done = false;
-    let event = widgets::modal(
-        ctx,
-        &spec,
-        |ui| {
-            let body = ui.max_rect();
-            rows.draw(app, ui, body.min, body.width(), "preview-3d-dialog");
-        },
-        |ui| {
-            done = Button::new(ButtonKind::Primary, tl!("Done"))
-                .show(ui)
-                .clicked();
-            all = Button::new(ButtonKind::Ghost, tl!("All settings"))
-                .icon(icons::SETTINGS)
-                .show(ui)
-                .clicked();
-        },
-    );
-    if all {
-        app.dialog = None;
-        app.go(Page::Settings);
-    } else if done || event == ModalEvent::Dismissed {
+    // The settings apply as they change: no buttons, the × closes it.
+    let event = widgets::modal_without_footer(ctx, &spec, |ui| {
+        let body = ui.max_rect();
+        rows.draw(app, ui, body.min, body.width(), "preview-3d-dialog");
+    });
+    if event == ModalEvent::Dismissed {
         app.dialog = None;
     }
 }
@@ -204,8 +186,8 @@ pub fn dialog(app: &mut Studio, ctx: &egui::Context) {
 /// The looks the stage shows: the main one (the picked skin, else the item as in the game) and,
 /// when a skin is picked that is not in the game yet, the item as in the game to compare with.
 pub struct Looks {
-    pub main: Option<LookSource>,
-    pub compared: Option<LookSource>,
+    pub main: Option<Keyed>,
+    pub compared: Option<Keyed>,
     /// The item, so a new one starts from the home view.
     pub item: String,
     /// Under the model once the drag hint is gone: whether the skin is in the game.

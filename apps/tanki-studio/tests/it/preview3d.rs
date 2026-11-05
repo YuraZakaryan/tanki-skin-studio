@@ -285,7 +285,7 @@ fn without_a_picked_skin_there_is_nothing_to_compare() {
 }
 
 #[test]
-fn quick_settings_turn_3d_off_and_on_and_lead_to_settings() {
+fn quick_settings_turn_3d_off_and_on_and_have_no_buttons_but_close() {
     let (env, _) = models("3d-quick");
     let Some(mut h) = gpu_harness(&env) else {
         return;
@@ -297,7 +297,10 @@ fn quick_settings_turn_3d_off_and_on_and_lead_to_settings() {
     h.get_by_label("Show the tank in 3D").click();
     h.run_steps(3);
     assert!(!h.state().preview.enabled);
-    h.get_by_label("Done").click();
+    // The settings apply as they change: no Done, no way elsewhere, only the ×.
+    assert!(h.query_by_label("Done").is_none());
+    assert!(h.query_by_label("All settings").is_none());
+    h.get_by_label("Close").click();
     h.run_steps(3);
     assert!(h.state().dialog.is_none());
     // Off: the flat picture, and only the settings button to turn it back on.
@@ -308,14 +311,14 @@ fn quick_settings_turn_3d_off_and_on_and_lead_to_settings() {
     h.get_by_label("Show the tank in 3D").click();
     h.run_steps(3);
     assert!(h.state().preview.enabled);
-    h.get_by_label("All settings").click();
-    h.run_steps(3);
-    assert!(h.state().dialog.is_none());
-    assert_eq!(h.state().page, Page::Settings);
     assert!(
         h.query_by_label("Economy").is_some(),
         "the quality is there"
     );
+    h.key_press(egui::Key::Escape);
+    h.run_steps(3);
+    assert!(h.state().dialog.is_none());
+    assert!(h.query_by_label(STAGE).is_some(), "3D is back");
 }
 
 #[test]
@@ -455,26 +458,26 @@ fn quality_choices_redraw_the_stage_and_survive_a_restart() {
     );
 }
 
-/// A paint picture in the cache at `/0/0/30/2/`, labelled by hand as the paint "ember".
-fn add_paint(env: &Env) {
+/// A paint picture in the cache at `/0/0/30/<n>/`, labelled by hand as the paint `id`.
+fn add_paint(env: &Env, id: &str, n: u32, rgb: [u8; 3]) {
     use base64::{Engine, engine::general_purpose::STANDARD};
-    let url = "http://cache.test/0/0/30/2/1/image.jpg";
+    let url = format!("http://cache.test/0/0/30/{n}/1/image.jpg");
     let file = env.cache.root.join(STANDARD.encode(url));
     if let Some(parent) = file.parent() {
         std::fs::create_dir_all(parent).expect("cache folder");
     }
-    std::fs::write(&file, tanki_testkit::jpeg(64, 64, [230, 120, 20])).expect("paint picture");
+    std::fs::write(&file, tanki_testkit::jpeg(64, 64, rgb)).expect("paint picture");
     let store = tanki_core::state::StateStore::open(&env.work.join("data/state.sqlite"))
         .expect("state store");
     store
-        .save_user_target("air-cache", "/0/0/30/2/", "paint", "ember", "m0")
+        .save_user_target("air-cache", &format!("/0/0/30/{n}/"), "paint", id, "m0")
         .expect("label the paint");
 }
 
 #[test]
 fn a_paint_is_shown_on_the_hull_last_looked_at() {
     let (env, _) = models("3d-paint");
-    add_paint(&env);
+    add_paint(&env, "ember", 2, [230, 120, 20]);
     let Some(mut h) = gpu_harness(&env) else {
         return;
     };
@@ -515,13 +518,54 @@ fn a_paint_is_shown_on_the_hull_last_looked_at() {
 fn a_paint_without_any_hull_model_shows_its_flat_picture() {
     // Placeholder models: no hull to put the paint on.
     let env = env("3d-paint-flat");
-    add_paint(&env);
+    add_paint(&env, "ember", 2, [230, 120, 20]);
     let Some(mut h) = gpu_harness(&env) else {
         return;
     };
     select(&mut h, "paint", "ember", 0);
     assert!(h.query_by_label(STAGE).is_none());
     assert!(h.query_by_label("3D settings").is_some());
+}
+
+#[test]
+fn hulls_and_turrets_wear_the_green_of_the_cache_until_a_paint_is_chosen() {
+    let (env, _) = models("3d-green");
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "wasp", 3);
+    let plain = h
+        .state()
+        .preview
+        .stage
+        .key(Preview3d::MAIN)
+        .map(str::to_owned)
+        .unwrap_or_default();
+    assert!(
+        plain.starts_with("cache:"),
+        "no green paint in this cache: {plain}"
+    );
+    drop(h);
+    add_paint(&env, "green", 4, [70, 110, 40]);
+    let mut h = gpu_harness(&env).expect("the GPU is still there");
+    for (kind, id) in [("hull", "wasp"), ("turret", "railgun")] {
+        select(&mut h, kind, id, 3);
+        let key = h
+            .state()
+            .preview
+            .stage
+            .key(Preview3d::MAIN)
+            .map(str::to_owned)
+            .unwrap_or_default();
+        let green = {
+            use base64::{Engine, engine::general_purpose::STANDARD};
+            STANDARD.encode("http://cache.test/0/0/30/4/1/image.jpg")
+        };
+        assert!(
+            key.starts_with("painted:") && key.contains(&green),
+            "{kind} wears the green: {key}"
+        );
+    }
 }
 
 /// A fixed pseudo-random walk, so a failure is reproducible.
@@ -558,8 +602,6 @@ fn a_monkey_on_the_3d_preview_breaks_nothing() {
         "Economy",
         "Balanced",
         "High",
-        "Done",
-        "All settings",
         "Wasp Red",
         "Before and after divider",
         "Garage",

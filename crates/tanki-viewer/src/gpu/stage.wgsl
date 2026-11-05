@@ -67,10 +67,12 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     let pattern = textureSample(paint, surface, input.uv).rgb;
 
     // The client blends its textures as stored, gamma-encoded: paint, the details over it where
-    // their alpha says, then the lightmap, baked at half brightness (0.5 leaves a colour as it is).
+    // their alpha says, then the lightmap, baked at half brightness. The game's garage lights that
+    // up again: measured against the garage pictures the game itself saved in the cache, a model
+    // comes out LIGHTMAP_EXPOSURE times brighter than texture × lightmap × 2.
     let under = mix(part.paint.rgb, pattern, part.flags.z);
     var base = mix(under, detail.rgb, detail.a * part.flags.x);
-    base = base * mix(vec3<f32>(1.0), baked * 2.0, part.flags.y);
+    base = base * mix(vec3<f32>(1.0), baked * (2.0 * LIGHTMAP_EXPOSURE), part.flags.y);
     base = pow(max(base, vec3<f32>(0.0)), vec3<f32>(2.2));
 
     // Exports are not always closed or consistently wound: light the side that faces the camera.
@@ -79,8 +81,10 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
         normal = -normal;
     }
     let to_eye = normalize(globals.eye.xyz - input.world);
-    // A studio over the baked light: a soft sky above a darker floor, a key light, a fill, and a
-    // rim on the silhouette, so the shape reads from any side while the lightmap keeps its detail.
+    // The client's own light is baked into the lightmap, which already shades the model as the
+    // game does: the studio only models the shape over it, a little brighter where the key light
+    // falls and a little darker away from it, about 1 on average so the colours stay the game's.
+    // A soft sky above a darker floor, a key light, a fill, and a rim on the silhouette.
     let hemisphere = mix(GROUND, SKY, 0.5 + 0.5 * normal.z);
     let key = max(dot(normal, globals.key.xyz), 0.0) * KEY;
     let fill = max(dot(normal, globals.fill.xyz), 0.0) * FILL;
@@ -90,20 +94,21 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const SKY: vec3<f32> = vec3<f32>(0.62, 0.64, 0.68);
-const GROUND: vec3<f32> = vec3<f32>(0.27, 0.26, 0.25);
-const KEY: f32 = 0.75;
-const FILL: f32 = 0.2;
-const RIM: f32 = 0.10;
+const LIGHTMAP_EXPOSURE: f32 = 1.8;
+const SKY: vec3<f32> = vec3<f32>(0.84, 0.86, 0.90);
+const GROUND: vec3<f32> = vec3<f32>(0.66, 0.65, 0.63);
+const KEY: f32 = 0.32;
+const FILL: f32 = 0.10;
+const RIM: f32 = 0.06;
 
-// Khronos PBR Neutral tone mapping: colours up to about 0.8 pass as they are, brighter ones
-// roll off toward white instead of clipping, so a lit skin keeps its hue.
+// The highlight roll-off of Khronos PBR Neutral tone mapping: colours up to 0.8 pass as they are,
+// brighter ones roll off toward white instead of clipping, so a lit skin keeps its hue. Its toe,
+// which darkens the shadows of a scene in HDR, is left out: the textures are the game's colours
+// already, and the toe would take half the brightness of a dark paint.
 fn neutral(colour: vec3<f32>) -> vec3<f32> {
-    let start = 0.8 - 0.04;
+    let start = 0.8;
     let desaturation = 0.15;
-    let low = min(colour.r, min(colour.g, colour.b));
-    let offset = select(0.04, low - 6.25 * low * low, low < 0.08);
-    var c = colour - offset;
+    var c = max(colour, vec3<f32>(0.0));
     let peak = max(c.r, max(c.g, c.b));
     if (peak < start) {
         return c;

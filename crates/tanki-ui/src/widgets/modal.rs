@@ -63,7 +63,27 @@ pub fn modal(
     body: impl FnOnce(&mut Ui),
     footer: impl FnOnce(&mut Ui),
 ) -> ModalEvent {
+    show(ctx, spec, body, Some(footer))
+}
+
+/// A dialog without a footer: settings that apply as they change need no buttons, the × closes it.
+/// `spec.body_height` is the body with its bottom padding (24).
+pub fn modal_without_footer(
+    ctx: &Context,
+    spec: &ModalSpec<'_>,
+    body: impl FnOnce(&mut Ui),
+) -> ModalEvent {
+    show(ctx, spec, body, None::<fn(&mut Ui)>)
+}
+
+fn show(
+    ctx: &Context,
+    spec: &ModalSpec<'_>,
+    body: impl FnOnce(&mut Ui),
+    footer: Option<impl FnOnce(&mut Ui)>,
+) -> ModalEvent {
     let tokens = Tokens::get(ctx);
+    let footer_height = if footer.is_some() { 72.0 } else { 0.0 };
     let screen = ctx.content_rect();
     let mut event = ModalEvent::None;
     // The buttons' width is known once they are laid out: it is kept from the pass before, and a
@@ -78,7 +98,7 @@ pub fn modal(
             let scrim = ui.allocate_rect(screen, Sense::click());
             ui.painter().rect_filled(screen, 0.0, tokens.scrim);
             let header = header_height(ctx, spec);
-            let height = header + spec.body_height + 72.0;
+            let height = header + spec.body_height + footer_height;
             let rect = Rect::from_center_size(screen.center(), Vec2::new(width, height));
             draw::shadow(
                 ui.painter(),
@@ -137,6 +157,9 @@ pub fn modal(
                 ui.spacing_mut().item_spacing = Vec2::ZERO;
                 body(ui);
             });
+            let Some(footer) = footer else {
+                return;
+            };
             let footer_top = rect.max.y - 72.0;
             draw::hrule(
                 ui.painter(),
