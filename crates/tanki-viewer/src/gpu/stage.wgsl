@@ -106,7 +106,7 @@ const GROUND: vec3<f32> = vec3<f32>(0.76, 0.75, 0.73);
 const KEY: f32 = 0.40;
 const FILL: f32 = 0.18;
 // About a tenth of the key light: enough to lift the front, not to flatten the shape.
-const FRONT: f32 = 0.045;
+const FRONT: f32 = 0.065;
 const RIM: vec3<f32> = vec3<f32>(0.08, 0.15, 0.07);
 
 // The highlight roll-off of Khronos PBR Neutral tone mapping: colours up to 0.8 pass as they are,

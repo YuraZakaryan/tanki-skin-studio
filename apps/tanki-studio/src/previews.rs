@@ -9,8 +9,23 @@ use tanki_core::pack::{InstalledPack, PackVariant, read_pack_resource};
 use crate::{app::Studio, model::preview_path};
 
 impl Studio {
-    /// The preview of a cache group (URL minus file name).
+    /// The preview of a cache group (URL minus file name), as the game saved it.
     pub fn cache_preview(&mut self, ctx: &Context, group: &str) -> Option<TextureHandle> {
+        self.cache_picture(ctx, group, None)
+    }
+
+    /// The preview of a cache group for an item card: lit up a little, so the cards read as bright
+    /// as the 3D stage above them (the game's garage pictures are darker than its garage).
+    pub fn cache_cover(&mut self, ctx: &Context, group: &str) -> Option<TextureHandle> {
+        self.cache_picture(ctx, group, Some(COVER_GAIN))
+    }
+
+    fn cache_picture(
+        &mut self,
+        ctx: &Context,
+        group: &str,
+        gain: Option<f32>,
+    ) -> Option<TextureHandle> {
         let scan = self.scan.as_ref()?;
         let path = preview_path(scan, group)?;
         // The client keeps the transparency of a picture in a file of its own next to the colour.
@@ -21,12 +36,20 @@ impl Studio {
                 r.group == group && matches!(r.role.as_str(), "alpha.jpg" | "details_alpha.jpg")
             })
             .map(|r| r.path.clone());
-        self.texture(ctx, &format!("cache:{group}"), || {
+        let key = match gain {
+            Some(_) => format!("cache:cover:{group}"),
+            None => format!("cache:{group}"),
+        };
+        self.texture(ctx, &key, || {
             let colour = std::fs::read(path).ok()?;
             let merged = alpha
                 .and_then(|alpha| std::fs::read(alpha).ok())
                 .and_then(|alpha| with_alpha(&colour, &alpha));
-            merged.or(Some(colour))
+            let picture = merged.or(Some(colour))?;
+            match gain {
+                Some(gain) => brighter(&picture, gain),
+                None => Some(picture),
+            }
         })
     }
 
@@ -61,7 +84,7 @@ impl Studio {
                         .clone()
                 })
             });
-        if let Some(texture) = group.and_then(|g| self.cache_preview(ctx, &g)) {
+        if let Some(texture) = group.and_then(|g| self.cache_cover(ctx, &g)) {
             return Some(texture);
         }
         let pack = self.active_pack.clone()?;
@@ -88,6 +111,24 @@ impl Studio {
 
 /// A PNG of the colour picture with the alpha picture as its transparency, or `None` when either
 /// does not decode or they differ in size.
+/// How much brighter an item card shows the game's picture.
+const COVER_GAIN: f32 = 1.18;
+
+/// A picture with its colours `gain` times as bright (its transparency kept), as PNG bytes.
+fn brighter(picture: &[u8], gain: f32) -> Option<Vec<u8>> {
+    let mut image = image::load_from_memory(picture).ok()?.to_rgba8();
+    for pixel in image.pixels_mut() {
+        for channel in &mut pixel.0[..3] {
+            *channel = (f32::from(*channel) * gain).round().min(255.0) as u8;
+        }
+    }
+    let mut out = std::io::Cursor::new(Vec::new());
+    image::DynamicImage::ImageRgba8(image)
+        .write_to(&mut out, image::ImageFormat::Png)
+        .ok()?;
+    Some(out.into_inner())
+}
+
 fn with_alpha(colour: &[u8], alpha: &[u8]) -> Option<Vec<u8>> {
     let colour = image::load_from_memory(colour).ok()?.to_rgba8();
     let alpha = image::load_from_memory(alpha).ok()?.to_luma8();
@@ -132,5 +173,17 @@ mod tests {
         assert_eq!(merged.get_pixel(1, 0).0, [200, 100, 50, 255]);
         let other = png(image::DynamicImage::ImageLuma8(image::GrayImage::new(3, 3)));
         assert!(with_alpha(&colour, &other).is_none(), "sizes differ");
+    }
+
+    #[test]
+    fn a_brighter_cover_keeps_its_transparency_and_never_overflows() {
+        let picture = png(image::DynamicImage::ImageRgba8(
+            image::RgbaImage::from_pixel(2, 1, image::Rgba([100, 240, 0, 77])),
+        ));
+        let lit = image::load_from_memory(&brighter(&picture, 1.18).unwrap())
+            .unwrap()
+            .to_rgba8();
+        assert_eq!(lit.get_pixel(0, 0).0, [118, 255, 0, 77]);
+        assert!(brighter(b"not a picture", 1.18).is_none());
     }
 }

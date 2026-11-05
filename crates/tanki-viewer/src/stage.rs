@@ -147,8 +147,24 @@ impl Stage {
 
     /// Draw the stage into `rect` and handle its input. `label` names it for screen readers.
     pub fn show(&mut self, ui: &mut Ui, rect: Rect, view: StageView, label: &str) -> Response {
+        self.show_in(ui, rect, rect, view, label, None)
+    }
+
+    /// [`Stage::show`] drawn in `picture` but turned only from `input` (so the buttons laid over
+    /// the picture keep their clicks), and painted in the shape slot `under` when given: reserved
+    /// with `painter.add(Shape::Noop)` before the widgets that go over the model.
+    pub fn show_in(
+        &mut self,
+        ui: &mut Ui,
+        picture: Rect,
+        input: Rect,
+        view: StageView,
+        label: &str,
+        under: Option<egui::layers::ShapeIdx>,
+    ) -> Response {
+        let rect = picture;
         let response = ui.interact(
-            rect,
+            input,
             ui.make_persistent_id("tanki-stage"),
             Sense::click_and_drag(),
         );
@@ -165,13 +181,24 @@ impl Stage {
         for slot in slots {
             self.draw(*slot, rect.size() * ppp, moving);
         }
-        let painter = ui.painter_at(rect);
-        match view {
-            StageView::Single => self.paint(&painter, MAIN, rect, 0.0..=1.0),
+        let shapes: Vec<egui::Shape> = match view {
+            StageView::Single => self.paint(MAIN, rect, 0.0..=1.0).into_iter().collect(),
             StageView::Compare { split } => {
                 let split = split.clamp(0.0, 1.0);
-                self.paint(&painter, COMPARED, rect, 0.0..=split);
-                self.paint(&painter, MAIN, rect, split..=1.0);
+                [
+                    self.paint(COMPARED, rect, 0.0..=split),
+                    self.paint(MAIN, rect, split..=1.0),
+                ]
+                .into_iter()
+                .flatten()
+                .collect()
+            }
+        };
+        let painter = ui.painter_at(rect);
+        match under {
+            Some(slot) => painter.set(slot, egui::Shape::Vec(shapes)),
+            None => {
+                painter.extend(shapes);
             }
         }
         if moving {
@@ -299,30 +326,27 @@ impl Stage {
         }
     }
 
-    /// Paint the part of a slot's picture between the shares `span` of the stage's width.
+    /// The part of a slot's picture between the shares `span` of the stage's width.
     fn paint(
         &self,
-        painter: &egui::Painter,
         slot: usize,
         rect: Rect,
         span: std::ops::RangeInclusive<f32>,
-    ) {
-        let Some(entry) = self.slots.get(slot) else {
-            return;
-        };
+    ) -> Option<egui::Shape> {
+        let entry = self.slots.get(slot)?;
         let (Some(texture), Some(_)) = (entry.shown, &entry.scene) else {
-            return;
+            return None;
         };
         let (from, to) = (*span.start(), *span.end());
         if to <= from {
-            return;
+            return None;
         }
         let part = Rect::from_min_max(
             Pos2::new(rect.min.x + rect.width() * from, rect.min.y),
             Pos2::new(rect.min.x + rect.width() * to, rect.max.y),
         );
         let uv = Rect::from_min_max(Pos2::new(from, 0.0), Pos2::new(to, 1.0));
-        painter.image(texture, part, uv, Color32::WHITE);
+        Some(egui::Shape::image(texture, part, uv, Color32::WHITE))
     }
 }
 

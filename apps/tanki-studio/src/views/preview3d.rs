@@ -313,9 +313,18 @@ fn tool(ui: &mut Ui, rect: Rect, glyph: char, label: &str, active: bool, enabled
             .clicked()
 }
 
-/// Draw the stage in `scene`, the room between the chips and the modification selector.
+/// Draw the stage: turned from `scene`, the room between the chips and the modification selector,
+/// and drawn over the whole height of `picture` (the chips, the toolbar and the selector lie over
+/// the model, as in a garage), in the shape slot `under` reserved below them.
 /// Returns false when there is no 3D picture to show (the caller draws the flat one).
-pub fn stage(app: &mut Studio, ui: &mut Ui, scene: Rect, looks: Looks) -> bool {
+pub fn stage(
+    app: &mut Studio,
+    ui: &mut Ui,
+    scene: Rect,
+    picture: Rect,
+    under: egui::layers::ShapeIdx,
+    looks: Looks,
+) -> bool {
     let tokens = Tokens::get(ui.ctx());
     app.preview.frame_item(&looks.item);
     let main = app.preview.want(Preview3d::MAIN, looks.main.as_ref());
@@ -365,10 +374,26 @@ pub fn stage(app: &mut Studio, ui: &mut Ui, scene: Rect, looks: Looks) -> bool {
         }
         None => StageView::Single,
     };
-    let response = app
-        .preview
-        .stage
-        .show(ui, room, view, tl!("3D view of the item"));
+    // The model's picture keeps the room's sides (the compare divider lines up with it) and grows
+    // as far up and down as the stage allows on both sides, so the model stays centred between the
+    // chips and the selector while its edges may pass under them; while comparing, it stays under
+    // the labels.
+    let grow = if app.preview.compare.is_some() {
+        0.0
+    } else {
+        (room.min.y - picture.min.y)
+            .min(picture.max.y - room.max.y)
+            .max(0.0)
+    };
+    let drawn = room.expand2(Vec2::new(0.0, grow));
+    let response = app.preview.stage.show_in(
+        ui,
+        drawn,
+        room,
+        view,
+        tl!("3D view of the item"),
+        Some(under),
+    );
     if response.dragged() || response.double_clicked() {
         app.preview.used = true;
     }

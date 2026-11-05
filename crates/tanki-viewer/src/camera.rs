@@ -61,7 +61,7 @@ const ZOOM_MAX: f32 = 2.2;
 const AUTO_DELAY: f32 = 3.0;
 const AUTO_SPEED: f32 = 0.35;
 /// The model's box fills this share of the picture at most, seen from any side at the home pitch.
-const FILL_SHARE: f32 = 0.92;
+const FILL_SHARE: f32 = 0.7;
 /// Sides the framing checks the model from, all the way round.
 const FRAMING_TURNS: usize = 24;
 /// Points of a model the framing looks at, at most (spread over all of its vertices).
