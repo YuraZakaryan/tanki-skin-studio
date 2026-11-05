@@ -896,10 +896,14 @@ checksum = "0979c2e37860fcf13a2bea77508607f067a9a6a84ba9bd47b5e298582fb59b86"
 dependencies = [
  "eframe",
  "egui",
+ "egui-wgpu",
+ "image",
  "kittest",
  "log",
+ "pollster 1.0.1",
  "serde",
  "toml",
+ "wgpu",
 ]
 
 [[package]]
@@ -1232,6 +1236,15 @@ dependencies = [
  "khronos_api",
  "log",
  "xml-rs",
+]
+
+[[package]]
+name = "glam"
+version = "0.34.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc148d4ddd3930c52f9e5ae79b89805c6f07e9ff417e7b083e0348cea60a5aba"
+dependencies = [
+ "bytemuck",
 ]
 
 [[package]]
@@ -3231,7 +3244,9 @@ dependencies = [
  "serde_json",
  "sysinfo",
  "tanki-cache",
+ "tanki-model",
  "tanki-pack",
+ "tanki-testkit",
 ]
 
 [[package]]
@@ -3262,6 +3277,7 @@ dependencies = [
  "image",
  "tanki-apply",
  "tanki-cache",
+ "tanki-model",
  "tanki-pack",
  "tanki-state",
  "tanki-testkit",
@@ -3271,6 +3287,13 @@ dependencies = [
 [[package]]
 name = "tanki-i18n"
 version = "0.7.0"
+
+[[package]]
+name = "tanki-model"
+version = "0.7.0"
+dependencies = [
+ "tanki-testkit",
+]
 
 [[package]]
 name = "tanki-pack"
@@ -3309,12 +3332,14 @@ dependencies = [
  "egui_kittest",
  "image",
  "log",
+ "pollster 1.0.1",
  "rfd",
  "serde_json",
  "tanki-core",
  "tanki-i18n",
  "tanki-testkit",
  "tanki-ui",
+ "tanki-viewer",
  "winresource",
 ]
 
@@ -3348,6 +3373,21 @@ dependencies = [
  "serde_json",
  "sha2",
  "ureq",
+]
+
+[[package]]
+name = "tanki-viewer"
+version = "0.7.0"
+dependencies = [
+ "bytemuck",
+ "egui",
+ "egui-wgpu",
+ "glam",
+ "image",
+ "pollster 1.0.1",
+ "tanki-model",
+ "tanki-testkit",
+ "wgpu",
 ]
 
 [[package]]

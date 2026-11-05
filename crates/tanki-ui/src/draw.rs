@@ -94,6 +94,48 @@ pub fn radial(
     }
 }
 
+/// A soft elliptical glow filling `rect`: `color` at the centre fading smoothly to nothing at the
+/// edge, as a light behind an object. Returned as a shape, so it can fill a slot reserved earlier.
+pub fn glow(rect: Rect, color: Color32) -> Shape {
+    const RINGS: usize = 16;
+    const SEGMENTS: usize = 48;
+    let center = rect.center();
+    let half = rect.size() / 2.0;
+    let mut mesh = Mesh::default();
+    mesh.vertices.push(Vertex {
+        pos: center,
+        uv: egui::epaint::WHITE_UV,
+        color,
+    });
+    for ring in 1..=RINGS {
+        let t = ring as f32 / RINGS as f32;
+        // Smooth falloff: full near the centre, nothing at the edge.
+        let strength = (1.0 - t * t).powi(2);
+        let shade = color.gamma_multiply(strength);
+        for segment in 0..SEGMENTS {
+            let angle = segment as f32 / SEGMENTS as f32 * std::f32::consts::TAU;
+            mesh.vertices.push(Vertex {
+                pos: center + Vec2::new(angle.cos() * half.x, angle.sin() * half.y) * t,
+                uv: egui::epaint::WHITE_UV,
+                color: shade,
+            });
+        }
+    }
+    let at = |ring: usize, segment: usize| (1 + (ring - 1) * SEGMENTS + segment % SEGMENTS) as u32;
+    for segment in 0..SEGMENTS {
+        mesh.indices
+            .extend_from_slice(&[0, at(1, segment), at(1, segment + 1)]);
+    }
+    for ring in 1..RINGS {
+        for segment in 0..SEGMENTS {
+            let (a, b) = (at(ring, segment), at(ring, segment + 1));
+            let (c, d) = (at(ring + 1, segment), at(ring + 1, segment + 1));
+            mesh.indices.extend_from_slice(&[a, c, b, b, c, d]);
+        }
+    }
+    Shape::mesh(mesh)
+}
+
 /// Repaint the corner areas outside a rounded rectangle's arcs with `color` (only the two top
 /// corners when `top_only`). For images and meshes that cannot be rounded themselves.
 pub fn cut_corners(painter: &Painter, rect: Rect, radius: f32, color: Color32, top_only: bool) {

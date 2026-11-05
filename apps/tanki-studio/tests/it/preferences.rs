@@ -157,3 +157,48 @@ fn the_release_app_is_a_window_program_without_a_terminal_on_windows() {
         "src/main.rs must declare the Windows GUI subsystem for release builds"
     );
 }
+
+#[test]
+fn the_3d_preview_is_on_by_default_and_settings_turn_it_off_for_good() {
+    let env = env("preview-3d");
+    let mut h = harness(&env);
+    assert!(h.state().preview.enabled, "a fresh install shows 3D");
+    h.state_mut().go(Page::Settings);
+    h.run_steps(3);
+    // The quality is chosen while the preview is on.
+    h.get_by_label("Economy").click();
+    h.run_steps(3);
+    assert_eq!(
+        h.state().preview.quality,
+        tanki_viewer::QualityPreference::Economy
+    );
+    // The whole tank is on by default, and the switch beside it turns it off.
+    assert!(h.state().preview.whole_tank);
+    h.get_by_label("Show the whole tank").click();
+    h.run_steps(3);
+    assert!(!h.state().preview.whole_tank);
+    h.get_by_label("Show the tank in 3D").click();
+    h.run_steps(3);
+    assert!(!h.state().preview.enabled);
+    // Off, the other rows cannot be changed.
+    h.get_by_label("High").click();
+    h.get_by_label("Show the whole tank").click();
+    h.run_steps(3);
+    assert!(!h.state().preview.whole_tank);
+    assert_eq!(
+        h.state().preview.quality,
+        tanki_viewer::QualityPreference::Economy
+    );
+    drop(h);
+
+    let again = harness(&env);
+    assert!(
+        !again.state().preview.enabled,
+        "the choice survives a restart"
+    );
+    assert_eq!(
+        again.state().preview.quality,
+        tanki_viewer::QualityPreference::Economy
+    );
+    assert!(!again.state().preview.whole_tank);
+}

@@ -240,6 +240,8 @@ pub enum Dialog {
         selected: usize,
         switching: bool,
     },
+    /// The 3D preview's own settings, opened from the stage (the same as in Settings).
+    Preview3d,
 }
 
 /// What waits for room on the disk (see [`Dialog::LowSpace`]).
@@ -605,6 +607,11 @@ pub struct Studio {
     pub watch: bool,
     /// Queued skins that went on by themselves, shown in the Garage until dismissed.
     pub later_done: Option<LaterDone>,
+    /// The Garage's 3D preview: the setting, the stage and its scenes.
+    pub preview: crate::preview3d::Preview3d,
+    /// The skin files the selected item has in the cache, and for which item and scan: finding
+    /// them goes through the whole cache, too slow for every frame.
+    pub skin_files: Option<(String, std::collections::BTreeSet<String>)>,
 }
 
 /// A look at the cache: when (Unix seconds) and whether its files had changed.
@@ -671,6 +678,11 @@ impl Studio {
             .ui_scale()?
             .and_then(|v| tanki_ui::scale::parse(&v))
             .unwrap_or(1.0);
+        let preview_3d = store.preview_3d()?;
+        let stage_quality =
+            tanki_viewer::QualityPreference::from_pref(store.stage_quality()?.as_deref());
+        let whole_tank = store.whole_tank()?;
+        let tank = crate::preview3d::Tank::restored(|part| store.tank_part(part).ok().flatten());
         tanki_ui::fonts::install(&cc.egui_ctx);
         tanki_ui::theme::apply(&cc.egui_ctx, theme);
         // A size given for screenshots and tests (`TANKI_SIZE`, `TANKI_SHOT`) is kept as it is.
@@ -767,7 +779,18 @@ impl Studio {
             was_focused: true,
             watch: true,
             later_done: None,
+            skin_files: None,
+            preview: crate::preview3d::Preview3d::new(
+                preview_3d,
+                stage_quality,
+                tanki_viewer::Stage::new(cc.wgpu_render_state.as_ref()),
+                whole_tank,
+                tank,
+            ),
         };
+        if let Some(view) = app.session.stage.clone() {
+            app.preview.restore_view(&view);
+        }
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();
         app.active_pack = app.store.active_pack().ok().flatten();
@@ -881,9 +904,15 @@ impl Studio {
             .filter(|key| self.rows.iter().any(|r| &r.key == key));
     }
 
-    /// The first recognised item, at its highest modification present.
+    /// The tank's hull (the starter one until the user chooses), else the first recognised item,
+    /// at its highest modification present.
     pub fn default_selection(&self) -> Option<Selection> {
-        let item = self.items.first()?;
+        let hull = &self.preview.tank.hull.0;
+        let item = self
+            .items
+            .iter()
+            .find(|item| item.kind == "hull" && &item.id == hull)
+            .or_else(|| self.items.first())?;
         let grade = (0..4).rev().find(|g| item.present[*g]).unwrap_or(3);
         Some(Selection {
             kind: item.kind.clone(),
@@ -980,6 +1009,33 @@ impl Studio {
     pub fn variant_key(&self, item: usize, variant: usize) -> Option<String> {
         let (item, variant) = self.pack_variant(item, variant)?;
         Some(format!("{}:{}", item.target.grade, variant.id))
+    }
+
+    /// The model and texture files the item of `selection` has in the cache (see
+    /// [`tanki_core::apply::cache_skin_files`]), worked out again only for another item or scan.
+    pub fn item_skin_files(&mut self, selection: &Selection) -> BTreeSet<String> {
+        let input = format!("{}|{:?}", selection.key(), self.scanned_at);
+        if let Some((key, files)) = &self.skin_files
+            && *key == input
+        {
+            return files.clone();
+        }
+        let files = self
+            .scan
+            .as_ref()
+            .map(|scan| {
+                tanki_core::apply::cache_skin_files(
+                    scan,
+                    &PackTarget {
+                        kind: selection.kind.clone(),
+                        id: selection.id.clone(),
+                        grade: grade_code(selection.grade).to_owned(),
+                    },
+                )
+            })
+            .unwrap_or_default();
+        self.skin_files = Some((input, files.clone()));
+        files
     }
 
     pub fn pack_variant(&self, item: usize, variant: usize) -> Option<(&PackItem, &PackVariant)> {
@@ -1122,6 +1178,9 @@ impl Studio {
         self.session.garage_tab = self.garage_tab.clone();
         self.session.resource_filter = self.filter.code().to_owned();
         self.session.window = self.window;
+        if let Some(view) = self.preview.kept_view(self.session.stage.as_ref()) {
+            self.session.stage = Some(view);
+        }
         let Some(root) = self
             .scan
             .as_ref()

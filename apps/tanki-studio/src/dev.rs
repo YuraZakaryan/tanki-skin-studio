@@ -630,6 +630,7 @@ fn dialog_name(app: &Studio) -> &'static str {
         Some(Dialog::LowSpace { .. }) => "low space",
         Some(Dialog::DeleteOld { .. }) => "delete old backups",
         Some(Dialog::DeleteBackups { .. }) => "delete backups",
+        Some(Dialog::Preview3d) => "3d preview",
     }
 }
 

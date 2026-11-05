@@ -21,6 +21,7 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 tanki-core = { path = "../../crates/tanki-core" }
 tanki-i18n = { path = "../../crates/tanki-i18n" }
 tanki-ui = { path = "../../crates/tanki-ui" }
+tanki-viewer = { path = "../../crates/tanki-viewer" }
 eframe = { version = "0.37.0", default-features = false, features = ["wgpu", "default_fonts", "accesskit", "links"] }
 rfd = "0.17.2"
 image.workspace = true
@@ -34,4 +35,6 @@ winresource = "0.1.34"
 tanki-testkit = { path = "../../crates/tanki-testkit" }
 egui = "0.37.0"
 base64.workspace = true
-egui_kittest = { version = "0.37.0", features = ["eframe"] }
+# `wgpu`: the 3D preview's tests hand the app a real GPU (`common::gpu_harness`).
+egui_kittest = { version = "0.37.0", features = ["eframe", "wgpu"] }
+pollster = "1.0.1"

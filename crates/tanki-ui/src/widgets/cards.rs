@@ -126,8 +126,8 @@ fn paint_cover(
     match cover {
         Cover::Icon(glyph) => fonts::icon(painter, rect.center(), glyph, icon_size, icon_color),
         Cover::Image(texture, size) => {
-            // Fit, never stretch: scale to the largest size that fits with a little air around it.
-            let area = rect.shrink2(Vec2::new(8.0, 4.0));
+            // Fit, never stretch: scale to the largest size that fits with even air around it.
+            let area = rect.shrink2(Vec2::new(14.0, 12.0));
             let scale = (area.width() / size.x.max(1.0)).min(area.height() / size.y.max(1.0));
             let image = Rect::from_center_size(rect.center(), size * scale);
             painter.image(

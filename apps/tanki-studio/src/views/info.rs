@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Item: the item in focus, its modifications in the cache, matching skin variants, the pack the
-//! skins come from, and the form to label an unrecognised resource by hand.
+//! Item: the item in focus (in 3D as in the Garage, or the whole tank with its parts), its
+//! modifications in the cache, matching skin variants, the pack the skins come from, and the form
+//! to label an unrecognised resource by hand.
 
-use eframe::egui::{self, CornerRadius, Pos2, Rect, Ui, Vec2};
+use eframe::egui::{self, CornerRadius, Pos2, Rect, Role, Sense, Ui, Vec2};
 use tanki_core::targets::modification_markers;
 use tanki_i18n::{fmt, tl, tn};
 use tanki_ui::{
@@ -17,9 +18,28 @@ use tanki_ui::{
 
 use super::{scroll_page, shell};
 use crate::{
-    app::{Page, Studio},
-    model::{grade_code, item_name, marker_id, target_title},
+    app::{Page, Selection, Studio},
+    model::{ResourceRow, grade_code, item_name, marker_id, target_title},
+    preview3d::TankParts,
 };
+
+/// The overview's model and facts stand side by side from this width; narrower, one above the other.
+const SIDE_BY_SIDE: f32 = 640.0;
+/// The facts' column beside the model.
+const FACTS_WIDTH: f32 = 300.0;
+/// The model's height when the facts are under it.
+const STACKED_STAGE: f32 = 240.0;
+/// The overview's height: a header, the model (and the facts, beside or under it: the tank's
+/// three part cards, or an item's name, chips and note), margins.
+fn overview_height(width: f32, tank: bool) -> f32 {
+    let facts = if tank { 196.0 } else { 124.0 };
+    let body = if width - 36.0 >= SIDE_BY_SIDE {
+        280.0
+    } else {
+        STACKED_STAGE + 16.0 + facts
+    };
+    widgets::HEADER_HEIGHT + 18.0 + body + 18.0
+}
 
 pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     // A page of the Garage (its Details), or of Resources when a resource is being labelled:
@@ -29,8 +49,21 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     } else {
         Page::Garage
     };
-    let (title, subtitle) = match &app.selection {
-        Some(selection) if app.label_resource.is_none() => (
+    let parts = app
+        .selection
+        .as_ref()
+        .filter(|_| app.label_resource.is_none())
+        .and_then(|selection| app.tank_parts(selection));
+    let (title, subtitle) = match (&app.selection, &parts) {
+        (Some(_), Some(parts)) => (
+            format!(
+                "{} + {}",
+                target_title(&parts.hull.id),
+                target_title(&parts.turret.id)
+            ),
+            tl!("Tank · pick a part for its modifications and skin variants").to_owned(),
+        ),
+        (Some(selection), None) if app.label_resource.is_none() => (
             crate::model::target_title(&selection.id),
             fmt(
                 tl!("{kind} · modifications, skin variants, pack and labeling"),
@@ -72,10 +105,24 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
         main.max,
     );
     let wide = super::is_wide(body.shrink2(Vec2::new(32.0, 0.0)));
-    let min_height = if wide {
-        764.0 + 64.0
+    // The item's panel: its 3D overview for a selection, the short facts while labelling.
+    let content_width = body.width() - 64.0;
+    let item_height = if app.selection.is_some() && app.label_resource.is_none() {
+        overview_height(
+            if wide {
+                content_width - 440.0 - 24.0
+            } else {
+                content_width
+            },
+            parts.is_some(),
+        )
     } else {
-        32.0 + 193.0 + 24.0 + 291.0 + 24.0 + 232.0 + 24.0 + 209.0 + 24.0 + 420.0 + 32.0
+        193.0
+    };
+    let min_height = if wide {
+        764.0 - 193.0 + item_height + 64.0
+    } else {
+        32.0 + item_height + 24.0 + 291.0 + 24.0 + 232.0 + 24.0 + 209.0 + 24.0 + 420.0 + 32.0
     };
     scroll_page(ui, body, min_height, |ui, rect| {
         let content = rect.shrink(32.0);
@@ -84,7 +131,11 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
             let left = rows(
                 cols[0],
                 24.0,
-                &[Size::Fixed(193.0), Size::Fixed(291.0), Size::Fill(1.0)],
+                &[
+                    Size::Fixed(item_height),
+                    Size::Fixed(291.0),
+                    Size::Fill(1.0),
+                ],
             );
             let right = rows(cols[1], 24.0, &[Size::Fixed(209.0), Size::Fill(1.0)]);
             (left[0], left[1], left[2], right[0], right[1])
@@ -93,7 +144,7 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
                 content,
                 24.0,
                 &[
-                    Size::Fixed(193.0),
+                    Size::Fixed(item_height),
                     Size::Fixed(291.0),
                     Size::Fixed(232.0),
                     Size::Fixed(209.0),
@@ -117,6 +168,11 @@ fn labelled_row(app: &Studio) -> Option<crate::model::ResourceRow> {
 }
 
 fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
+    if app.label_resource.is_none()
+        && let Some(selection) = app.selection.clone()
+    {
+        return overview(app, ui, rect, &selection);
+    }
     let tokens = Tokens::get(ui.ctx());
     let label_row = labelled_row(app);
     let (icon, meta, title, kind_chip, state_chip, note) = if let Some(row) = &label_row {
@@ -127,21 +183,6 @@ fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             (ChipKind::Neutral, row.kind.clone()),
             (ChipKind::Warning, tl!("Not recognised").to_owned()),
             tl!("Give this resource an item id below to use skins for it.").to_owned(),
-        )
-    } else if let Some(selection) = &app.selection {
-        (
-            super::garage::kind_icon(&selection.kind),
-            format!("{} · {}", selection.kind, selection.id),
-            target_title(&selection.id),
-            (
-                ChipKind::Info,
-                super::garage::kind_label(&selection.kind).to_owned(),
-            ),
-            (ChipKind::Success, tl!("Recognised in cache").to_owned()),
-            tl!(
-                "Modifications of one item sit side by side and usually share the same model size."
-            )
-            .to_owned(),
         )
     } else {
         let body = widgets::panel(ui, rect, tl!("Item"), None);
@@ -198,6 +239,304 @@ fn item_panel(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         galley,
         tokens.text_2,
     );
+}
+
+/// The item in focus above its modifications: in 3D as in the Garage (the same stage, view and
+/// turning; its flat picture while 3D is off), and beside it what the item is. With the whole tank
+/// on, the tank in 3D and its parts, the one picked shown in the panels below.
+fn overview(app: &mut Studio, ui: &mut Ui, rect: Rect, selection: &Selection) {
+    app.remember_tank_part(selection);
+    let parts = app.tank_parts(selection);
+    let (title, meta) = match &parts {
+        Some(parts) => (
+            tl!("My tank"),
+            format!(
+                "{} · {}",
+                item_name("hull", &parts.hull.id, grade_code(parts.hull.grade)),
+                item_name("turret", &parts.turret.id, grade_code(parts.turret.grade)),
+            ),
+        ),
+        None => (
+            tl!("Item"),
+            format!("{} · {}", selection.kind, selection.id),
+        ),
+    };
+    let body = widgets::panel(ui, rect, title, Some(&meta));
+    let inner = body.shrink(18.0);
+    let beside = inner.width() >= SIDE_BY_SIDE;
+    let (stage, facts) = if beside {
+        let cols = columns(inner, 24.0, &[Size::Fill(1.0), Size::Fixed(FACTS_WIDTH)]);
+        (cols[0], cols[1])
+    } else {
+        let parts = rows(inner, 16.0, &[Size::Fixed(STACKED_STAGE), Size::Fill(1.0)]);
+        (parts[0], parts[1])
+    };
+    model(app, ui, stage, selection);
+    match parts {
+        Some(parts) => part_cards(app, ui, facts, &parts, selection, beside),
+        None => item_facts(app, ui, facts, selection, beside),
+    }
+}
+
+/// The cache resource of a selection's modification, when the cache has it.
+fn selection_row(app: &Studio, selection: &Selection) -> Option<ResourceRow> {
+    let marker = app
+        .items
+        .iter()
+        .find(|i| i.kind == selection.kind && i.id == selection.id)
+        .and_then(|i| i.markers[selection.grade.min(3)].clone())?;
+    app.rows.iter().find(|r| r.key == marker).cloned()
+}
+
+/// The model on a stage of its own, as in the Garage.
+fn model(app: &mut Studio, ui: &mut Ui, stage: Rect, selection: &Selection) {
+    let tokens = Tokens::get(ui.ctx());
+    draw::radial(
+        ui.painter(),
+        stage,
+        12.0,
+        tokens.surface_3,
+        tokens.stage,
+        tokens.surface,
+    );
+    ui.painter().rect_stroke(
+        stage,
+        CornerRadius::same(12),
+        egui::Stroke::new(1.0, tokens.border),
+        egui::StrokeKind::Inside,
+    );
+    let backdrop = ui.painter().add(egui::Shape::Noop);
+    let under = ui.painter().add(egui::Shape::Noop);
+    let drawn = app.preview.active() && {
+        let mut looks = super::preview3d::looks(app, selection);
+        // Comparing with the game is the Garage's: here the look alone.
+        looks.compared = None;
+        super::preview3d::stage(
+            app,
+            ui,
+            stage.shrink(16.0),
+            stage.shrink(2.0),
+            [backdrop, under],
+            looks,
+        )
+    };
+    if !drawn {
+        let row = selection_row(app, selection);
+        super::garage::flat_picture(app, ui, stage.shrink(16.0), selection, row.as_ref());
+    }
+}
+
+/// What a single item is: its name, kind, whether the cache has it.
+fn item_facts(app: &Studio, ui: &mut Ui, area: Rect, selection: &Selection, centred: bool) {
+    let tokens = Tokens::get(ui.ctx());
+    let found = selection_row(app, selection).is_some();
+    let title = target_title(&selection.id);
+    let title_style = Text::display(24.0, 700, tokens.text);
+    let chips_height = 24.0;
+    let note =
+        tl!("Modifications of one item sit side by side and usually share the same model size.");
+    let galley = fonts::paragraph(
+        ui.painter(),
+        note,
+        Text::body(13.0, 400, tokens.text_2),
+        area.width(),
+        Some(20.0),
+    );
+    // Centred beside the model; under it, from the top.
+    let height = 32.0 + 12.0 + chips_height + 16.0 + galley.size().y;
+    let top = area.min.y
+        + if centred {
+            ((area.height() - height) / 2.0).max(0.0)
+        } else {
+            0.0
+        };
+    let used = fonts::draw(
+        ui.painter(),
+        Pos2::new(area.min.x, top),
+        &title,
+        title_style,
+    );
+    super::label_node(ui, used, "item-title", &title);
+    let chips_y = top + 32.0 + 12.0;
+    let kind = super::garage::kind_label(&selection.kind);
+    let first = widgets::chip_width(ui, kind);
+    widgets::paint_chip(
+        ui,
+        Rect::from_min_size(
+            Pos2::new(area.min.x, chips_y),
+            Vec2::new(first, chips_height),
+        ),
+        ChipKind::Info,
+        kind,
+    );
+    let (chip, state) = if found {
+        (ChipKind::Success, tl!("Recognised in cache"))
+    } else {
+        (ChipKind::Neutral, tl!("Not in cache"))
+    };
+    let second = widgets::chip_width(ui, state);
+    widgets::paint_chip(
+        ui,
+        Rect::from_min_size(
+            Pos2::new(area.min.x + first + 8.0, chips_y),
+            Vec2::new(second, chips_height),
+        ),
+        chip,
+        state,
+    );
+    ui.painter().galley(
+        Pos2::new(area.min.x, chips_y + chips_height + 16.0),
+        galley,
+        tokens.text_2,
+    );
+}
+
+/// The tank's parts, one card each, the picked one marked: picking another shows it in the panels
+/// below.
+fn part_cards(
+    app: &mut Studio,
+    ui: &mut Ui,
+    area: Rect,
+    parts: &TankParts,
+    selection: &Selection,
+    centred: bool,
+) {
+    let cards: Vec<&Selection> = [Some(&parts.hull), Some(&parts.turret), parts.paint.as_ref()]
+        .into_iter()
+        .flatten()
+        .collect();
+    let height = |part: &Selection| if part.kind == "paint" { 52.0 } else { 64.0 };
+    let total: f32 = cards.iter().map(|p| height(p)).sum::<f32>() + 8.0 * (cards.len() - 1) as f32;
+    let mut y = area.min.y
+        + if centred {
+            ((area.height() - total) / 2.0).max(0.0)
+        } else {
+            0.0
+        };
+    let mut picked = None;
+    for part in cards {
+        let card = Rect::from_min_size(
+            Pos2::new(area.min.x, y),
+            Vec2::new(area.width(), height(part)),
+        );
+        if part_card(app, ui, card, part, part == selection) {
+            picked = Some(part.clone());
+        }
+        y += height(part) + 8.0;
+    }
+    if let Some(part) = picked {
+        app.selection = Some(part);
+    }
+}
+
+/// One part of the tank: its kind's icon (a paint's own swatch), name, kind and modification, and
+/// whether the cache has it. Returns whether it was clicked.
+fn part_card(app: &mut Studio, ui: &mut Ui, rect: Rect, part: &Selection, picked: bool) -> bool {
+    let tokens = Tokens::get(ui.ctx());
+    let paint = part.kind == "paint";
+    let name = target_title(&part.id);
+    let kind = super::garage::kind_label(&part.kind);
+    let label = format!("{kind}: {name}");
+    let response = ui.interact(
+        rect,
+        ui.scope_id().with(("tank-part", &part.kind)),
+        Sense::click(),
+    );
+    let accessible = label.clone();
+    response.widget_info(move || {
+        egui::WidgetInfo::selected(Role::Button, true, picked, accessible.clone())
+    });
+    let hovered = response.hovered();
+    let (fill, stroke) = if picked {
+        (tokens.surface_2, (1.5, tokens.primary))
+    } else if hovered {
+        (tokens.surface_2, (1.0, tokens.border_strong))
+    } else {
+        (tokens.surface, (1.0, tokens.border))
+    };
+    draw::rounded(
+        ui.painter(),
+        rect,
+        CornerRadius::same(12),
+        fill,
+        Some(stroke),
+    );
+    if hovered && !picked {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
+    let side = rect.height() - 24.0;
+    let icon = Rect::from_min_size(
+        Pos2::new(rect.min.x + 12.0, rect.center().y - side / 2.0),
+        Vec2::splat(side),
+    );
+    let row = selection_row(app, part);
+    let swatch = paint
+        .then(|| row.as_ref().and_then(|r| r.preview_group.clone()))
+        .flatten()
+        .and_then(|group| app.cache_preview(&ui.ctx().clone(), &group));
+    match swatch {
+        Some(texture) => {
+            egui::Image::new(&texture)
+                .corner_radius(CornerRadius::same(8))
+                .paint_at(ui, icon);
+        }
+        None => {
+            draw::rounded(
+                ui.painter(),
+                icon,
+                CornerRadius::same(10),
+                tokens.stage,
+                None,
+            );
+            fonts::icon(
+                ui.painter(),
+                icon.center(),
+                super::garage::kind_icon(&part.kind),
+                side * 0.5,
+                if picked {
+                    tokens.primary
+                } else {
+                    tokens.text_2
+                },
+            );
+        }
+    }
+    let x = icon.max.x + 12.0;
+    let (chip, state) = if row.is_some() {
+        (ChipKind::Success, tl!("Found"))
+    } else {
+        (ChipKind::Neutral, tl!("Not in cache"))
+    };
+    let chip_width = widgets::chip_width(ui, state);
+    let chip_rect = Rect::from_min_size(
+        Pos2::new(rect.max.x - 12.0 - chip_width, rect.center().y - 12.0),
+        Vec2::new(chip_width, 24.0),
+    );
+    widgets::paint_chip(ui, chip_rect, chip, state);
+    let room = chip_rect.min.x - 8.0 - x;
+    let title_style = Text::body(15.0, 600, tokens.text);
+    let sub_style = Text::body(12.0, 400, tokens.text_3);
+    let sub = if paint {
+        kind.to_owned()
+    } else {
+        format!("{kind} · {}", grade_code(part.grade).to_uppercase())
+    };
+    let (title_y, sub_y) = (rect.center().y - 9.0, rect.center().y + 10.0);
+    fonts::draw_left(
+        ui.painter(),
+        x,
+        title_y,
+        &fonts::ellipsize(ui.painter(), &name, title_style, room),
+        title_style,
+    );
+    fonts::draw_left(
+        ui.painter(),
+        x,
+        sub_y,
+        &fonts::ellipsize(ui.painter(), &sub, sub_style, room),
+        sub_style,
+    );
+    response.clicked()
 }
 
 fn modifications(app: &mut Studio, ui: &mut Ui, rect: Rect) {

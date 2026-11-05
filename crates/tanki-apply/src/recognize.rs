@@ -23,7 +23,7 @@ use tanki_cache::{
 };
 use tanki_pack::pack::{InstalledPack, read_pack_resource};
 
-use crate::geometry::{Fingerprint, fingerprint};
+use tanki_model::{Fingerprint, fingerprint};
 
 /// A cache resource id that was matched to an item.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1064,9 +1064,9 @@ mod tests {
     fn the_same_mesh_in_other_bytes_names_the_item_and_a_known_neighbour_anchors_the_block() {
         let root = scratch("geometry-cache");
         let packs_dir = scratch("geometry-pack");
-        let pack_model = crate::geometry::tests::model(&[(120, 200), (40, 60)]);
+        let pack_model = tanki_testkit::three_ds::model_counts(&[(120, 200), (40, 60)]);
         // The cache's export of the same mesh: other bytes, other object order.
-        let mut cache_model = crate::geometry::tests::model(&[(40, 60), (120, 200)]);
+        let mut cache_model = tanki_testkit::three_ds::model_counts(&[(40, 60), (120, 200)]);
         cache_model.extend([0u8; 8]);
         assert_ne!(pack_model, cache_model);
         let pack = pack(&packs_dir, &[("hull", "wasp", "m3", &pack_model, None)]);

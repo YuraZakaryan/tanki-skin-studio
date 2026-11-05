@@ -3,8 +3,9 @@
 //! Layer 3 facade. The logic lives in the lower crates; this keeps `tanki_core::cache::…` paths
 //! stable for applications and hosts the end-to-end tests that cross every layer.
 
-pub use tanki_apply::{apply, backups, paint, process, recognize, sprite};
+pub use tanki_apply::{apply, backups, look, paint, process, recognize, sprite};
 pub use tanki_cache::{cache, targets};
+pub use tanki_model as model;
 pub use tanki_pack::{archive, pack};
 pub use tanki_state::{later, paths, session, state};
 pub use tanki_update as update;

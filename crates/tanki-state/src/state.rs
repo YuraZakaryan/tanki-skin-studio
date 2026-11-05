@@ -16,6 +16,11 @@ use tanki_pack::pack::{InstalledPack, load_pack};
 const KEY_LANGUAGE: &str = "language";
 const KEY_THEME: &str = "theme";
 const KEY_UI_SCALE: &str = "ui_scale";
+const KEY_PREVIEW_3D: &str = "garage.preview_3d";
+const KEY_STAGE_QUALITY: &str = "garage.stage_quality";
+const KEY_WHOLE_TANK: &str = "garage.whole_tank";
+/// Followed by `.hull`, `.turret` or `.paint`.
+const KEY_TANK: &str = "garage.tank";
 
 pub struct StateStore {
     conn: Connection,
@@ -161,6 +166,36 @@ impl StateStore {
     }
     pub fn set_ui_scale(&self, percent: u32) -> Result<()> {
         self.set(KEY_UI_SCALE, &percent.to_string())
+    }
+    /// Whether the Garage shows the selected item in 3D: on unless the user turned it off.
+    pub fn preview_3d(&self) -> Result<bool> {
+        Ok(self.get(KEY_PREVIEW_3D)?.as_deref() != Some("off"))
+    }
+    pub fn set_preview_3d(&self, on: bool) -> Result<()> {
+        self.set(KEY_PREVIEW_3D, if on { "on" } else { "off" })
+    }
+    /// The saved 3D quality (`auto`, `economy`, `balanced`, `high`), if the user ever chose one.
+    pub fn stage_quality(&self) -> Result<Option<String>> {
+        self.get(KEY_STAGE_QUALITY)
+    }
+    pub fn set_stage_quality(&self, code: &str) -> Result<()> {
+        self.set(KEY_STAGE_QUALITY, code)
+    }
+    /// Whether the 3D stage shows the whole tank (a hull, its turret and a paint together): on
+    /// unless the user turned it off.
+    pub fn whole_tank(&self) -> Result<bool> {
+        Ok(self.get(KEY_WHOLE_TANK)?.as_deref() != Some("off"))
+    }
+    pub fn set_whole_tank(&self, on: bool) -> Result<()> {
+        self.set(KEY_WHOLE_TANK, if on { "on" } else { "off" })
+    }
+    /// The part of the tank last chosen in the Garage (`hull`, `turret`, `paint`): `id:m3` for a
+    /// hull or turret, the id for a paint; `None` while the user never chose one.
+    pub fn tank_part(&self, part: &str) -> Result<Option<String>> {
+        self.get(&format!("{KEY_TANK}.{part}"))
+    }
+    pub fn set_tank_part(&self, part: &str, value: &str) -> Result<()> {
+        self.set(&format!("{KEY_TANK}.{part}"), value)
     }
     pub fn set(&self, key: &str, value: &str) -> Result<()> {
         self.conn.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", params![key,value])?;

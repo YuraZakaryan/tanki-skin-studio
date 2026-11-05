@@ -16,6 +16,8 @@ serde_json.workspace = true
 sysinfo = { version = "0.39.6", default-features = false, features = ["system", "disk"] }
 tanki-cache = { path = "../tanki-cache" }
 tanki-pack = { path = "../tanki-pack" }
+tanki-model = { path = "../tanki-model" }
 
 [dev-dependencies]
 base64.workspace = true
+tanki-testkit = { path = "../tanki-testkit" }

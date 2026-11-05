@@ -3,10 +3,7 @@
 //! Garage: the selected item with its modifications and skin variants, and every item of the cache.
 
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
-use tanki_core::{
-    apply::{cache_skin_files, missing_from},
-    pack::PackTarget,
-};
+use tanki_core::apply::missing_from;
 use tanki_i18n::{fmt, tl, tl_ctx, tn};
 use tanki_ui::{
     draw, fonts,
@@ -21,6 +18,7 @@ use super::{scroll_page, shell};
 use crate::{
     app::{Page, Selection, StateFilter, Studio, TABS},
     model::{grade_code, item_name, target_title},
+    preview3d::Preview3d,
 };
 
 pub fn kind_label(kind: &str) -> &'static str {
@@ -224,6 +222,10 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         egui::Stroke::new(1.0, tokens.border),
         egui::StrokeKind::Inside,
     );
+    // The 3D model and the light behind it go here, under the chips, the toolbar and the selector
+    // drawn next.
+    let backdrop = ui.painter().add(egui::Shape::Noop);
+    let under_widgets = ui.painter().add(egui::Shape::Noop);
     let marker = app
         .items
         .iter()
@@ -271,8 +273,16 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         .icon(icons::SCAN_SEARCH)
         .height(28.0);
     let details_width = details.measure(ui);
+    // The 3D toolbar takes the right end (only its settings button while 3D is off), Details
+    // stands left of it.
+    let details_right = if app.preview.stage.is_available() {
+        let shown = app.preview.active() && app.preview.stage.key(Preview3d::MAIN).is_some();
+        super::preview3d::toolbar(app, ui, stage.max.x - 18.0, y - 4.0, shown) - 8.0
+    } else {
+        stage.max.x - 18.0
+    };
     let details_rect = Rect::from_min_size(
-        Pos2::new(stage.max.x - 18.0 - details_width, y - 2.0),
+        Pos2::new(details_right - details_width, y - 2.0),
         Vec2::new(details_width, 28.0),
     );
     let room = details_rect.min.x - 8.0;
@@ -309,20 +319,97 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         Pos2::new(stage.min.x + 18.0, stage.min.y + 54.0),
         Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector_room),
     );
+    // In 3D when it is on and the look can be built; else the flat picture. A hull, turret or
+    // paint chosen becomes the tank's, shown with the tank's other parts.
+    app.remember_tank_part(&selection);
+    let drawn_3d = app.preview.active() && {
+        let looks = super::preview3d::looks(app, &selection);
+        // Between the chips' row and the selector (a paint has none), 16 clear of each.
+        let selector = if paint { 0.0 } else { 30.0 + 16.0 };
+        let scene = Rect::from_min_max(
+            Pos2::new(stage.min.x + 18.0, stage.min.y + 18.0 + 32.0 + 8.0),
+            Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector),
+        );
+        super::preview3d::stage(
+            app,
+            ui,
+            scene,
+            stage.shrink(2.0),
+            [backdrop, under_widgets],
+            looks,
+        )
+    };
+    if !drawn_3d {
+        flat_picture(app, ui, center, &selection, row.as_ref());
+    }
+    if paint {
+        return;
+    }
+    // Modification selector, centred at the bottom.
+    let label = tl!("Modification").to_uppercase();
+    let label_style = Text::display(11.0, 700, tokens.text_3).spaced(1.5);
+    let label_width = fonts::width(ui.painter(), &label, label_style);
+    let total = label_width + 12.0 + 4.0 * 52.0 + 3.0 * 12.0;
+    let start = stage.center().x - total / 2.0;
+    let selector_y = stage.max.y - 18.0 - 30.0;
+    fonts::draw_left(ui.painter(), start, selector_y + 15.0, &label, label_style);
+    let present_grades = app
+        .items
+        .iter()
+        .find(|i| i.kind == selection.kind && i.id == selection.id)
+        .map_or([false; 4], |i| i.present);
+    for (grade, &is_present) in present_grades.iter().enumerate() {
+        let chip = Rect::from_min_size(
+            Pos2::new(start + label_width + 12.0 + grade as f32 * 64.0, selector_y),
+            Vec2::new(52.0, 30.0),
+        );
+        let response = ui.interact(
+            chip,
+            ui.scope_id().with(("garage-grade", grade)),
+            Sense::click(),
+        );
+        widgets::grade_chip_paint(
+            ui,
+            chip,
+            &format!("M{grade}"),
+            grade == selection.grade,
+            is_present,
+            response.hovered(),
+        );
+        if response.clicked() {
+            app.selection = Some(Selection {
+                grade,
+                ..selection.clone()
+            });
+        }
+    }
+}
+
+/// The item's flat picture in `center` (3D off, or a look that cannot be built): the picked skin's
+/// own picture, else the item as the game shows it, with a caption saying which.
+pub(super) fn flat_picture(
+    app: &mut Studio,
+    ui: &mut Ui,
+    center: Rect,
+    selection: &Selection,
+    row: Option<&crate::model::ResourceRow>,
+) {
+    let tokens = Tokens::get(ui.ctx());
+    let paint = selection.kind == "paint";
     let ctx = ui.ctx().clone();
-    let variant_texture = app.chosen_variant(&selection).and_then(|(i, v)| {
+    let variant_texture = app.chosen_variant(selection).and_then(|(i, v)| {
         let pack = app.active_pack.clone()?;
         let variant = pack.manifest.items.get(i)?.variants.get(v)?.clone();
         app.variant_preview(&ctx, &pack, &variant)
     });
     // The picked skin's own picture when the pack has one, else the item as the game shows it.
     // The caption says whether that skin is in the game: a pick is only a pick until applied.
-    let chosen = app.chosen_variant(&selection);
+    let chosen = app.chosen_variant(selection);
     let has_variant = chosen.is_some();
-    let in_game = chosen.is_some() && chosen == app.applied_variant(&selection);
-    let worn = app.in_game_name(&selection);
+    let in_game = chosen.is_some() && chosen == app.applied_variant(selection);
+    let worn = app.in_game_name(selection);
     // A paint's own picture stands for it when the game has no garage picture of it.
-    let picture = row.as_ref().and_then(|r| {
+    let picture = row.and_then(|r| {
         r.picture_group
             .clone()
             .or_else(|| paint.then(|| r.preview_group.clone()).flatten())
@@ -344,7 +431,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     // The game downloads a modification's garage picture only when its own garage shows it: say
     // so, and how to get it, when the cache has none.
     let no_picture =
-        row.is_some() && !has_variant && row.as_ref().is_some_and(|r| r.picture_group.is_none());
+        row.is_some() && !has_variant && row.is_some_and(|r| r.picture_group.is_none());
     match texture {
         Some(texture) => {
             let area = Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
@@ -405,47 +492,6 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             }
         }
     }
-    if paint {
-        return;
-    }
-    // Modification selector, centred at the bottom.
-    let label = tl!("Modification").to_uppercase();
-    let label_style = Text::display(11.0, 700, tokens.text_3).spaced(1.5);
-    let label_width = fonts::width(ui.painter(), &label, label_style);
-    let total = label_width + 12.0 + 4.0 * 52.0 + 3.0 * 12.0;
-    let start = stage.center().x - total / 2.0;
-    let selector_y = stage.max.y - 18.0 - 30.0;
-    fonts::draw_left(ui.painter(), start, selector_y + 15.0, &label, label_style);
-    let present_grades = app
-        .items
-        .iter()
-        .find(|i| i.kind == selection.kind && i.id == selection.id)
-        .map_or([false; 4], |i| i.present);
-    for (grade, &is_present) in present_grades.iter().enumerate() {
-        let chip = Rect::from_min_size(
-            Pos2::new(start + label_width + 12.0 + grade as f32 * 64.0, selector_y),
-            Vec2::new(52.0, 30.0),
-        );
-        let response = ui.interact(
-            chip,
-            ui.scope_id().with(("garage-grade", grade)),
-            Sense::click(),
-        );
-        widgets::grade_chip_paint(
-            ui,
-            chip,
-            &format!("M{grade}"),
-            grade == selection.grade,
-            is_present,
-            response.hovered(),
-        );
-        if response.clicked() {
-            app.selection = Some(Selection {
-                grade,
-                ..selection.clone()
-            });
-        }
-    }
 }
 
 fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
@@ -463,20 +509,7 @@ fn variants(app: &mut Studio, ui: &mut Ui, rect: Rect) {
     let target = item_name(&selection.kind, &selection.id, grade_code(selection.grade));
     // The model and texture files the selected item has in the cache: a skin that does not bring
     // every one of them cannot be applied (the preview is optional).
-    let cache_files = app
-        .scan
-        .as_ref()
-        .map(|scan| {
-            cache_skin_files(
-                scan,
-                &PackTarget {
-                    kind: selection.kind.clone(),
-                    id: selection.id.clone(),
-                    grade: grade_code(selection.grade).to_owned(),
-                },
-            )
-        })
-        .unwrap_or_default();
+    let cache_files = app.item_skin_files(&selection);
     let missing = |app: &Studio, (item, variant): (usize, usize)| {
         app.pack_variant(item, variant)
             .map(|(_, v)| missing_from(&cache_files, v))

@@ -281,6 +281,8 @@ A Cargo workspace of focused crates, layered so the core never depends on the in
 |---|---|---|
 | 0 | `tanki-ui` | The interface kit drawn to `design.pen`: dark and light tokens, bundled fonts and icons, widgets, layout, interface zoom |
 | 0 | `tanki-i18n` | Localisation: English keys in code, the Russian catalogue, plural rules, digit grouping |
+| 0 | `tanki-model` | 3DS models read safely into meshes, their geometry fingerprint, and geometry ready to draw |
+| 1 | `tanki-viewer` | The Garage's 3D stage: wgpu drawing only when the view changes, an orbit camera, quality levels, before/after |
 | 1 | `tanki-cache` | Finding and scanning a cache; the item table and consecutive modification ids |
 | 1 | `tanki-pack` | The `.tankipack` format, safe import from ZIP or folder, and building packs from plain folders |
 | 1 | `tanki-update` | Updates from this repository's GitHub releases: the check, the download checked against `SHA256SUMS.txt`, the install and the restart |

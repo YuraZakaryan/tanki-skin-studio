@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Settings, one column of grouped rows (as Windows 11 and GNOME lay them out): the game cache
 //! (which one, when it was last read, how often it is read again, what the backups take) and the
-//! appearance (theme, language, interface size). The backups have their own page.
+//! appearance (theme, language, interface size) and the Garage (its 3D preview). The backups have
+//! their own page.
 
 use eframe::egui::{CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
 use tanki_i18n::{Lang, fmt, tl, tn};
@@ -41,19 +42,25 @@ pub fn draw(app: &mut Studio, ui: &mut Ui, main: Rect) {
     let width = (body.width() - 64.0).clamp(240.0, COLUMN);
     let cache = cache_rows(app, ui);
     let look = look_rows(app, ui);
+    let garage = super::preview3d::settings_rows(app, ui);
     let height = 32.0
         + 29.0
         + widgets::group_height(ui, width, &cache.rows())
         + 28.0
         + 29.0
         + widgets::group_height(ui, width, &look.rows())
+        + 28.0
+        + 29.0
+        + garage.height(ui, width)
         + 32.0;
     scroll_page(ui, body, height, |ui, rect| {
         let x = rect.min.x + 32.0;
         let mut y = widgets::group_heading(ui, Pos2::new(x, rect.min.y + 32.0), tl!("Game cache"));
         y = cache.draw(app, ui, Pos2::new(x, y), width) + 28.0;
         y = widgets::group_heading(ui, Pos2::new(x, y), tl!("Appearance"));
-        look.draw(app, ui, Pos2::new(x, y), width);
+        y = look.draw(app, ui, Pos2::new(x, y), width) + 28.0;
+        y = widgets::group_heading(ui, Pos2::new(x, y), tl!("Garage"));
+        garage.draw(app, ui, Pos2::new(x, y), width, "settings-garage");
     });
 }
 
@@ -414,7 +421,8 @@ impl LookRows {
         ]
     }
 
-    fn draw(&self, app: &mut Studio, ui: &mut Ui, origin: Pos2, width: f32) {
+    /// Draw the rows at `origin`; returns the y under them.
+    fn draw(&self, app: &mut Studio, ui: &mut Ui, origin: Pos2, width: f32) -> f32 {
         let rows = self.rows();
         let places = widgets::group(ui, origin, width, &rows, "settings-look");
         let (_, clicked) = widgets::choice_segments(
@@ -442,6 +450,7 @@ impl LookRows {
         if let Some(step) = stepper(ui, places[2].control, app.ui_scale) {
             app.zoom(step);
         }
+        places.last().map_or(origin.y, |place| place.rect.max.y)
     }
 }
 

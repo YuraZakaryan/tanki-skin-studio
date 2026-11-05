@@ -10,6 +10,8 @@ members = [
     "crates/tanki-core",
     "crates/tanki-ui",
     "crates/tanki-i18n",
+    "crates/tanki-model",
+    "crates/tanki-viewer",
     "crates/tanki-testkit",
     "xtask",
 ]

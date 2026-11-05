@@ -142,6 +142,41 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Cache names with huge numbers (outside data) are no markers and never overflow the id arithmetic | unit `recognize` |
 | A background search answering after the cache was switched is dropped and asked again for the new cache | it `recognise` |
 
+## 3D preview
+
+| Case | Test |
+|---|---|
+| A 3DS model reads back with its objects, UVs and smoothing; damaged faces, UVs and non-finite vertices are dropped | unit `tanki-model` `three_ds` |
+| Every truncation of a model and 2000 random corruptions read without a panic, faces always in range | unit `every_truncation_and_corruption_reads_without_panicking` |
+| Normals follow smoothing groups: one group shares vertices, other groups and no group split them | unit `tanki-model` `geometry` |
+| The geometry fingerprint survives another export of the same mesh (recognition) | unit `fingerprint_counts_survive_a_different_file`, `tanki-apply` recognise tests |
+| The camera turns with a drag, keeps turning after a flick and stops; pitch and zoom stay in their limits; home takes the short way; turning by itself waits for the user to let go | unit `tanki-viewer` `camera` |
+| Turning by itself is on by default: it waits five seconds, gathers speed and goes on very slowly; the way back home starts and ends at rest and can keep the zoom; a whole tank may fill more of the picture; a kept pose is restored within the limits; a still stage asks for a frame when it is to start, the wait counting the time between frames; turning it by hand pauses it, and it goes on from there five seconds later | unit `turning_by_itself_waits_five_seconds_…`, `turning_home_starts_and_ends_at_rest_…`, `a_larger_fill_comes_closer_…`, `a_still_stage_is_woken_…`, `turning_it_by_hand_pauses_…` |
+| Another hull, turret or paint keeps the view: the same angle and zoom, still turning from where it was with no new wait; the zoom, angle and auto-turn come back after a restart; a kept view without an item or with a number that is none is not kept | it `switching_the_hull_turret_or_paint_keeps_the_tank_turning_…`, `the_zoom_turn_and_auto_turn_come_back_after_a_restart`, unit `a_3d_view_without_an_item_…` |
+| The adapter picks the quality (OpenGL is always Economy); lighter levels never draw more | unit `tanki-viewer` `quality` |
+| On a real adapter: the tank is opaque in the middle on a clear background, with and without anti-aliasing; details cover the paint; a paint picture replaces the paint colour | unit `tanki-viewer` `gpu` (skipped where there is no adapter) |
+| A stage without a GPU is unavailable and harmless (the Garage shows the flat picture) | unit `a_stage_without_a_gpu_is_unavailable_and_harmless` |
+| The cache look is the newest revision with every file; a replaced file changes its key; a variant without a model (or paint) has none; a painted hull is the hull's files with the paint's picture | unit `tanki-apply` `look` |
+| A look becomes a textured part; the separate alpha picture becomes the details' alpha; a broken model or texture is an error and is not tried again | unit `tanki-studio` `preview3d` |
+| The 3D preview is on until turned off; both choices survive a restart | e2e `the_3d_preview_is_on_until_turned_off_and_both_choices_survive_a_restart`, it `the_3d_preview_is_on_by_default_and_settings_turn_it_off_for_good` |
+| Studio light: the top catches the key light and the sides are told apart; the contact shadow sits at the model and fades out; bright paint rolls off toward white keeping its hue; 4× anti-aliasing softens edges; the same view draws the same picture and home comes back to it | unit `tanki-viewer` `gpu` visual checks (`TANKI_VISUAL_DIR=<dir>` saves the pictures) |
+| With a GPU, the Garage draws the item where the flat picture was; the toolbar is there and Details stays clear of it | it `the_garage_draws_the_item_in_3d_where_the_flat_picture_was` |
+| A drag turns the model, the drag hint gives way to the caption, Home brings the first view back; the wheel zooms and never scrolls the page | it `dragging_turns_the_model…`, `the_wheel_zooms_the_stage…` |
+| A picked skin compares with the game (two different halves), the divider follows a drag, auto-turn toggles, a PNG is saved with a clear background; with no skin picked, Compare is disabled | it `a_picked_skin_compares_with_the_game…`, `without_a_picked_skin_there_is_nothing_to_compare` |
+| Quick settings turn 3D off (flat picture, only the settings button left) and on; they apply as they change, with no buttons but the ×; Escape and × close them; each quality still draws and survives a restart | it `quick_settings_…`, `escape_and_the_close_button_…`, `quality_choices_…` |
+| Hulls and turrets wear the plain green paint of the cache until a skin or paint says otherwise; without it, the cache look as it is | it `hulls_and_turrets_wear_the_green_of_the_cache_until_a_paint_is_chosen` |
+| A neutral lightmap leaves a colour as it is (the garage's calibrated exposure); a brighter one rolls off and keeps the hue | unit `a_neutral_lightmap_leaves_the_colour_as_it_is`, `bright_paint_rolls_off_toward_white_and_keeps_its_hue` |
+| A model that cannot be read shows the flat picture and is not read again; a modification the cache lacks has no stage; hull and turret get their own scenes | it `a_model_that_cannot_be_read_…`, `every_modification_and_the_turret_…` |
+| A 3DS object's pivot (local axes) is read; mounts, collision boxes and other helpers are told apart and never drawn | unit `helpers_are_told_apart_and_give_the_mount_and_the_pivot`, `a_tank_sets_its_turret_s_pivot_…` |
+| A whole tank sets the turret's pivot on the hull's mount (the top's middle when a model has neither); its key changes with any part; the tank's parts start as the starter hull and turret at M3 in the cache's green, then follow what is chosen and survive a restart; a broken saved value gives the starter part | unit `a_tank_sets_its_turret_…`, `without_a_mount_or_pivot_…`, `an_assembled_look_…`, `the_tank_starts_as_the_starter_one_…` |
+| A new user opens on the starter hull, shown whole in the cache's green; the switch shows the hull alone; a paint goes on both parts; the view stays while the parts change; the switch (Settings and the quick dialog) and the parts survive a restart; without the tank's other part in the cache the item is shown alone | it `a_new_user_sees_the_starter_tank_whole_…`, `the_tank_keeps_the_parts_chosen_last_…`, `without_the_tank_s_other_part_…`, `the_3d_preview_is_on_by_default_…` |
+| A paint is shown on the hull last looked at; without any hull model it keeps its flat picture | it `a_paint_is_shown_on_the_hull_last_looked_at`, `a_paint_without_any_hull_model_…` |
+| Let go while it turned by itself, it goes on the next frame at its usual speed, the way it was flicked (a flick slows down into it, never stopping or turning back); zooming does not stop it; grabbed while it only waited, it waits the usual time | unit `let_go_while_it_turned_by_itself_…` |
+| While the next model loads, the one before stays on the stage, faded under a loading pill, never a blank frame; the next one fades in | it `while_the_next_model_loads_the_one_before_stays_…` (`TANKI_VISUAL_DIR` saves the frame) |
+| Details of a whole tank: the same stage, tank and view as the Garage; the hull, turret and paint as cards, the picked one shown in the panels below; with the whole tank off, or its other part not in the cache, the item alone in 3D with its name and chips; with 3D off, its flat picture; model and cards never overlap from 820 to 1920 px | it `details_of_a_whole_tank_…`, `details_of_an_item_alone_…` (`TANKI_VISUAL_DIR` saves the pages) |
+| Toolbar, Details and stage never overlap from 820 to 1920 px wide | it `the_toolbar_details_and_stage_never_overlap_at_any_window_size` |
+| Monkey: 300 random clicks, drags, wheels, keys, item and size changes on the 3D preview; no stray dialog, the camera stays finite, every state renders | it `a_monkey_on_the_3d_preview_breaks_nothing` |
+
 ## Interface
 
 | Case | Test |
