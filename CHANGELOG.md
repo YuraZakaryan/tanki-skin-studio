@@ -6,6 +6,8 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-05
+
 ### Added
 
 - **The Garage shows your item in 3D.** "My tank" draws the selected hull, turret or paint as a 3D
@@ -289,7 +291,8 @@ All notable changes are recorded here. The format follows
 - Quality gate: provenance check, formatting, translations, Clippy, crate layering, unit, UI and
   real-window tests, dependency policy (`cargo-deny`), minimum Rust version check.
 
-[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/YuraZakaryan/tanki-skin-studio/compare/v0.4.0...v0.5.0
