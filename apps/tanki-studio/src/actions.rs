@@ -64,6 +64,53 @@ impl Studio {
         }
     }
 
+    /// Show the Garage's item in 3D, or the flat picture.
+    pub fn set_preview_3d(&mut self, on: bool) {
+        if self.preview.enabled == on {
+            return;
+        }
+        self.preview.enabled = on;
+        if let Err(error) = self.store.set_preview_3d(on) {
+            log::warn!("could not save the 3D preview setting: {error}");
+        }
+    }
+
+    pub fn set_stage_quality(&mut self, quality: tanki_viewer::QualityPreference) {
+        if self.preview.quality == quality {
+            return;
+        }
+        self.preview.set_quality(quality);
+        if let Err(error) = self.store.set_stage_quality(quality.code()) {
+            log::warn!("could not save the 3D quality: {error}");
+        }
+    }
+
+    /// Save the 3D view, as it is turned now, as a PNG where the user chooses.
+    pub fn save_stage_picture(&mut self) {
+        let Some(picture) = self.preview.stage.snapshot([1920, 1200]) else {
+            self.toast(tl!("Could not draw the picture."), None);
+            return;
+        };
+        let path = if self.file_dialogs {
+            rfd::FileDialog::new()
+                .set_file_name("tank.png")
+                .add_filter("PNG", &["png"])
+                .save_file()
+        } else {
+            Some(self.data.join("tank.png"))
+        };
+        let Some(path) = path else {
+            return;
+        };
+        match crate::preview3d::png(&picture).and_then(|bytes| Ok(std::fs::write(&path, bytes)?)) {
+            Ok(()) => self.toast(tl!("Picture saved"), None),
+            Err(error) => {
+                log::warn!("could not save the picture: {error:#}");
+                self.toast(tl!("Could not save the picture."), None);
+            }
+        }
+    }
+
     /// Zoom the interface one preset up (`direction > 0`) or down, or back to 100% (`0`).
     pub fn zoom(&mut self, direction: i32) {
         let next = if direction == 0 {

@@ -582,3 +582,31 @@ backup	Needed to undo	Нужна для отмены
 	{look} on {items}	{look} ({items})
 	{names} and {last}	{names} и {last}
 	{skins} are on now: they can no longer be taken off.	{skins} надеты сейчас: их больше нельзя будет снять.
+	3D preview	3D-превью
+	3D settings	Настройки 3D
+	3D view of the item	3D-вид предмета
+	All settings	Все настройки
+	Auto	Авто
+	Auto:	Авто:
+	Balanced	Баланс
+	Balanced (integrated graphics)	баланс (встроенная видеокарта)
+	Before and after divider	Разделитель «до и после»
+	Compare with the game	Сравнить с игрой
+	Could not draw the picture.	Не удалось нарисовать картинку.
+	Could not save the picture.	Не удалось сохранить картинку.
+	Drag to rotate · Scroll to zoom	Тяните, чтобы вращать · колесо — зум
+	Economy	Эконом
+	Economy (basic graphics)	эконом (простая видеокарта)
+	High	Высокое
+	High (discrete graphics)	высокое (дискретная видеокарта)
+	In the game	В игре
+	Loading 3D model…	Загрузка 3D-модели…
+	Lower is smoother on older computers	Чем ниже, тем плавнее на старых компьютерах
+	Picture saved	Картинка сохранена
+	Quality	Качество
+	Reset the view	Сбросить вид
+	Save a picture	Сохранить картинку
+	Show the tank in 3D	Показывать танк в 3D
+	Skin	Скин
+	Turn by itself	Вращать автоматически
+	Turn off to show the flat picture.	Выключите, чтобы показывать плоскую картинку.

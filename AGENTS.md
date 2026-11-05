@@ -49,6 +49,8 @@ theirs.
 - Interface strings are English keys (`tl!("…")`) with a Russian row in
   `crates/tanki-i18n/src/ru.tsv`; `cargo xtask i18n --template` prints the missing rows.
 - For the Garage, the app is the source of truth; `design.pen` follows it.
+- `design.pen` is at the 4 MiB file limit: new screens go in `design-2.pen`, which carries copies of
+  the components and variables of `design.pen` it uses.
 
 ## 4. Before every commit
 

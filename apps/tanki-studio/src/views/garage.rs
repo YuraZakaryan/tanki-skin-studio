@@ -5,6 +5,7 @@
 use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
 use tanki_core::{
     apply::{cache_skin_files, missing_from},
+    look::{LookSource, cache_look, variant_look},
     pack::PackTarget,
 };
 use tanki_i18n::{fmt, tl, tl_ctx, tn};
@@ -17,10 +18,11 @@ use tanki_ui::{
     widgets::{self, Button, ButtonKind, ChipKind, Cover, Width},
 };
 
-use super::{scroll_page, shell};
+use super::{preview3d::Looks, scroll_page, shell};
 use crate::{
     app::{Page, Selection, StateFilter, Studio, TABS},
     model::{grade_code, item_name, target_title},
+    preview3d::Preview3d,
 };
 
 pub fn kind_label(kind: &str) -> &'static str {
@@ -271,8 +273,16 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         .icon(icons::SCAN_SEARCH)
         .height(28.0);
     let details_width = details.measure(ui);
+    // The 3D toolbar takes the right end (only its settings button while 3D is off), Details
+    // stands left of it.
+    let details_right = if app.preview.stage.is_available() {
+        let shown = app.preview.active() && app.preview.stage.key(Preview3d::MAIN).is_some();
+        super::preview3d::toolbar(app, ui, stage.max.x - 18.0, y - 4.0, shown) - 8.0
+    } else {
+        stage.max.x - 18.0
+    };
     let details_rect = Rect::from_min_size(
-        Pos2::new(stage.max.x - 18.0 - details_width, y - 2.0),
+        Pos2::new(details_right - details_width, y - 2.0),
         Vec2::new(details_width, 28.0),
     );
     let room = details_rect.min.x - 8.0;
@@ -327,81 +337,144 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             .clone()
             .or_else(|| paint.then(|| r.preview_group.clone()).flatten())
     });
-    let (texture, caption) = match (variant_texture, has_variant, picture) {
-        (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
-        (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
-        // A skin of the pack that came without a picture: say so instead of showing another picture.
-        (None, true, _) => (None, tl!("This skin has no preview in the pack").to_owned()),
-        (None, false, Some(group)) => (
-            app.cache_preview(&ctx, &group),
-            worn.map_or_else(
+    // In 3D when it is on and the look can be built; else the flat picture below. A paint is
+    // seen on the hull last shown.
+    if selection.kind == "hull" {
+        app.preview.hull = Some((selection.id.clone(), selection.grade));
+    }
+    let drawn_3d = app.preview.active() && {
+        let target = PackTarget {
+            kind: selection.kind.clone(),
+            id: selection.id.clone(),
+            grade: grade_code(selection.grade).to_owned(),
+        };
+        let in_cache = app.scan.as_ref().and_then(|scan| cache_look(scan, &target));
+        // A picked skin shows as itself or not at all (one without a model has its picture).
+        let main = match chosen {
+            Some((i, v)) => app.active_pack.as_ref().and_then(|pack| {
+                let variant = pack.manifest.items.get(i)?.variants.get(v)?;
+                variant_look(pack, variant)
+            }),
+            None => in_cache.clone(),
+        };
+        let (main, in_cache) = if paint {
+            let body = app.paint_body();
+            let painted = |look: Option<LookSource>| {
+                Some(LookSource::Painted {
+                    body: Box::new(body.clone()?),
+                    paint: Box::new(look?),
+                })
+            };
+            (painted(main), painted(in_cache))
+        } else {
+            (main, in_cache)
+        };
+        let caption = if in_game {
+            tl!("In the game now").to_owned()
+        } else if has_variant {
+            tl!("Skin preview · not applied").to_owned()
+        } else {
+            worn.clone().map_or_else(
                 || tl!("Current look in the game").to_owned(),
                 |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
-            ),
-        ),
-        (None, false, None) => (None, tl!("No preview available").to_owned()),
+            )
+        };
+        let looks = Looks {
+            main,
+            compared: (has_variant && !in_game).then_some(in_cache).flatten(),
+            item: format!("{}:{}", selection.kind, selection.id),
+            caption,
+        };
+        // Between the chips' row and the selector (a paint has none), 16 clear of each.
+        let selector = if paint { 0.0 } else { 30.0 + 16.0 };
+        let scene = Rect::from_min_max(
+            Pos2::new(stage.min.x + 18.0, stage.min.y + 18.0 + 32.0 + 8.0),
+            Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector),
+        );
+        super::preview3d::stage(app, ui, scene, looks)
     };
-    // The game downloads a modification's garage picture only when its own garage shows it: say
-    // so, and how to get it, when the cache has none.
-    let no_picture =
-        row.is_some() && !has_variant && row.as_ref().is_some_and(|r| r.picture_group.is_none());
-    match texture {
-        Some(texture) => {
-            let area = Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
-            let size = texture.size_vec2();
-            let scale = (area.width() / size.x).min(area.height() / size.y).min(2.0);
-            let image = Rect::from_center_size(area.center(), size * scale);
-            ui.painter().image(
-                texture.id(),
-                image,
-                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                egui::Color32::WHITE,
-            );
-            fonts::draw_centered(
-                ui.painter(),
-                Rect::from_center_size(
-                    Pos2::new(center.center().x, center.max.y - 8.0),
-                    Vec2::new(center.width(), 16.0),
+    if !drawn_3d {
+        let (texture, caption) = match (variant_texture, has_variant, picture) {
+            (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
+            (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
+            // A skin of the pack that came without a picture: say so instead of showing another picture.
+            (None, true, _) => (None, tl!("This skin has no preview in the pack").to_owned()),
+            (None, false, Some(group)) => (
+                app.cache_preview(&ctx, &group),
+                worn.map_or_else(
+                    || tl!("Current look in the game").to_owned(),
+                    |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
                 ),
-                &caption,
-                Text::mono(12.0, 400, tokens.text_3),
-            );
-        }
-        None => {
-            let c = center.center();
-            fonts::icon(
-                ui.painter(),
-                Pos2::new(c.x, c.y - 14.0),
-                icons::IMAGE,
-                72.0,
-                tokens.text_3,
-            );
-            fonts::draw_centered(
-                ui.painter(),
-                Rect::from_center_size(Pos2::new(c.x, c.y + 44.0), Vec2::new(center.width(), 16.0)),
-                &caption,
-                Text::mono(12.0, 400, tokens.text_3),
-            );
-            if no_picture {
-                let note = fmt(
-                    tl!(
-                        "The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache."
-                    ),
-                    &[(
-                        "name",
-                        &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
-                    )],
+            ),
+            (None, false, None) => (None, tl!("No preview available").to_owned()),
+        };
+        // The game downloads a modification's garage picture only when its own garage shows it: say
+        // so, and how to get it, when the cache has none.
+        let no_picture = row.is_some()
+            && !has_variant
+            && row.as_ref().is_some_and(|r| r.picture_group.is_none());
+        match texture {
+            Some(texture) => {
+                let area =
+                    Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
+                let size = texture.size_vec2();
+                let scale = (area.width() / size.x).min(area.height() / size.y).min(2.0);
+                let image = Rect::from_center_size(area.center(), size * scale);
+                ui.painter().image(
+                    texture.id(),
+                    image,
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    egui::Color32::WHITE,
                 );
-                let width = (center.width() - 48.0).clamp(120.0, 420.0);
-                let galley = fonts::paragraph_centered(
+                fonts::draw_centered(
                     ui.painter(),
-                    &note,
-                    Text::body(12.0, 400, tokens.text_3),
-                    width,
-                    Some(17.0),
+                    Rect::from_center_size(
+                        Pos2::new(center.center().x, center.max.y - 8.0),
+                        Vec2::new(center.width(), 16.0),
+                    ),
+                    &caption,
+                    Text::mono(12.0, 400, tokens.text_3),
                 );
-                ui.painter()
-                    .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
+            }
+            None => {
+                let c = center.center();
+                fonts::icon(
+                    ui.painter(),
+                    Pos2::new(c.x, c.y - 14.0),
+                    icons::IMAGE,
+                    72.0,
+                    tokens.text_3,
+                );
+                fonts::draw_centered(
+                    ui.painter(),
+                    Rect::from_center_size(
+                        Pos2::new(c.x, c.y + 44.0),
+                        Vec2::new(center.width(), 16.0),
+                    ),
+                    &caption,
+                    Text::mono(12.0, 400, tokens.text_3),
+                );
+                if no_picture {
+                    let note = fmt(
+                        tl!(
+                            "The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache."
+                        ),
+                        &[(
+                            "name",
+                            &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
+                        )],
+                    );
+                    let width = (center.width() - 48.0).clamp(120.0, 420.0);
+                    let galley = fonts::paragraph_centered(
+                        ui.painter(),
+                        &note,
+                        Text::body(12.0, 400, tokens.text_3),
+                        width,
+                        Some(17.0),
+                    );
+                    ui.painter()
+                        .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
+                }
             }
         }
     }

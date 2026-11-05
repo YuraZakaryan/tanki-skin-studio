@@ -142,6 +142,22 @@ scene or journey (the real window), **unit** = `#[cfg(test)]` beside the code.
 | Cache names with huge numbers (outside data) are no markers and never overflow the id arithmetic | unit `recognize` |
 | A background search answering after the cache was switched is dropped and asked again for the new cache | it `recognise` |
 
+## 3D preview
+
+| Case | Test |
+|---|---|
+| A 3DS model reads back with its objects, UVs and smoothing; damaged faces, UVs and non-finite vertices are dropped | unit `tanki-model` `three_ds` |
+| Every truncation of a model and 2000 random corruptions read without a panic, faces always in range | unit `every_truncation_and_corruption_reads_without_panicking` |
+| Normals follow smoothing groups: one group shares vertices, other groups and no group split them | unit `tanki-model` `geometry` |
+| The geometry fingerprint survives another export of the same mesh (recognition) | unit `fingerprint_counts_survive_a_different_file`, `tanki-apply` recognise tests |
+| The camera turns with a drag, keeps turning after a flick and stops; pitch and zoom stay in their limits; home takes the short way; turning by itself waits for the user to let go | unit `tanki-viewer` `camera` |
+| The adapter picks the quality (OpenGL is always Economy); lighter levels never draw more | unit `tanki-viewer` `quality` |
+| On a real adapter: the tank is opaque in the middle on a clear background, with and without anti-aliasing; details cover the paint; a paint picture replaces the paint colour | unit `tanki-viewer` `gpu` (skipped where there is no adapter) |
+| A stage without a GPU is unavailable and harmless (the Garage shows the flat picture) | unit `a_stage_without_a_gpu_is_unavailable_and_harmless` |
+| The cache look is the newest revision with every file; a replaced file changes its key; a variant without a model (or paint) has none; a painted hull is the hull's files with the paint's picture | unit `tanki-apply` `look` |
+| A look becomes a textured part; the separate alpha picture becomes the details' alpha; a broken model or texture is an error and is not tried again | unit `tanki-studio` `preview3d` |
+| The 3D preview is on until turned off; both choices survive a restart | e2e `the_3d_preview_is_on_until_turned_off_and_both_choices_survive_a_restart` |
+
 ## Interface
 
 | Case | Test |

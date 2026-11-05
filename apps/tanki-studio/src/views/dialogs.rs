@@ -77,6 +77,7 @@ pub fn draw(app: &mut Studio, ctx: &eframe::egui::Context) {
             bytes,
             worn,
         } => delete_backups(app, ctx, &what, &dirs, backups, bytes, &worn),
+        Dialog::Preview3d => super::preview3d::dialog(app, ctx),
     }
 }
 

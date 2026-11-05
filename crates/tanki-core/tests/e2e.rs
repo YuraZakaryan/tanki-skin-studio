@@ -670,6 +670,25 @@ fn deleting_a_pack_removes_its_files_and_falls_back_to_the_next_one() -> Result<
 }
 
 #[test]
+fn the_3d_preview_is_on_until_turned_off_and_both_choices_survive_a_restart() -> Result<()> {
+    let root = scratch("prefs-3d");
+    let db = root.join("data/state.sqlite");
+    {
+        let store = StateStore::open(&db)?;
+        assert!(store.preview_3d()?, "on by default");
+        assert_eq!(store.stage_quality()?, None);
+        store.set_preview_3d(false)?;
+        store.set_stage_quality("economy")?;
+    }
+    let store = StateStore::open(&db)?;
+    assert!(!store.preview_3d()?);
+    assert_eq!(store.stage_quality()?.as_deref(), Some("economy"));
+    store.set_preview_3d(true)?;
+    assert!(store.preview_3d()?);
+    Ok(())
+}
+
+#[test]
 fn language_theme_size_and_session_survive_a_restart_without_clobbering_each_other() -> Result<()> {
     use tanki_core::session::{ItemRef, SessionState};
     let root = scratch("prefs");

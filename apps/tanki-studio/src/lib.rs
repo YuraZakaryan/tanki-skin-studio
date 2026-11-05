@@ -18,6 +18,7 @@ pub mod instance;
 pub mod later;
 pub mod logging;
 pub mod model;
+pub mod preview3d;
 pub mod previews;
 pub mod runtime;
 pub mod updates;

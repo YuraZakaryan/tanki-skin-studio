@@ -240,6 +240,8 @@ pub enum Dialog {
         selected: usize,
         switching: bool,
     },
+    /// The 3D preview's own settings, opened from the stage (the same as in Settings).
+    Preview3d,
 }
 
 /// What waits for room on the disk (see [`Dialog::LowSpace`]).
@@ -605,6 +607,8 @@ pub struct Studio {
     pub watch: bool,
     /// Queued skins that went on by themselves, shown in the Garage until dismissed.
     pub later_done: Option<LaterDone>,
+    /// The Garage's 3D preview: the setting, the stage and its scenes.
+    pub preview: crate::preview3d::Preview3d,
 }
 
 /// A look at the cache: when (Unix seconds) and whether its files had changed.
@@ -671,6 +675,9 @@ impl Studio {
             .ui_scale()?
             .and_then(|v| tanki_ui::scale::parse(&v))
             .unwrap_or(1.0);
+        let preview_3d = store.preview_3d()?;
+        let stage_quality =
+            tanki_viewer::QualityPreference::from_pref(store.stage_quality()?.as_deref());
         tanki_ui::fonts::install(&cc.egui_ctx);
         tanki_ui::theme::apply(&cc.egui_ctx, theme);
         // A size given for screenshots and tests (`TANKI_SIZE`, `TANKI_SHOT`) is kept as it is.
@@ -767,6 +774,11 @@ impl Studio {
             was_focused: true,
             watch: true,
             later_done: None,
+            preview: crate::preview3d::Preview3d::new(
+                preview_3d,
+                stage_quality,
+                tanki_viewer::Stage::new(cc.wgpu_render_state.as_ref()),
+            ),
         };
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();

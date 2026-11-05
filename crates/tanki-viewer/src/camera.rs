@@ -1,0 +1,240 @@
+// SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//! A camera that circles the model: dragged by the mouse, it keeps turning a little after a flick
+//! and slows down, zooms smoothly, eases back to the starting view, and can turn by itself while
+//! nobody touches it. Pure arithmetic over time steps, so every behaviour is unit-tested.
+
+use std::f32::consts::{PI, TAU};
+
+use glam::{Mat4, Vec2, Vec3, camera::rh};
+use tanki_model::Bounds;
+
+/// Where the camera stands: around the vertical axis, above the ground, and how far.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Pose {
+    /// Radians around the vertical (Z) axis, 0 looking from +X.
+    pub yaw: f32,
+    /// Radians above the ground plane.
+    pub pitch: f32,
+    /// 1 frames the whole model; smaller is closer.
+    pub zoom: f32,
+}
+
+/// A three-quarter view from the front left and a little above, the way a garage shows a tank.
+pub const HOME: Pose = Pose {
+    yaw: 2.36,
+    pitch: 0.36,
+    zoom: 1.0,
+};
+
+/// Vertical field of view: narrow, like a product photo, so the model is not distorted.
+const FOV_Y: f32 = 30.0 * PI / 180.0;
+/// How far one point of mouse travel turns the camera.
+const RADIANS_PER_POINT: f32 = 0.009;
+/// How fast a flick dies down, per second.
+const DAMPING: f32 = 5.0;
+/// Below this speed (radians per second) the camera stops.
+const STOP_SPEED: f32 = 0.03;
+/// How quickly zoom and the way home catch up, per second.
+const EASE: f32 = 12.0;
+const PITCH_MIN: f32 = 0.02;
+const PITCH_MAX: f32 = 1.35;
+const ZOOM_MIN: f32 = 0.45;
+const ZOOM_MAX: f32 = 2.2;
+/// Turning by itself starts after this many seconds without input.
+const AUTO_DELAY: f32 = 3.0;
+const AUTO_SPEED: f32 = 0.35;
+/// The sphere around a model is loose; frame a little tighter than it.
+const FRAMING: f32 = 0.88;
+
+#[derive(Debug, Clone)]
+pub struct OrbitCamera {
+    pose: Pose,
+    target_zoom: f32,
+    /// Yaw and pitch speed in radians per second, left over from a flick.
+    velocity: Vec2,
+    centre: Vec3,
+    radius: f32,
+    going_home: bool,
+    idle: f32,
+    /// Turn slowly by itself after a few seconds without input.
+    pub auto_rotate: bool,
+}
+
+impl Default for OrbitCamera {
+    fn default() -> Self {
+        OrbitCamera {
+            pose: HOME,
+            target_zoom: HOME.zoom,
+            velocity: Vec2::ZERO,
+            centre: Vec3::ZERO,
+            radius: 1.0,
+            going_home: false,
+            idle: 0.0,
+            auto_rotate: false,
+        }
+    }
+}
+
+impl OrbitCamera {
+    pub fn pose(&self) -> Pose {
+        self.pose
+    }
+
+    /// Look at a new model: centre on it and size the view to it. The pose is kept.
+    pub fn frame(&mut self, bounds: &Bounds) {
+        let centre = bounds.center();
+        self.centre = Vec3::from_array(centre);
+        self.radius = bounds.radius().max(1e-3);
+    }
+
+    /// The mouse moved by `delta` points over `dt` seconds while dragging.
+    pub fn drag(&mut self, delta: Vec2, dt: f32) {
+        let turn = Vec2::new(-delta.x, delta.y) * RADIANS_PER_POINT;
+        self.turn(turn);
+        if dt > f32::EPSILON {
+            // Average with the last speed so one jittery frame does not decide the flick.
+            self.velocity = (self.velocity + turn / dt) / 2.0;
+        }
+    }
+
+    /// Grabbing the model stops it.
+    pub fn hold(&mut self) {
+        self.velocity = Vec2::ZERO;
+        self.touched();
+    }
+
+    /// Turn by a fixed step (the keyboard): `yaw` and `pitch` in radians.
+    pub fn nudge(&mut self, yaw: f32, pitch: f32) {
+        self.velocity = Vec2::ZERO;
+        self.turn(Vec2::new(yaw, pitch));
+    }
+
+    /// Zoom in by `factor` (above 1) or out (below 1), eased.
+    pub fn zoom_by(&mut self, factor: f32) {
+        if factor.is_finite() && factor > 0.0 {
+            self.target_zoom = (self.target_zoom / factor).clamp(ZOOM_MIN, ZOOM_MAX);
+            self.touched();
+        }
+    }
+
+    /// Ease back to the starting view.
+    pub fn go_home(&mut self) {
+        self.going_home = true;
+        self.velocity = Vec2::ZERO;
+        self.target_zoom = HOME.zoom;
+        self.touched();
+    }
+
+    /// Advance `dt` seconds. Returns whether the camera is still moving (draw again next frame).
+    pub fn update(&mut self, dt: f32) -> bool {
+        let dt = dt.clamp(0.0, 0.25);
+        self.idle += dt;
+        let ease = 1.0 - (-EASE * dt).exp();
+        let mut moving = false;
+        if self.going_home {
+            let yaw = wrap_angle(HOME.yaw - self.pose.yaw);
+            let pitch = HOME.pitch - self.pose.pitch;
+            if yaw.abs() < 1e-3 && pitch.abs() < 1e-3 {
+                self.pose.yaw = HOME.yaw;
+                self.pose.pitch = HOME.pitch;
+                self.going_home = false;
+            } else {
+                self.pose.yaw += yaw * ease;
+                self.pose.pitch += pitch * ease;
+                moving = true;
+            }
+        } else if self.velocity.length() > STOP_SPEED {
+            self.turn_by(self.velocity * dt);
+            self.velocity *= (-DAMPING * dt).exp();
+            moving = true;
+        } else {
+            self.velocity = Vec2::ZERO;
+        }
+        let zoom = self.target_zoom - self.pose.zoom;
+        if zoom.abs() > 1e-4 {
+            self.pose.zoom += zoom * ease;
+            moving = true;
+        } else {
+            self.pose.zoom = self.target_zoom;
+        }
+        if self.auto_rotate && self.idle > AUTO_DELAY && !moving {
+            self.turn_by(Vec2::new(AUTO_SPEED * dt, 0.0));
+            moving = true;
+        }
+        moving
+    }
+
+    /// The camera's position.
+    pub fn eye(&self) -> Vec3 {
+        self.centre + self.direction() * self.distance(1.0)
+    }
+
+    /// The view and projection for a picture `aspect` times as wide as it is tall (wgpu's 0..1
+    /// depth range).
+    pub fn view_projection(&self, aspect: f32) -> Mat4 {
+        let aspect = if aspect.is_finite() && aspect > 0.0 {
+            aspect
+        } else {
+            1.0
+        };
+        let distance = self.distance(aspect);
+        let eye = self.centre + self.direction() * distance;
+        let near = (distance - self.radius * 1.6).max(distance * 0.02);
+        let far = distance + self.radius * 1.6;
+        let view = rh::view::look_at_mat4(eye, self.centre, Vec3::Z);
+        // wgpu's clip space is Direct3D's: depth from 0 to 1.
+        rh::proj::directx::perspective(FOV_Y, aspect, near, far) * view
+    }
+
+    /// The direction the key light comes from: above and to the left of the camera, so the side
+    /// facing the viewer is lit and the shape reads.
+    pub fn light(&self) -> Vec3 {
+        let toward = self.direction();
+        let right = toward.cross(Vec3::Z).normalize_or_zero();
+        (toward + right * 0.6 + Vec3::Z * 1.1).normalize_or(Vec3::Z)
+    }
+
+    fn touched(&mut self) {
+        self.idle = 0.0;
+    }
+
+    fn turn(&mut self, by: Vec2) {
+        self.going_home = false;
+        self.touched();
+        self.turn_by(by);
+    }
+
+    fn turn_by(&mut self, by: Vec2) {
+        self.pose.yaw = (self.pose.yaw + by.x).rem_euclid(TAU);
+        self.pose.pitch = (self.pose.pitch + by.y).clamp(PITCH_MIN, PITCH_MAX);
+    }
+
+    /// Unit vector from the centre toward the camera.
+    fn direction(&self) -> Vec3 {
+        let (sin_yaw, cos_yaw) = self.pose.yaw.sin_cos();
+        let (sin_pitch, cos_pitch) = self.pose.pitch.sin_cos();
+        Vec3::new(cos_pitch * cos_yaw, cos_pitch * sin_yaw, sin_pitch)
+    }
+
+    /// How far the camera must stand for the model's sphere to fit both ways, times the zoom.
+    fn distance(&self, aspect: f32) -> f32 {
+        let half_y = FOV_Y / 2.0;
+        let half_x = (half_y.tan() * aspect).atan();
+        let fit = self.radius / half_y.min(half_x).sin();
+        fit * FRAMING * self.pose.zoom
+    }
+}
+
+/// The same angle within (−π, π].
+fn wrap_angle(angle: f32) -> f32 {
+    let wrapped = (angle + PI).rem_euclid(TAU) - PI;
+    if wrapped <= -PI {
+        wrapped + TAU
+    } else {
+        wrapped
+    }
+}
+
+#[cfg(test)]
+mod tests;

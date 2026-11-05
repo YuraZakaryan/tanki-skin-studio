@@ -13,6 +13,7 @@ pub mod info;
 pub mod overview;
 pub mod packs;
 pub mod palette;
+pub mod preview3d;
 pub mod progress;
 pub mod resources;
 pub mod settings;

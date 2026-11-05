@@ -15,6 +15,9 @@
   that lists every file.
 - English and Russian, dark and light themes, interface sizes, a command palette, a restored session,
   one window per data folder, a rotated log file.
+- A 3D preview in the Garage (on by default, off in Settings or the stage's own settings): the item,
+  or a paint on a hull, turned with the mouse, compared before and after, saved as a picture; drawn
+  only when the view changes, at a lower resolution on weaker graphics while it turns.
 - Tests on synthetic fixtures only: unit, in-process UI (`egui_kittest`, monkey and chaos runs) and the
   real window (`cargo xtask e2e-ui`).
 
@@ -22,7 +25,9 @@
 
 1. Hands-on QA of the Windows build on a real install.
 2. Signed installers for macOS and Windows; a Linux build.
-3. A pack authoring and export flow, and side-by-side before/after previews.
-4. Parse and round-trip `.tara` only after the format is verified, then support its contained assets.
+3. A pack authoring and export flow.
+4. The 3D preview checked against a real cache: how the client blends paint, details and lightmap,
+   and the hull and turret shown together.
+5. Parse and round-trip `.tara` only after the format is verified, then support its contained assets.
 
 The open-source repository contains no proprietary game models or textures.

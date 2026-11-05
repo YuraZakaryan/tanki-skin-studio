@@ -21,6 +21,8 @@ pub enum Class {
 pub const TABLE: &[(&str, Class)] = &[
     ("tanki-ui", Class::Layer(0)),
     ("tanki-i18n", Class::Layer(0)),
+    ("tanki-model", Class::Layer(0)),
+    ("tanki-viewer", Class::Layer(1)),
     ("tanki-cache", Class::Layer(1)),
     ("tanki-pack", Class::Layer(1)),
     ("tanki-update", Class::Layer(1)),

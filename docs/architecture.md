@@ -7,11 +7,13 @@ of a **lower** layer, and `cargo xtask layers` (part of `cargo xtask ci`) enforc
 |-------|-------|----------------|
 | 0 | `tanki-ui` | Reusable egui building blocks drawn to `design.pen`: dark/light tokens, bundled fonts and icons, widgets, rectangle layout, interface zoom. Knows nothing about caches or packs. |
 | 0 | `tanki-i18n` | UI localisation (English keys in code, `ru.tsv` catalog, plural rules, current language). Knows nothing about the app. |
+| 0 | `tanki-model` | 3DS models read into plain meshes (untrusted input: bounds-checked, capped, never a panic), their geometry fingerprint, and indexed geometry with smoothing-group normals. No cache, pack or GPU. |
+| 1 | `tanki-viewer` | A 3D stage for egui: a scene drawn with wgpu into a texture of its own only when the view changes, an orbit camera with inertia, quality levels for weaker graphics, a before/after comparison. Knows nothing about caches or packs. |
 | 1 | `tanki-cache` | Find and scan a game cache; recognise which resource groups are which item (`targets`: built-in table, hand labels, consecutive-id modifications). |
 | 1 | `tanki-pack` | The `.tankipack` format: validation, checksums, safe import from zip or folder. |
 | 1 | `tanki-update` | Updates from the project's GitHub releases: check, download checked against the release's `SHA256SUMS.txt`, install (the macOS bundle from the `.dmg`, the Windows `.msi` after exit), restart. |
-| 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; backup history; backup housekeeping (`backups`: which backups are still needed, deleting old ones, a size limit, free disk space and a plan to make room); "is the game running" check. |
-| 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the saved session) and the app data folder. |
+| 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; an item's look (`look`: its model, textures or paint, from the cache or a pack, for the 3D preview); backup history; backup housekeeping (`backups`: which backups are still needed, deleting old ones, a size limit, free disk space and a plan to make room); "is the game running" check. |
+| 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the 3D preview and its quality, the saved session) and the app data folder. |
 | 3 | `tanki-core` | Thin facade re-exporting the layers above, plus the end-to-end tests that cross all of them. |
 | — | `tanki-studio`, `tanki-cli`, `xtask` | Binaries and tooling; they may use any layer. |
 | — | `tanki-testkit` | Synthetic cache and packs for tests. A dev-dependency only, and depends on nothing of ours. |

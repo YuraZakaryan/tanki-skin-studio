@@ -27,6 +27,9 @@ impl eframe::App for Studio {
         if self.survey_paints() {
             ctx.request_repaint_after(std::time::Duration::from_millis(200));
         }
+        if self.preview.poll() {
+            ctx.request_repaint_after(std::time::Duration::from_millis(50));
+        }
         if self.finish_import() {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }

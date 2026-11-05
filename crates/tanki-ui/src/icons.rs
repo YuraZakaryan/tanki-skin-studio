@@ -80,3 +80,6 @@ pub const ARROW_LEFT_RIGHT: char = '\u{e249}';
 pub const CHEVRON_UP: char = '\u{e074}';
 pub const LIST: char = '\u{e10b}';
 pub const PLUS: char = '\u{e140}';
+pub const COLUMNS_2: char = '\u{e09c}';
+pub const ROTATE_3D: char = '\u{e2e9}';
+pub const CAMERA: char = '\u{e068}';

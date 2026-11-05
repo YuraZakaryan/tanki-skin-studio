@@ -16,6 +16,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub mod three_ds;
+
 /// Cache URL markers of the two items of the built-in table.
 pub const HULL_MARKER: &str = "0/0/10/14";
 pub const TURRET_MARKER: &str = "0/0/10/64";
