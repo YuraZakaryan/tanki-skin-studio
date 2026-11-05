@@ -42,6 +42,7 @@ struct Globals {
     key: [f32; 4],
     fill: [f32; 4],
     rim: [f32; 4],
+    front: [f32; 4],
     shadow: [f32; 4],
     shadow_size: [f32; 4],
 }
@@ -406,6 +407,7 @@ impl Gpu {
             key: view.lights.key.extend(0.0).to_array(),
             fill: view.lights.fill.extend(0.0).to_array(),
             rim: view.lights.rim.extend(0.0).to_array(),
+            front: view.lights.front.extend(0.0).to_array(),
             shadow: scene.map_or([0.0; 4], |s| s.shadow),
             shadow_size: scene.map_or([0.0; 4], |s| s.shadow_size),
         };

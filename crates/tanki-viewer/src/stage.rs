@@ -120,7 +120,16 @@ impl Stage {
         entry.scene = Some(gpu.upload(scene));
         entry.drawn = None;
         if slot == MAIN {
-            self.camera.frame(&scene.bounds());
+            let points: Vec<[f32; 3]> = scene
+                .parts
+                .iter()
+                .flat_map(|part| {
+                    part.geometry.vertices.iter().map(move |v| {
+                        std::array::from_fn(|axis| v.position[axis] + part.offset[axis])
+                    })
+                })
+                .collect();
+            self.camera.frame_points(&scene.bounds(), &points);
             for entry in &mut self.slots {
                 entry.drawn = None;
             }

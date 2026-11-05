@@ -124,6 +124,60 @@ fn the_model_centre_projects_to_the_middle_and_fits_the_picture() {
 }
 
 #[test]
+fn the_whole_model_fits_the_stage_from_any_side() {
+    // A long, low hull, on a stage twice as wide as it is tall (as in the Garage) and a square one.
+    let mut camera = camera();
+    for (aspect, turn) in [(2.0, 0.0), (1.4, 0.8), (1.0, 1.9), (2.0, 3.0), (1.6, 4.4)] {
+        camera.nudge(turn, 0.0);
+        let view_projection = camera.view_projection(aspect);
+        for corner in 0..8 {
+            let point = Vec3::new(
+                if corner & 1 == 0 { -150.0 } else { 150.0 },
+                if corner & 2 == 0 { -250.0 } else { 330.0 },
+                if corner & 4 == 0 { 0.0 } else { 170.0 },
+            );
+            let clip = view_projection * point.extend(1.0);
+            let ndc = clip.truncate() / clip.w;
+            assert!(
+                ndc.x.abs() < 1.0 && ndc.y.abs() < 1.0,
+                "aspect {aspect}: corner {point} at {ndc}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_model_framed_on_its_points_comes_closer_than_its_box_and_still_fits() {
+    // A wedge: its box's upper back corners are empty.
+    let points = [
+        [-150.0, -250.0, 0.0],
+        [150.0, -250.0, 0.0],
+        [-150.0, 330.0, 0.0],
+        [150.0, 330.0, 0.0],
+        [-150.0, 330.0, 170.0],
+        [150.0, 330.0, 170.0],
+    ];
+    let mut bounds = Bounds::default();
+    for p in points {
+        bounds.add(p);
+    }
+    let by_box = camera();
+    let mut by_points = OrbitCamera::default();
+    by_points.frame_points(&bounds, &points);
+    let distance = |c: &OrbitCamera| c.eye().distance(c.centre);
+    assert!(distance(&by_points) < distance(&by_box));
+    for turn in [0.0, 1.0, 2.5, 4.0] {
+        by_points.nudge(turn, 0.0);
+        let view_projection = by_points.view_projection(2.0);
+        for p in points {
+            let clip = view_projection * Vec3::from_array(p).extend(1.0);
+            let ndc = clip.truncate() / clip.w;
+            assert!(ndc.x.abs() < 1.0 && ndc.y.abs() < 1.0, "{p:?} at {ndc}");
+        }
+    }
+}
+
+#[test]
 fn angles_wrap_into_one_turn() {
     assert!((wrap_angle(3.0 * PI) - PI).abs() < 1e-5);
     assert!((wrap_angle(-PI / 2.0) + PI / 2.0).abs() < 1e-6);

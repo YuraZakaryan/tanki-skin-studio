@@ -4,7 +4,10 @@
 //! and slows down, zooms smoothly, eases back to the starting view, and can turn by itself while
 //! nobody touches it. Pure arithmetic over time steps, so every behaviour is unit-tested.
 
-use std::f32::consts::{PI, TAU};
+use std::{
+    cell::Cell,
+    f32::consts::{PI, TAU},
+};
 
 use glam::{Mat4, Vec2, Vec3, camera::rh};
 use tanki_model::Bounds;
@@ -17,6 +20,9 @@ pub struct Lights {
     pub key: Vec3,
     pub fill: Vec3,
     pub rim: Vec3,
+    /// A faint light from the camera and a little below it, so the front and the lower hull,
+    /// which face the viewer, never sink into the shadow.
+    pub front: Vec3,
 }
 
 /// Where the camera stands: around the vertical axis, above the ground, and how far.
@@ -54,9 +60,12 @@ const ZOOM_MAX: f32 = 2.2;
 /// Turning by itself starts after this many seconds without input.
 const AUTO_DELAY: f32 = 3.0;
 const AUTO_SPEED: f32 = 0.35;
-/// The sphere around a model is loose (a tank is long and low): frame tighter than it, so the model
-/// fills the stage.
-const FRAMING: f32 = 0.68;
+/// The model's box fills this share of the picture at most, seen from any side at the home pitch.
+const FILL_SHARE: f32 = 0.92;
+/// Sides the framing checks the model from, all the way round.
+const FRAMING_TURNS: usize = 24;
+/// Points of a model the framing looks at, at most (spread over all of its vertices).
+const FRAMING_POINTS: usize = 2048;
 
 #[derive(Debug, Clone)]
 pub struct OrbitCamera {
@@ -66,6 +75,10 @@ pub struct OrbitCamera {
     velocity: Vec2,
     centre: Vec3,
     radius: f32,
+    /// Points of the model, from its centre, that must stay in the picture.
+    points: Vec<Vec3>,
+    /// The last framing distance worked out, and the picture's aspect it is for.
+    fit: Cell<Option<(u32, f32)>>,
     going_home: bool,
     idle: f32,
     /// Turn slowly by itself after a few seconds without input.
@@ -80,6 +93,8 @@ impl Default for OrbitCamera {
             velocity: Vec2::ZERO,
             centre: Vec3::ZERO,
             radius: 1.0,
+            points: Vec::new(),
+            fit: Cell::new(None),
             going_home: false,
             idle: 0.0,
             auto_rotate: false,
@@ -97,6 +112,30 @@ impl OrbitCamera {
         let centre = bounds.center();
         self.centre = Vec3::from_array(centre);
         self.radius = bounds.radius().max(1e-3);
+        let half = Vec3::from_array(bounds.size()) / 2.0;
+        self.points = (0..8)
+            .map(|corner| {
+                let sign = |bit: usize| if corner & bit == 0 { -1.0 } else { 1.0 };
+                half * Vec3::new(sign(1), sign(2), sign(4))
+            })
+            .collect();
+        self.fit.set(None);
+    }
+
+    /// Look at a new model, framed on its own points rather than its box: a box's corners are
+    /// mostly empty around a tank (a sloped front, tracks below the hull), so the model can come
+    /// closer. `points` are where the model's vertices stand.
+    pub fn frame_points(&mut self, bounds: &Bounds, points: &[[f32; 3]]) {
+        self.frame(bounds);
+        if points.is_empty() {
+            return;
+        }
+        let step = points.len().div_ceil(FRAMING_POINTS).max(1);
+        self.points = points
+            .iter()
+            .step_by(step)
+            .map(|p| Vec3::from_array(*p) - self.centre)
+            .collect();
     }
 
     /// The mouse moved by `delta` points over `dt` seconds while dragging.
@@ -208,6 +247,7 @@ impl OrbitCamera {
             key: (toward + left * 1.3 + Vec3::Z * 1.2).normalize_or(Vec3::Z),
             fill: (toward - left * 0.9 + Vec3::Z * 0.25).normalize_or(Vec3::Z),
             rim: (-toward + Vec3::Z * 1.0).normalize_or(Vec3::Z),
+            front: (toward - Vec3::Z * 0.25).normalize_or(Vec3::Z),
         }
     }
 
@@ -234,11 +274,41 @@ impl OrbitCamera {
     }
 
     /// How far the camera must stand for the model's sphere to fit both ways, times the zoom.
+    /// How far the camera stands, times the zoom: the nearest distance from which the model fits
+    /// the picture (its `FILL_SHARE`) seen from any side at the home pitch, so the model is as
+    /// large as it can be and keeps its size while it turns.
     fn distance(&self, aspect: f32) -> f32 {
-        let half_y = FOV_Y / 2.0;
-        let half_x = (half_y.tan() * aspect).atan();
-        let fit = self.radius / half_y.min(half_x).sin();
-        fit * FRAMING * self.pose.zoom
+        let fit = match self.fit.get() {
+            Some((bits, fit)) if bits == aspect.to_bits() => fit,
+            _ => {
+                let fit = self.fit_distance(aspect);
+                self.fit.set(Some((aspect.to_bits(), fit)));
+                fit
+            }
+        };
+        fit * self.pose.zoom
+    }
+
+    fn fit_distance(&self, aspect: f32) -> f32 {
+        let tan_y = (FOV_Y / 2.0).tan() * FILL_SHARE;
+        let tan_x = tan_y * aspect;
+        let (sin_pitch, cos_pitch) = HOME.pitch.sin_cos();
+        let mut fit: f32 = 0.0;
+        for turn in 0..FRAMING_TURNS {
+            let yaw = turn as f32 * TAU / FRAMING_TURNS as f32;
+            let (sin_yaw, cos_yaw) = yaw.sin_cos();
+            let toward = Vec3::new(cos_pitch * cos_yaw, cos_pitch * sin_yaw, sin_pitch);
+            let right = toward.cross(Vec3::Z).normalize_or(Vec3::X);
+            let up = right.cross(toward);
+            for p in &self.points {
+                // A point at depth (d - p·toward) must have its sides within the view's tangents.
+                let depth = p.dot(toward);
+                fit = fit
+                    .max(depth + p.dot(right).abs() / tan_x)
+                    .max(depth + p.dot(up).abs() / tan_y);
+            }
+        }
+        fit.max(self.radius * 0.5)
     }
 }
 
