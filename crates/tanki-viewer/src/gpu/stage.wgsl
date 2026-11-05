@@ -89,17 +89,21 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     let key = max(dot(normal, globals.key.xyz), 0.0) * KEY;
     let fill = max(dot(normal, globals.fill.xyz), 0.0) * FILL;
     let edge = pow(1.0 - max(dot(normal, to_eye), 0.0), 3.0);
+    // The rim takes the stage's green, so the model belongs to its background and its silhouette
+    // stands out of it.
     let rim = edge * (0.5 + 0.5 * dot(normal, globals.rim.xyz)) * RIM;
-    let lit = base * (hemisphere + vec3<f32>(key + fill)) + vec3<f32>(rim);
+    let lit = base * (hemisphere + vec3<f32>(key + fill)) + rim;
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const LIGHTMAP_EXPOSURE: f32 = 1.8;
-const SKY: vec3<f32> = vec3<f32>(0.84, 0.86, 0.90);
-const GROUND: vec3<f32> = vec3<f32>(0.66, 0.65, 0.63);
-const KEY: f32 = 0.32;
-const FILL: f32 = 0.10;
-const RIM: f32 = 0.06;
+const LIGHTMAP_EXPOSURE: f32 = 2.1;
+// The ambient: a sky above, and a floor bright enough that the lower hull and the tracks keep
+// their detail (the lightmap keeps the deep shadows of the recesses).
+const SKY: vec3<f32> = vec3<f32>(0.86, 0.88, 0.92);
+const GROUND: vec3<f32> = vec3<f32>(0.76, 0.75, 0.73);
+const KEY: f32 = 0.40;
+const FILL: f32 = 0.18;
+const RIM: vec3<f32> = vec3<f32>(0.07, 0.13, 0.06);
 
 // The highlight roll-off of Khronos PBR Neutral tone mapping: colours up to 0.8 pass as they are,
 // brighter ones roll off toward white instead of clipping, so a lit skin keeps its hue. Its toe,

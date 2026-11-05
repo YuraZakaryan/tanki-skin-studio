@@ -54,8 +54,9 @@ const ZOOM_MAX: f32 = 2.2;
 /// Turning by itself starts after this many seconds without input.
 const AUTO_DELAY: f32 = 3.0;
 const AUTO_SPEED: f32 = 0.35;
-/// The sphere around a model is loose; frame a little tighter than it.
-const FRAMING: f32 = 0.88;
+/// The sphere around a model is loose (a tank is long and low): frame tighter than it, so the model
+/// fills the stage.
+const FRAMING: f32 = 0.68;
 
 #[derive(Debug, Clone)]
 pub struct OrbitCamera {
@@ -206,7 +207,7 @@ impl OrbitCamera {
         Lights {
             key: (toward + left * 1.3 + Vec3::Z * 1.2).normalize_or(Vec3::Z),
             fill: (toward - left * 0.9 + Vec3::Z * 0.25).normalize_or(Vec3::Z),
-            rim: (-toward + Vec3::Z * 0.8).normalize_or(Vec3::Z),
+            rim: (-toward + Vec3::Z * 1.0).normalize_or(Vec3::Z),
         }
     }
 
