@@ -117,21 +117,49 @@ const COVER_GAIN: f32 = 1.18;
 
 /// Below this opacity a pixel is margin, not picture.
 const VISIBLE: u8 = 8;
+/// From this opacity a pixel is the item itself, not its soft shadow.
+const SOLID: u8 = 128;
 
-/// A picture cut to its visible part, its colours `gain` times as bright (its transparency kept),
-/// as PNG bytes. A picture with nothing visible is kept whole.
+/// The box (x0, y0, x1, y1, inclusive) of the pixels at least `opacity` opaque.
+fn opaque_box(image: &image::RgbaImage, opacity: u8) -> Option<(u32, u32, u32, u32)> {
+    image
+        .enumerate_pixels()
+        .filter(|(_, _, p)| p.0[3] >= opacity)
+        .fold(None, |bounds, (x, y, _)| {
+            Some(
+                bounds.map_or((x, y, x, y), |(x0, y0, x1, y1): (u32, u32, u32, u32)| {
+                    (x0.min(x), y0.min(y), x1.max(x), y1.max(y))
+                }),
+            )
+        })
+}
+
+/// A picture cut to its visible part with the item itself (not its soft shadow) at the centre, its
+/// colours `gain` times as bright (its transparency kept), as PNG bytes. A picture with nothing
+/// visible is kept whole.
 fn cover(picture: &[u8], gain: f32) -> Option<Vec<u8>> {
     let mut image = image::load_from_memory(picture).ok()?.to_rgba8();
-    let visible = image
-        .enumerate_pixels()
-        .filter(|(_, _, p)| p.0[3] >= VISIBLE)
-        .fold(None, |bounds: Option<(u32, u32, u32, u32)>, (x, y, _)| {
-            Some(bounds.map_or((x, y, x, y), |(x0, y0, x1, y1)| {
-                (x0.min(x), y0.min(y), x1.max(x), y1.max(y))
-            }))
-        });
-    if let Some((x0, y0, x1, y1)) = visible {
-        image = image::imageops::crop_imm(&image, x0, y0, x1 - x0 + 1, y1 - y0 + 1).to_image();
+    if let Some((x0, y0, x1, y1)) = opaque_box(&image, VISIBLE) {
+        let (s0x, s0y, s1x, s1y) = opaque_box(&image, SOLID).unwrap_or((x0, y0, x1, y1));
+        // Twice the item's centre, so the halves stay whole numbers.
+        let (cx, cy) = (i64::from(s0x + s1x), i64::from(s0y + s1y));
+        let reach = |lo: u32, hi: u32, c: i64| (c - 2 * i64::from(lo)).max(2 * i64::from(hi) - c);
+        let (rx, ry) = (reach(x0, x1, cx), reach(y0, y1, cy));
+        // A transparent canvas around the item's centre, as wide each way as the picture reaches.
+        let width = u32::try_from(rx + 1).ok()?;
+        let height = u32::try_from(ry + 1).ok()?;
+        let mut canvas = image::RgbaImage::new(width, height);
+        let (left, top) = ((cx - rx) / 2, (cy - ry) / 2);
+        for (x, y, pixel) in image.enumerate_pixels() {
+            let (cx, cy) = (i64::from(x) - left, i64::from(y) - top);
+            if let (Ok(cx), Ok(cy)) = (u32::try_from(cx), u32::try_from(cy))
+                && cx < width
+                && cy < height
+            {
+                canvas.put_pixel(cx, cy, *pixel);
+            }
+        }
+        image = canvas;
     }
     for pixel in image.pixels_mut() {
         for channel in &mut pixel.0[..3] {
@@ -204,6 +232,29 @@ mod tests {
             .to_rgba8();
         assert_eq!(lit.dimensions(), (4, 2), "the margins are gone");
         assert_eq!(lit.get_pixel(0, 0).0, [118, 255, 0, 200]);
+        // A soft shadow under the item: the picture is centred on the item, not on the shadow.
+        let mut image = image::RgbaImage::new(10, 10);
+        for (x, y) in (3..7).flat_map(|x| (1..3).map(move |y| (x, y))) {
+            image.put_pixel(x, y, image::Rgba([100, 240, 0, 255]));
+        }
+        for (x, y) in (3..7).flat_map(|x| (3..7).map(move |y| (x, y))) {
+            image.put_pixel(x, y, image::Rgba([0, 0, 0, 40]));
+        }
+        let picture = png(image::DynamicImage::ImageRgba8(image));
+        let lit = image::load_from_memory(&cover(&picture, 1.0).unwrap())
+            .unwrap()
+            .to_rgba8();
+        let solid: Vec<u32> = lit
+            .enumerate_pixels()
+            .filter(|(_, _, p)| p.0[3] == 255)
+            .map(|(_, y, _)| y)
+            .collect();
+        let (top, bottom) = (solid[0], *solid.last().unwrap());
+        assert_eq!(
+            top,
+            lit.height() - 1 - bottom,
+            "as much air above the item as below"
+        );
         let empty = png(image::DynamicImage::ImageRgba8(image::RgbaImage::new(3, 3)));
         let kept = image::load_from_memory(&cover(&empty, 1.18).unwrap())
             .unwrap()
