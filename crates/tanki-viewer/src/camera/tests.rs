@@ -148,14 +148,14 @@ fn the_whole_model_fits_the_stage_from_any_side() {
 
 #[test]
 fn a_model_framed_on_its_points_comes_closer_than_its_box_and_still_fits() {
-    // A wedge: its box's upper back corners are empty.
+    // A roof: a flat base and a ridge along the middle, so every upper corner of its box is empty.
     let points = [
         [-150.0, -250.0, 0.0],
         [150.0, -250.0, 0.0],
         [-150.0, 330.0, 0.0],
         [150.0, 330.0, 0.0],
-        [-150.0, 330.0, 170.0],
-        [150.0, 330.0, 170.0],
+        [0.0, -250.0, 170.0],
+        [0.0, 330.0, 170.0],
     ];
     let mut bounds = Bounds::default();
     for p in points {

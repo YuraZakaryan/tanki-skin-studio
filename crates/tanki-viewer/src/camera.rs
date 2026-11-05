@@ -60,8 +60,11 @@ const ZOOM_MAX: f32 = 2.2;
 /// Turning by itself starts after this many seconds without input.
 const AUTO_DELAY: f32 = 3.0;
 const AUTO_SPEED: f32 = 0.35;
-/// The model's box fills this share of the picture at most, seen from any side at the home pitch.
-const FILL_SHARE: f32 = 0.7;
+/// The model fills this share of the picture at most, seen from any side at the home pitch. The
+/// Garage's picture reaches under the chips and the selector, so this is about two thirds of the
+/// clear room between them: some 17% of air above and below, as product viewers and product
+/// photography leave around an object.
+const FILL_SHARE: f32 = 0.6;
 /// Sides the framing checks the model from, all the way round.
 const FRAMING_TURNS: usize = 24;
 /// Points of a model the framing looks at, at most (spread over all of its vertices).
