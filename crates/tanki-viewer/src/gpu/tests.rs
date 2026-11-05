@@ -139,8 +139,8 @@ fn details_cover_the_paint_where_they_are_opaque() {
 }
 
 /// The lightmap value that leaves a colour as it is: half brightness, lit up by the garage's exposure
-/// (0.72, see the shader).
-const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 0.72) as u8;
+/// (0.86, see the shader).
+const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 0.86) as u8;
 
 #[test]
 fn a_neutral_lightmap_leaves_the_colour_as_it_is() {

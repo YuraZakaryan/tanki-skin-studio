@@ -69,9 +69,9 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
 
     // The client blends its textures as stored, gamma-encoded: paint, the details over it where
     // their alpha says, then the lightmap, baked at half brightness. LIGHTMAP_EXPOSURE and
-    // SHADOW_LIFT are measured so the model has the mean brightness and the contrast of the garage
-    // pictures the game itself saved in the cache, as the item cards show them (within a few
-    // percent on several hulls).
+    // SHADOW_LIFT start from a measurement against the garage pictures the game itself saved in
+    // the cache (the mean brightness and the contrast the item cards show), tuned by eye from there
+    // on the real models: a little brighter, the shadows a little more lifted.
     let under = mix(part.paint.rgb, pattern, part.flags.z);
     var base = mix(under, detail.rgb, detail.a * part.flags.x);
     base = base * mix(vec3<f32>(1.0), baked * (2.0 * LIGHTMAP_EXPOSURE), part.flags.y);
@@ -100,8 +100,8 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const LIGHTMAP_EXPOSURE: f32 = 0.72;
-const SHADOW_LIFT: f32 = 0.65;
+const LIGHTMAP_EXPOSURE: f32 = 0.86;
+const SHADOW_LIFT: f32 = 0.55;
 // The ambient: a sky above, and a floor bright enough that the lower hull and the tracks keep
 // their detail (the lightmap keeps the deep shadows of the recesses).
 const SKY: vec3<f32> = vec3<f32>(0.94, 0.95, 0.97);
