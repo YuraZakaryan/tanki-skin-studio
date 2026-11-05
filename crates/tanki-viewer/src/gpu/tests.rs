@@ -139,8 +139,8 @@ fn details_cover_the_paint_where_they_are_opaque() {
 }
 
 /// The lightmap value that leaves a colour as it is: half brightness, lit up by the garage's exposure
-/// (1.5, see the shader).
-const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 1.5) as u8;
+/// (0.72, see the shader).
+const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 0.72) as u8;
 
 #[test]
 fn a_neutral_lightmap_leaves_the_colour_as_it_is() {
@@ -309,9 +309,9 @@ fn bright_paint_rolls_off_toward_white_and_keeps_its_hue() {
         return;
     };
     let mut gpu = Gpu::new(&device, &queue);
-    // A lightmap twice as bright as the neutral one: the red is pushed past white.
+    // The brightest lightmap, well above the neutral one: the red is pushed past white.
     let (mut scene, camera) = boxed([230, 60, 40]);
-    let n = NEUTRAL_LIGHTMAP * 2;
+    let n = 255;
     scene.parts[0].material.lightmap =
         Some(Arc::new(Image::new(1, 1, vec![n, n, n, 255]).unwrap()));
     let uploaded = gpu.upload(&scene);

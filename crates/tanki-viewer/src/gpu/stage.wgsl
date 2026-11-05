@@ -68,8 +68,8 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     let pattern = textureSample(paint, surface, input.uv).rgb;
 
     // The client blends its textures as stored, gamma-encoded: paint, the details over it where
-    // their alpha says, then the lightmap, baked at half brightness. The game's garage lights that
-    // up again: LIGHTMAP_EXPOSURE is measured so the model has the mean colour of the garage
+    // their alpha says, then the lightmap, baked at half brightness. LIGHTMAP_EXPOSURE and
+    // SHADOW_LIFT are measured so the model has the mean brightness and the contrast of the garage
     // pictures the game itself saved in the cache, as the item cards show them (within a few
     // percent on several hulls).
     let under = mix(part.paint.rgb, pattern, part.flags.z);
@@ -94,11 +94,14 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     let edge = pow(1.0 - max(dot(normal, to_eye), 0.0), 3.0);
     // A faint neutral rim lifts the silhouette off the dark stage without changing the colours.
     let rim = edge * (0.5 + 0.5 * dot(normal, globals.rim.xyz)) * RIM;
-    let lit = base * (hemisphere + vec3<f32>(key + fill)) + rim;
+    // The game's garage pictures are flatter than texture × lightmap, their shadows lifted: a
+    // gentle curve does the same to the game's colours, and the studio light goes over them.
+    let lit = pow(base, vec3<f32>(SHADOW_LIFT)) * (hemisphere + vec3<f32>(key + fill)) + rim;
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const LIGHTMAP_EXPOSURE: f32 = 1.5;
+const LIGHTMAP_EXPOSURE: f32 = 0.72;
+const SHADOW_LIFT: f32 = 0.65;
 // The ambient: a sky above, and a floor bright enough that the lower hull and the tracks keep
 // their detail (the lightmap keeps the deep shadows of the recesses).
 const SKY: vec3<f32> = vec3<f32>(0.94, 0.95, 0.97);
