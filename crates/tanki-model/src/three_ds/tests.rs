@@ -8,14 +8,35 @@ use super::*;
 #[test]
 fn a_box_reads_back_with_its_names_uvs_and_smoothing() {
     let model = read(&hull_3ds()).unwrap();
-    assert_eq!(model.meshes.len(), 2);
+    assert_eq!(model.meshes.len(), 3, "hull, deck and the mount helper");
     let hull = model.mesh("HULL").unwrap();
     assert_eq!(hull.positions.len(), 24);
     assert_eq!(hull.uvs.len(), 24);
     assert_eq!(hull.faces.len(), 12);
     assert_eq!(hull.smoothing.len(), 12);
     assert_eq!(hull.positions[0], [-150.0, -250.0, 80.0]);
-    assert_eq!(model.triangle_count(), 24);
+    assert_eq!(model.triangle_count(), 36);
+}
+
+#[test]
+fn helpers_are_told_apart_and_give_the_mount_and_the_pivot() {
+    use tanki_testkit::three_ds::{HULL_MOUNT, turret_3ds};
+    let hull = read(&hull_3ds()).unwrap();
+    let shown: Vec<&str> = hull.shown().map(|m| m.name.as_str()).collect();
+    assert_eq!(shown, ["hull", "deck"]);
+    assert_eq!(hull.mount(), Some(HULL_MOUNT));
+    let turret = read(&turret_3ds()).unwrap();
+    let shown: Vec<&str> = turret.shown().map(|m| m.name.as_str()).collect();
+    assert_eq!(
+        shown,
+        ["turret", "barrel"],
+        "the collision box is not drawn"
+    );
+    assert_eq!(turret.pivot(), Some([0.0; 3]));
+    assert_eq!(turret.mount(), None);
+    // Without local axes there is no pivot to go by.
+    let plain = read(&model_3ds(&[Mesh3ds::cuboid("turret", [0.0; 3], [1.0; 3])])).unwrap();
+    assert_eq!(plain.pivot(), None);
 }
 
 #[test]
@@ -108,7 +129,10 @@ fn fingerprint_counts_survive_a_different_file() {
 
 #[test]
 fn fingerprint_of_a_full_model_is_its_counts() {
-    assert_eq!(fingerprint(&hull_3ds()), Some(vec![(24, 12), (24, 12)]));
+    assert_eq!(
+        fingerprint(&hull_3ds()),
+        Some(vec![(24, 12), (24, 12), (24, 12)])
+    );
 }
 
 #[test]

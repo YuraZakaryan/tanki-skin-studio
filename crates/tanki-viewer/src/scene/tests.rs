@@ -47,8 +47,8 @@ fn odd_sizes_keep_their_last_row_and_column() {
 
 #[test]
 fn scene_bounds_follow_each_parts_offset() {
-    let hull = Geometry::from_meshes(&read(&hull_3ds()).unwrap().meshes);
-    let turret = Geometry::from_meshes(&read(&turret_3ds()).unwrap().meshes);
+    let hull = Geometry::from_meshes(read(&hull_3ds()).unwrap().shown());
+    let turret = Geometry::from_meshes(read(&turret_3ds()).unwrap().shown());
     let scene = Scene {
         parts: vec![
             Part {

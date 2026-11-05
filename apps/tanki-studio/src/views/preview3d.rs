@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Tanki Skin Studio contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! The 3D preview on screen: the stage in "My tank" with its toolbar and before/after divider, the
-//! two settings (shown in the Garage group of Settings and in the stage's own quick dialog, drawn
+//! three settings (shown in the Garage group of Settings and in the stage's own quick dialog, drawn
 //! by the same code), and the dialog itself.
 
-use eframe::egui::{self, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
-use tanki_i18n::tl;
+use eframe::egui::{self, Color32, CornerRadius, Pos2, Rect, Sense, Ui, Vec2};
+use tanki_i18n::{fmt, tl};
 use tanki_ui::{
     draw, fonts,
     fonts::Text,
@@ -16,16 +16,18 @@ use tanki_ui::{
 use tanki_viewer::{Quality, QualityPreference, StageView};
 
 use crate::{
-    app::{Dialog, Studio},
+    app::{Dialog, Selection, Studio},
     preview3d::{Keyed, Preview3d, SlotState},
 };
 
 const SEGMENTS: f32 = 32.0;
+/// How faded the model before is while the next one loads.
+const LOADING_OPACITY: f32 = 0.4;
 /// The stage's toolbar buttons and the gaps between them.
 const TOOL: f32 = 28.0;
 const TOOL_GAP: f32 = 2.0;
 
-// --- The two settings -------------------------------------------------------------------------
+// --- The three settings -----------------------------------------------------------------------
 
 fn quality_items() -> [(&'static str, Option<String>); 4] {
     [
@@ -63,7 +65,7 @@ fn quality_hint(app: &Studio) -> String {
     }
 }
 
-/// The 3D rows of a settings group: the switch, and the quality.
+/// The 3D rows of a settings group: the switch, the whole tank, and the quality.
 pub struct SettingsRows {
     quality: Vec2,
     hint: String,
@@ -80,7 +82,7 @@ pub fn settings_rows(app: &Studio, ui: &Ui) -> SettingsRows {
 }
 
 impl SettingsRows {
-    pub fn rows(&self) -> [GroupRow<'_>; 2] {
+    pub fn rows(&self) -> [GroupRow<'_>; 3] {
         [
             GroupRow {
                 icon: icons::BOX,
@@ -88,6 +90,18 @@ impl SettingsRows {
                 tint: Tint::Plain,
                 title: tl!("Show the tank in 3D"),
                 desc: Some(tl!("Turn off to show the flat picture.")),
+                control: Vec2::new(40.0, 22.0),
+                extra: 0.0,
+                click: false,
+            },
+            GroupRow {
+                icon: icons::TANK,
+                mark: None,
+                tint: Tint::Plain,
+                title: tl!("Show the whole tank"),
+                desc: Some(tl!(
+                    "The hull, turret and paint last chosen, together. Off: the selected item alone."
+                )),
                 control: Vec2::new(40.0, 22.0),
                 extra: 0.0,
                 click: false,
@@ -113,7 +127,9 @@ impl SettingsRows {
     pub fn draw(&self, app: &mut Studio, ui: &mut Ui, origin: Pos2, width: f32, salt: &str) {
         let rows = self.rows();
         let places = widgets::group(ui, origin, width, &rows, salt);
-        let (Some(switch), Some(quality)) = (places.first(), places.get(1)) else {
+        let (Some(switch), Some(whole), Some(quality)) =
+            (places.first(), places.get(1), places.get(2))
+        else {
             return;
         };
         let mut on = app.preview.enabled;
@@ -123,8 +139,23 @@ impl SettingsRows {
         if changed {
             app.set_preview_3d(on);
         }
-        // The quality means nothing while the preview is off: shown, but not to be changed.
+        // The other rows mean nothing while the preview is off: shown, but not to be changed.
         let enabled = app.preview.enabled;
+        let mut whole_tank = app.preview.whole_tank;
+        let changed = ui
+            .scope(|ui| {
+                if !enabled {
+                    ui.disable();
+                    ui.set_opacity(0.45);
+                }
+                tanki_ui::layout::in_rect(ui, whole.control, |ui| {
+                    widgets::toggle(ui, &mut whole_tank, tl!("Show the whole tank")).changed()
+                })
+            })
+            .inner;
+        if changed && enabled {
+            app.set_whole_tank(whole_tank);
+        }
         let index = quality_index(app);
         let clicked = ui
             .scope(|ui| {
@@ -154,7 +185,7 @@ impl SettingsRows {
 
 // --- The quick dialog ---------------------------------------------------------------------------
 
-/// The stage's own settings: the same two rows as in Settings.
+/// The stage's own settings: the same three rows as in Settings.
 pub fn dialog(app: &mut Studio, ctx: &egui::Context) {
     const WIDTH: f32 = 520.0;
     let probe = Ui::new(
@@ -192,6 +223,40 @@ pub struct Looks {
     pub item: String,
     /// Under the model once the drag hint is gone: whether the skin is in the game.
     pub caption: String,
+}
+
+/// What the stage shows for `selection`, the same in the Garage and on the item's page: the picked
+/// skin (else the item as in the game), the whole tank when that is on, and a caption saying
+/// whether the look is in the game.
+pub fn looks(app: &mut Studio, selection: &Selection) -> Looks {
+    let chosen = app.chosen_variant(selection);
+    let in_game = chosen.is_some() && chosen == app.applied_variant(selection);
+    let (main, compared) = app.stage_looks(selection, chosen, in_game);
+    let caption = if in_game {
+        tl!("In the game now").to_owned()
+    } else if chosen.is_some() {
+        tl!("Skin preview · not applied").to_owned()
+    } else {
+        app.in_game_name(selection).map_or_else(
+            || tl!("Current look in the game").to_owned(),
+            |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
+        )
+    };
+    // What the view is kept for: the tank (its hull and turret), a paint, or an item alone.
+    let item = if main.as_ref().is_some_and(|look| look.parts.len() > 1) {
+        let tank = &app.preview.tank;
+        format!("tank:{}:{}", tank.hull.0, tank.turret.0)
+    } else if selection.kind == "paint" {
+        "paint".to_owned()
+    } else {
+        format!("{}:{}", selection.kind, selection.id)
+    };
+    Looks {
+        main,
+        compared,
+        item,
+        caption,
+    }
 }
 
 /// The toolbar, its right edge at `right`; returns its left edge, for the Details button to keep
@@ -335,9 +400,13 @@ pub fn stage(
     if compared != SlotState::Ready {
         app.preview.compare = None;
     }
+    // While the next model loads, the one before stays on the stage, faded under a loading pill
+    // (no blank frame between them); only the first one loads on an empty stage.
+    let loading = main == SlotState::Loading;
+    let shown_before = app.preview.stage.key(Preview3d::MAIN).is_some();
     match main {
         SlotState::Unavailable => return false,
-        SlotState::Loading => {
+        SlotState::Loading if !shown_before => {
             let c = scene.center();
             let seconds = ui.input(|i| i.time) as f32;
             fonts::icon_rotated(
@@ -357,8 +426,14 @@ pub fn stage(
             ui.ctx().request_repaint();
             return true;
         }
-        SlotState::Ready => {}
+        SlotState::Loading | SlotState::Ready => {}
     }
+    let opacity = ui.ctx().animate_value_with_time(
+        ui.make_persistent_id("preview-3d-loading-fade"),
+        if loading { LOADING_OPACITY } else { 1.0 },
+        0.2,
+    );
+    app.preview.stage.set_opacity(opacity);
     // The hint under the model until the stage is first used, then the caption in its place.
     let note = Rect::from_min_size(
         Pos2::new(scene.min.x, scene.max.y - 24.0),
@@ -409,6 +484,10 @@ pub fn stage(
     }
     if let Some(split) = app.preview.compare {
         app.preview.compare = Some(divider(ui, room, split));
+    }
+    if loading {
+        loading_pill(ui, room.center());
+        ui.ctx().request_repaint();
     }
     if app.preview.used {
         fonts::draw_centered(
@@ -480,6 +559,41 @@ fn divider(ui: &mut Ui, room: Rect, split: f32) -> f32 {
 }
 
 /// "Drag to rotate · Scroll to zoom" in a quiet pill.
+/// Over the model before while the next one loads: a spinner and what is happening, on a pill
+/// lifted off the stage by a soft shadow.
+fn loading_pill(ui: &Ui, center: Pos2) {
+    let tokens = Tokens::get(ui.ctx());
+    let painter = ui.painter();
+    let text = tl!("Loading 3D model…");
+    let style = Text::body(12.0, 500, tokens.text_2);
+    let width = fonts::width(painter, text, style) + 16.0 + 16.0 + 8.0 + 16.0;
+    let pill = Rect::from_center_size(center, Vec2::new(width, 32.0));
+    draw::shadow(painter, pill, 16.0, 6, 24, Color32::from_black_alpha(70));
+    draw::rounded(
+        painter,
+        pill,
+        CornerRadius::same(16),
+        tokens.surface_2.gamma_multiply(0.94),
+        Some((1.0, tokens.border)),
+    );
+    let seconds = ui.input(|i| i.time) as f32;
+    fonts::icon_rotated(
+        painter,
+        Pos2::new(pill.min.x + 16.0 + 8.0, pill.center().y),
+        icons::LOADER,
+        14.0,
+        tokens.primary,
+        fonts::spinner_angle(seconds),
+    );
+    fonts::draw_left(
+        painter,
+        pill.min.x + 16.0 + 16.0 + 8.0,
+        pill.center().y,
+        text,
+        style,
+    );
+}
+
 fn hint(ui: &Ui, note: Rect) {
     let tokens = Tokens::get(ui.ctx());
     let text = tl!("Drag to rotate · Scroll to zoom");

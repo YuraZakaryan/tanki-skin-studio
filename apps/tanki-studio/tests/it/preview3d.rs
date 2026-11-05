@@ -178,7 +178,8 @@ fn dragging_turns_the_model_and_the_home_key_brings_it_back() {
     assert_ne!(before.as_raw(), after.as_raw(), "the picture follows");
     // Focused by the drag, the stage takes the keyboard: Home brings the first view back.
     h.key_press(egui::Key::Home);
-    h.run_steps(90);
+    // Back home (under a second) well before it starts turning by itself (five).
+    h.run_steps(12);
     let back = h.state().preview.stage.camera().pose();
     assert!(
         (back.yaw - home.yaw).abs() < 1e-3 && (back.pitch - home.pitch).abs() < 1e-3,
@@ -244,12 +245,13 @@ fn a_picked_skin_compares_with_the_game_and_the_toolbar_does_what_it_says() {
     let split = h.state().preview.compare.unwrap_or(0.5);
     assert!(split < 0.45, "moved left: {split}");
 
-    h.get_by_label("Turn by itself").click();
-    h.run_steps(2);
-    assert!(h.state().preview.auto_rotating());
+    assert!(h.state().preview.auto_rotating(), "on by default");
     h.get_by_label("Turn by itself").click();
     h.run_steps(2);
     assert!(!h.state().preview.auto_rotating());
+    h.get_by_label("Turn by itself").click();
+    h.run_steps(2);
+    assert!(h.state().preview.auto_rotating());
 
     h.get_by_label("Save a picture").click();
     h.run_steps(2);
@@ -675,4 +677,415 @@ fn a_monkey_on_the_3d_preview_breaks_nothing() {
             h.render().expect("every state renders");
         }
     }
+}
+
+/// Put the starter tank in the test cache: copies of its hull's and turret's files under groups
+/// of their own, labelled as the starter parts (M3).
+fn starter_tank(env: &Env) {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    let store = tanki_core::state::StateStore::open(&env.work.join("data/state.sqlite"))
+        .expect("state store");
+    for (files, from, to, kind, id) in [
+        (
+            &env.cache.hull_files,
+            "0/0/10/14/",
+            "0/0/31/1/",
+            "hull",
+            "hunter",
+        ),
+        (
+            &env.cache.turret_files,
+            "0/0/10/64/",
+            "0/0/31/2/",
+            "turret",
+            "smoky",
+        ),
+    ] {
+        for file in files {
+            let url = file
+                .file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| STANDARD.decode(name).ok())
+                .map(|bytes| String::from_utf8_lossy(&bytes).replace(from, to))
+                .expect("a cache file's name is its URL");
+            let bytes = std::fs::read(file).expect("cache file");
+            std::fs::write(env.cache.root.join(STANDARD.encode(url)), bytes).expect("copy");
+        }
+        store
+            .save_user_target("air-cache", &format!("/{to}"), kind, id, "m3")
+            .expect("label the part");
+    }
+}
+
+fn main_key(h: &Harness<'static, Studio>) -> String {
+    h.state()
+        .preview
+        .stage
+        .key(Preview3d::MAIN)
+        .map(str::to_owned)
+        .unwrap_or_default()
+}
+
+#[test]
+fn a_new_user_sees_the_starter_tank_whole_in_the_cache_s_green() {
+    let (env, _) = models("3d-starter");
+    starter_tank(&env);
+    add_paint(&env, "green", 4, [70, 110, 40]);
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    h.state_mut().go(Page::Garage);
+    h.run_steps(4);
+    let selection = h.state().selection.clone().expect("a selection");
+    assert_eq!(
+        (
+            selection.kind.as_str(),
+            selection.id.as_str(),
+            selection.grade
+        ),
+        ("hull", "hunter", 3),
+        "the starter hull is selected first"
+    );
+    let whole = main_key(&h);
+    assert_eq!(whole.matches(" & ").count(), 1, "hull and turret: {whole}");
+    assert_eq!(
+        whole.matches("painted:").count(),
+        2,
+        "both painted: {whole}"
+    );
+    let rect = stage_rect(&h);
+    if let Some(dir) = std::env::var_os("TANKI_VISUAL_DIR") {
+        let image = h.render().expect("render");
+        let _ = image.save(PathBuf::from(dir).join("garage-tank.png"));
+    }
+    assert!(drawn_pixels(&mut h, rect) > 500, "drawn");
+    let whole_picture = h.render().expect("render");
+    h.state_mut().set_whole_tank(false);
+    h.run_steps(4);
+    let alone = main_key(&h);
+    assert!(!alone.contains(" & "), "off: the hull alone: {alone}");
+    let hull_picture = h.render().expect("render");
+    // The turret (and the framing it changes) makes a picture of its own.
+    let mut differ = 0;
+    let mut y = rect.min.y;
+    while y < rect.max.y {
+        let mut x = rect.min.x;
+        while x < rect.max.x {
+            let at = Pos2::new(x, y);
+            if distance(colour(&whole_picture, at), colour(&hull_picture, at)) > 12 {
+                differ += 1;
+            }
+            x += 2.0;
+        }
+        y += 2.0;
+    }
+    assert!(differ > 500, "the turret is drawn on the hull: {differ}");
+}
+
+#[test]
+fn the_tank_keeps_the_parts_chosen_last_across_a_restart_and_the_switch_shows_one_alone() {
+    let (env, _) = models("3d-tank");
+    starter_tank(&env);
+    add_paint(&env, "green", 4, [70, 110, 40]);
+    add_paint(&env, "ember", 2, [230, 120, 20]);
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "hunter", 3);
+    let green = main_key(&h);
+    select(&mut h, "paint", "ember", 0);
+    let ember = main_key(&h);
+    assert_eq!(ember.matches("painted:").count(), 2, "{ember}");
+    assert_ne!(ember, green, "the paint chosen is on both parts");
+    // The view stays as it is while the tank's parts change.
+    select(&mut h, "turret", "smoky", 3);
+    assert_eq!(main_key(&h), ember, "the same tank, the same scene");
+    drop(h);
+    let mut h = gpu_harness(&env).expect("the GPU is still there");
+    let tank = h.state().preview.tank.clone();
+    assert_eq!(tank.hull, ("hunter".to_owned(), 3));
+    assert_eq!(tank.turret, ("smoky".to_owned(), 3));
+    assert_eq!(tank.paint, "ember", "kept across a restart");
+    select(&mut h, "hull", "hunter", 3);
+    assert_eq!(main_key(&h), ember, "in the paint chosen last");
+    // The quick settings turn it off: the item alone, and it stays off.
+    h.get_by_label("3D settings").click();
+    h.run_steps(3);
+    h.get_by_label("Show the whole tank").click();
+    h.run_steps(4);
+    assert!(!h.state().preview.whole_tank);
+    assert!(!main_key(&h).contains(" & "), "the hull alone");
+    drop(h);
+    let mut h = gpu_harness(&env).expect("the GPU is still there");
+    assert!(!h.state().preview.whole_tank, "off for good");
+    select(&mut h, "hull", "hunter", 3);
+    h.state_mut().set_whole_tank(true);
+    h.run_steps(4);
+    assert_eq!(main_key(&h), ember, "on again: the whole tank");
+}
+
+#[test]
+fn without_the_tank_s_other_part_in_the_cache_the_item_is_shown_alone() {
+    // The cache has no starter turret: nothing is put together.
+    let (env, _) = models("3d-alone");
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "wasp", 3);
+    let key = main_key(&h);
+    assert!(!key.is_empty() && !key.contains(" & "), "alone: {key}");
+    assert_eq!(h.state().preview.tank.hull, ("wasp".to_owned(), 3));
+    select(&mut h, "turret", "railgun", 3);
+    assert!(
+        main_key(&h).contains(" & "),
+        "with a turret chosen, the tank is whole"
+    );
+}
+
+#[test]
+fn the_zoom_turn_and_auto_turn_come_back_after_a_restart() {
+    let (env, _) = models("3d-view");
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "wasp", 3);
+    let rect = stage_rect(&h);
+    h.hover_at(rect.center());
+    h.run_steps(1);
+    wheel(&h, 120.0);
+    h.drag_at(rect.center());
+    h.hover_at(rect.center() + vec2(80.0, -30.0));
+    h.drop_at(rect.center() + vec2(80.0, -30.0));
+    // Turned off, so the angle stays where it was left.
+    h.state_mut().preview.toggle_auto_rotate();
+    h.run_steps(60);
+    let left = h.state().preview.stage.camera().pose();
+    assert!(left.zoom < 1.0, "zoomed in: {left:?}");
+    h.state_mut().persist(true);
+    drop(h);
+
+    let mut h = gpu_harness(&env).expect("the GPU is still there");
+    h.state_mut().go(Page::Garage);
+    h.run_steps(2);
+    let back = h.state().preview.stage.camera().pose();
+    assert!(!h.state().preview.auto_rotating(), "still off");
+    assert!((back.zoom - left.zoom).abs() < 1e-3, "{left:?} → {back:?}");
+    assert!(
+        (back.pitch - left.pitch).abs() < 1e-3,
+        "{left:?} → {back:?}"
+    );
+    assert!((back.yaw - left.yaw).abs() < 1e-3, "{left:?} → {back:?}");
+    // Another item keeps the view: the same angle and zoom.
+    select(&mut h, "turret", "railgun", 3);
+    h.run_steps(10);
+    let other = h.state().preview.stage.camera().pose();
+    assert!((other.zoom - left.zoom).abs() < 1e-3, "{other:?}");
+    assert!((other.yaw - left.yaw).abs() < 1e-3, "{other:?}");
+}
+
+#[test]
+fn switching_the_hull_turret_or_paint_keeps_the_tank_turning_from_where_it_was() {
+    let (env, _) = models("3d-keep-turning");
+    starter_tank(&env);
+    add_paint(&env, "green", 4, [70, 110, 40]);
+    add_paint(&env, "ember", 2, [230, 120, 20]);
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "hunter", 3);
+    assert!(h.state().preview.auto_rotating(), "on by default");
+    let turning =
+        |h: &Harness<'static, Studio>| h.state().preview.stage.camera().turning_by_itself();
+    for _ in 0..400 {
+        if turning(&h) {
+            break;
+        }
+        h.run_steps(1);
+    }
+    assert!(turning(&h), "turning by itself after the wait");
+    h.run_steps(10);
+    for (kind, id, grade) in [
+        ("paint", "ember", 0),
+        ("hull", "wasp", 3),
+        ("turret", "smoky", 3),
+    ] {
+        let before = h.state().preview.stage.camera().pose();
+        select(&mut h, kind, id, grade);
+        let after = h.state().preview.stage.camera().pose();
+        assert!(turning(&h), "{kind}: it goes on turning, no new wait");
+        let moved = (after.yaw - before.yaw).rem_euclid(std::f32::consts::TAU);
+        assert!(
+            moved > 0.0 && moved < 0.5,
+            "{kind}: on from where it was, not back home: {before:?} → {after:?}"
+        );
+        assert_eq!(after.zoom, before.zoom);
+    }
+}
+
+#[test]
+fn while_the_next_model_loads_the_one_before_stays_under_a_loading_pill() {
+    let (env, _) = models("3d-loading");
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "wasp", 3);
+    let before = main_key(&h);
+    let rect = stage_rect(&h);
+    let drawn = h.render().expect("render");
+    // Built on their own thread, as in the app.
+    h.state_mut().preview.background = true;
+    h.state_mut().selection = Some(Selection {
+        kind: "turret".into(),
+        id: "railgun".into(),
+        grade: 3,
+    });
+    h.run_steps(1);
+    let mut saw_loading = false;
+    for _ in 0..400 {
+        if main_key(&h) != before {
+            break;
+        }
+        if h.state().preview.loading() {
+            saw_loading = true;
+            // The stage is still there, the model before on it (faded), never a blank frame.
+            assert!(h.query_by_label(STAGE).is_some(), "the stage stays");
+            let faded = h.render().expect("render");
+            if let Some(dir) = std::env::var_os("TANKI_VISUAL_DIR") {
+                let _ = faded.save(PathBuf::from(dir).join("garage-loading.png"));
+            }
+            let mut kept = 0;
+            let mut y = rect.min.y;
+            while y < rect.max.y {
+                let mut x = rect.min.x;
+                while x < rect.max.x {
+                    let at = Pos2::new(x, y);
+                    if distance(colour(&faded, at), colour(&drawn, at)) < 200
+                        && colour(&drawn, at) != colour(&faded, at)
+                    {
+                        kept += 1;
+                    }
+                    x += 4.0;
+                }
+                y += 4.0;
+            }
+            assert!(kept > 50, "the model before is still drawn, faded: {kept}");
+        }
+        h.run_steps(1);
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    assert!(saw_loading, "it loaded on its own thread");
+    assert_ne!(main_key(&h), before, "the next model came");
+    assert!(!h.state().preview.loading());
+}
+
+fn open_details(h: &mut Harness<'static, Studio>) {
+    h.get_by_label("Details").click();
+    h.run_steps(4);
+    assert_eq!(h.state().page, Page::Info);
+}
+
+#[test]
+fn details_of_a_whole_tank_show_it_in_3d_with_its_parts_and_a_part_picked_below() {
+    let (env, _) = models("3d-details-tank");
+    starter_tank(&env);
+    add_paint(&env, "green", 4, [70, 110, 40]);
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    select(&mut h, "hull", "hunter", 3);
+    let garage_key = main_key(&h);
+    let pose = h.state().preview.stage.camera().pose();
+    open_details(&mut h);
+    // The same stage, the same tank on it, the same view going on.
+    assert!(h.query_by_label(STAGE).is_some(), "the tank in 3D");
+    assert_eq!(main_key(&h), garage_key, "the whole tank, as in the Garage");
+    let now = h.state().preview.stage.camera().pose();
+    assert_eq!(now.zoom, pose.zoom);
+    assert!((now.pitch - pose.pitch).abs() < 1e-3);
+    for part in ["Hull: Hunter", "Turret: Smoky", "Paint: Green"] {
+        assert!(h.query_by_label(part).is_some(), "{part}");
+    }
+    if let Some(dir) = std::env::var_os("TANKI_VISUAL_DIR") {
+        let image = h.render().expect("render");
+        let _ = image.save(PathBuf::from(dir).join("details-tank.png"));
+    }
+    // Picking the turret shows it in the panels below; the tank stays the same.
+    h.get_by_label("Turret: Smoky").click();
+    h.run_steps(4);
+    let selection = h.state().selection.clone().expect("a selection");
+    assert_eq!(
+        (
+            selection.kind.as_str(),
+            selection.id.as_str(),
+            selection.grade
+        ),
+        ("turret", "smoky", 3)
+    );
+    assert!(
+        h.query_by_label("Smoky M0").is_some(),
+        "its modifications below"
+    );
+    assert_eq!(main_key(&h), garage_key, "the same tank");
+    // The panels and the model never overlap, wide or narrow.
+    for (width, height) in [
+        (820.0, 520.0),
+        (1100.0, 800.0),
+        (1440.0, 900.0),
+        (1920.0, 1080.0),
+    ] {
+        h.set_size(vec2(width, height));
+        h.run_steps(4);
+        let stage = stage_rect(&h);
+        let hull = h.get_by_label("Hull: Hunter").rect();
+        let turret = h.get_by_label("Turret: Smoky").rect();
+        assert!(
+            stage.width() > 100.0 && stage.height() > 100.0,
+            "{width}: {stage:?}"
+        );
+        assert!(
+            !stage.intersects(hull) && !stage.intersects(turret) && !hull.intersects(turret),
+            "{width}: {stage:?} {hull:?} {turret:?}"
+        );
+    }
+}
+
+#[test]
+fn details_of_an_item_alone_show_it_in_3d_and_with_3d_off_its_picture() {
+    let (env, _) = models("3d-details-item");
+    starter_tank(&env);
+    let Some(mut h) = gpu_harness(&env) else {
+        return;
+    };
+    h.state_mut().set_whole_tank(false);
+    select(&mut h, "turret", "smoky", 3);
+    open_details(&mut h);
+    assert!(h.query_by_label(STAGE).is_some(), "the turret in 3D");
+    assert!(!main_key(&h).contains(" & "), "alone");
+    assert!(h.query_by_label("Hull: Hunter").is_none(), "no tank parts");
+    assert!(
+        h.query_by_label("Smoky").is_some(),
+        "its name beside the model"
+    );
+    if let Some(dir) = std::env::var_os("TANKI_VISUAL_DIR") {
+        let image = h.render().expect("render");
+        let _ = image.save(PathBuf::from(dir).join("details-item.png"));
+    }
+    // 3D off: the flat picture, the parts still listed when the whole tank is on.
+    h.state_mut().set_preview_3d(false);
+    h.state_mut().set_whole_tank(true);
+    h.run_steps(4);
+    assert!(
+        h.query_by_label(STAGE).is_none(),
+        "no stage while 3D is off"
+    );
+    assert!(h.query_by_label("Hull: Hunter").is_some());
+    assert!(h.query_by_label("Turret: Smoky").is_some());
+    // Without the tank's other part in the cache, the item alone even with the whole tank on.
+    h.state_mut().set_preview_3d(true);
+    select(&mut h, "hull", "wasp", 3);
+    h.state_mut().preview.tank.turret = ("nothing".into(), 3);
+    h.state_mut().go(Page::Info);
+    h.run_steps(4);
+    assert!(h.query_by_label("Turret: Smoky").is_none());
+    assert!(h.query_by_label(STAGE).is_some());
 }

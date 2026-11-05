@@ -13,7 +13,7 @@ of a **lower** layer, and `cargo xtask layers` (part of `cargo xtask ci`) enforc
 | 1 | `tanki-pack` | The `.tankipack` format: validation, checksums, safe import from zip or folder. |
 | 1 | `tanki-update` | Updates from the project's GitHub releases: check, download checked against the release's `SHA256SUMS.txt`, install (the macOS bundle from the `.dmg`, the Windows `.msi` after exit), restart. |
 | 2 | `tanki-apply` | Transactional replacement of cache files with backup, verification and rollback; an item's look (`look`: its model, textures or paint, from the cache or a pack, for the 3D preview); backup history; backup housekeeping (`backups`: which backups are still needed, deleting old ones, a size limit, free disk space and a plan to make room); "is the game running" check. |
-| 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the 3D preview and its quality, the saved session) and the app data folder. |
+| 2 | `tanki-state` | SQLite state (packs, active pack, recents, hand labels, language, theme, interface size, the 3D preview, its quality, the whole tank and its last parts, the saved session) and the app data folder. |
 | 3 | `tanki-core` | Thin facade re-exporting the layers above, plus the end-to-end tests that cross all of them. |
 | — | `tanki-studio`, `tanki-cli`, `xtask` | Binaries and tooling; they may use any layer. |
 | — | `tanki-testkit` | Synthetic cache and packs for tests. A dev-dependency only, and depends on nothing of ours. |

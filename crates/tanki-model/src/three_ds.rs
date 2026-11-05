@@ -19,6 +19,7 @@ const FACES: u16 = 0x4120;
 const FACE_MATERIAL: u16 = 0x4130;
 const UVS: u16 = 0x4140;
 const SMOOTHING: u16 = 0x4150;
+const LOCAL_AXES: u16 = 0x4160;
 const MATERIAL: u16 = 0xAFFF;
 const MATERIAL_NAME: u16 = 0xA000;
 const TEXTURE_MAP: u16 = 0xA200;
@@ -51,6 +52,20 @@ pub struct Mesh {
     pub smoothing: Vec<u32>,
     /// The name of the first material the faces use.
     pub material: Option<String>,
+    /// The object's own origin, its pivot (the vertices are in the scene's space already).
+    pub origin: Option<[f32; 3]>,
+}
+
+/// Name prefixes of the helper objects a model carries besides what it shows: where a turret is
+/// mounted or a flag hangs, where a shot leaves the muzzle, and the boxes the game collides with.
+const HELPERS: [&str; 4] = ["box", "mount", "fmnt", "muzzle"];
+
+impl Mesh {
+    /// Whether the object is a helper, not part of what the model looks like.
+    pub fn is_helper(&self) -> bool {
+        let name = self.name.to_ascii_lowercase();
+        HELPERS.iter().any(|prefix| name.starts_with(prefix))
+    }
 }
 
 /// A material of the model: its name and the file name of its texture, as the file states them.
@@ -77,6 +92,25 @@ impl Model {
 
     pub fn triangle_count(&self) -> usize {
         self.meshes.iter().map(|mesh| mesh.faces.len()).sum()
+    }
+
+    /// The objects that show the model, without its helpers.
+    pub fn shown(&self) -> impl Iterator<Item = &Mesh> {
+        self.meshes.iter().filter(|mesh| !mesh.is_helper())
+    }
+
+    /// Where a hull carries its turret: the origin of its mount helper.
+    pub fn mount(&self) -> Option<[f32; 3]> {
+        self.meshes
+            .iter()
+            .find(|mesh| mesh.name.to_ascii_lowercase().starts_with("mount"))?
+            .origin
+    }
+
+    /// The point a turret turns around and is mounted by: the origin of its main object (named
+    /// after it, else the first shown one).
+    pub fn pivot(&self) -> Option<[f32; 3]> {
+        self.mesh("turret").or_else(|| self.shown().next())?.origin
     }
 }
 
@@ -159,6 +193,16 @@ fn object(body: &[u8]) -> Option<Mesh> {
                 })
             }
             FACES => faces(chunk.body, &mut mesh),
+            // Three axes, then the origin: 12 floats.
+            LOCAL_AXES => {
+                mesh.origin = Some([
+                    f32_at(chunk.body, 36),
+                    f32_at(chunk.body, 40),
+                    f32_at(chunk.body, 44),
+                ])
+                .and_then(|[x, y, z]| Some([x?, y?, z?]))
+                .filter(|origin| origin.iter().all(|v| v.is_finite()));
+            }
             _ => {}
         }
     }

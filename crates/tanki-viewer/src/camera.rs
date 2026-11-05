@@ -58,14 +58,18 @@ const PITCH_MIN: f32 = 0.02;
 const PITCH_MAX: f32 = 1.35;
 const ZOOM_MIN: f32 = 0.45;
 const ZOOM_MAX: f32 = 2.2;
-/// Turning by itself starts after this many seconds without input.
-const AUTO_DELAY: f32 = 3.0;
-const AUTO_SPEED: f32 = 0.35;
+/// Turning by itself starts after this many seconds without input, gathers speed over
+/// `AUTO_RAMP` seconds and goes on very slowly (radians per second: some 40 s a turn).
+const AUTO_DELAY: f32 = 5.0;
+const AUTO_RAMP: f32 = 2.0;
+const AUTO_SPEED: f32 = 0.15;
+/// Seconds the way back to the home view takes: it starts and ends at rest, never a jump.
+const HOME_SECONDS: f32 = 0.9;
 /// The model fills this share of the picture at most, seen from any side at the home pitch. The
 /// Garage's picture reaches under the chips and the selector, so this is about two thirds of the
 /// clear room between them: some 17% of air above and below, as product viewers and product
 /// photography leave around an object.
-const FILL_SHARE: f32 = 0.6;
+pub const FILL_SHARE: f32 = 0.6;
 /// Sides the framing checks the model from, all the way round.
 const FRAMING_TURNS: usize = 24;
 /// Points of a model the framing looks at, at most (spread over all of its vertices).
@@ -81,11 +85,21 @@ pub struct OrbitCamera {
     radius: f32,
     /// Points of the model, from its centre, that must stay in the picture.
     points: Vec<Vec3>,
+    /// The share of the picture the model fills at most ([`FILL_SHARE`] unless set).
+    fill: f32,
     /// The last framing distance worked out, and the picture's aspect it is for.
     fit: Cell<Option<(u32, f32)>>,
-    going_home: bool,
+    /// The way back to the home view under way: where it started and how far it is (0 to 1).
+    homing: Option<(Pose, f32)>,
     idle: f32,
-    /// Turn slowly by itself after a few seconds without input.
+    /// Grabbed while it was turning by itself: let go, it goes on at once rather than waiting.
+    grabbed_turning: bool,
+    /// Let go after that: it goes on turning at once, the flick dying down over it.
+    go_on: bool,
+    /// Which way it turns by itself (1 or -1): the way the hand last flicked it, so a flick slows
+    /// down into turning by itself and never stops or turns back in between.
+    auto_direction: f32,
+    /// Turn slowly by itself after a few seconds without input: on unless turned off.
     pub auto_rotate: bool,
 }
 
@@ -98,10 +112,14 @@ impl Default for OrbitCamera {
             centre: Vec3::ZERO,
             radius: 1.0,
             points: Vec::new(),
+            fill: FILL_SHARE,
             fit: Cell::new(None),
-            going_home: false,
+            homing: None,
             idle: 0.0,
-            auto_rotate: false,
+            grabbed_turning: false,
+            go_on: false,
+            auto_direction: 1.0,
+            auto_rotate: true,
         }
     }
 }
@@ -154,8 +172,19 @@ impl OrbitCamera {
 
     /// Grabbing the model stops it.
     pub fn hold(&mut self) {
+        self.grabbed_turning = self.turning_by_itself() || self.go_on;
+        self.go_on = false;
         self.velocity = Vec2::ZERO;
         self.touched();
+    }
+
+    /// The model is let go: if it was turning by itself when grabbed, it goes on turning at once,
+    /// at its usual speed, without the wait; a flick dies down over it.
+    pub fn release(&mut self) {
+        self.go_on = std::mem::take(&mut self.grabbed_turning);
+        if self.velocity.x.abs() > STOP_SPEED {
+            self.auto_direction = self.velocity.x.signum();
+        }
     }
 
     /// Turn by a fixed step (the keyboard): `yaw` and `pitch` in radians.
@@ -168,34 +197,105 @@ impl OrbitCamera {
     pub fn zoom_by(&mut self, factor: f32) {
         if factor.is_finite() && factor > 0.0 {
             self.target_zoom = (self.target_zoom / factor).clamp(ZOOM_MIN, ZOOM_MAX);
-            self.touched();
+            // Zooming while it turns by itself does not stop it.
+            if !self.turning_by_itself() {
+                self.touched();
+            }
         }
+    }
+
+    /// How much of the picture the model fills at most (0.3 to 0.9): more for a model whose
+    /// framing from every side leaves it small from the usual one.
+    pub fn set_fill(&mut self, share: f32) {
+        let share = if share.is_finite() {
+            share.clamp(0.3, 0.9)
+        } else {
+            FILL_SHARE
+        };
+        if share != self.fill {
+            self.fill = share;
+            self.fit.set(None);
+        }
+    }
+
+    /// Stand at `pose` at once (a view kept from before), the pitch and zoom within their limits.
+    /// A pose with a number that is none is ignored.
+    pub fn set_pose(&mut self, pose: Pose) {
+        if ![pose.yaw, pose.pitch, pose.zoom]
+            .iter()
+            .all(|v| v.is_finite())
+        {
+            return;
+        }
+        self.pose = Pose {
+            yaw: wrap_angle(pose.yaw),
+            pitch: pose.pitch.clamp(PITCH_MIN, PITCH_MAX),
+            zoom: pose.zoom.clamp(ZOOM_MIN, ZOOM_MAX),
+        };
+        self.target_zoom = self.pose.zoom;
+        self.velocity = Vec2::ZERO;
+        self.homing = None;
+        self.touched();
+    }
+
+    /// The pose the camera comes to rest at (the zoom it eases to), or `None` while a flick or
+    /// the way home still turns it.
+    pub fn resting_pose(&self) -> Option<Pose> {
+        (self.homing.is_none() && self.velocity == Vec2::ZERO).then_some(Pose {
+            zoom: self.target_zoom,
+            ..self.pose
+        })
+    }
+
+    /// Seconds until it starts turning by itself, while it waits to.
+    pub fn turns_by_itself_in(&self) -> Option<f32> {
+        (self.auto_rotate && self.idle <= AUTO_DELAY).then_some(AUTO_DELAY - self.idle)
+    }
+
+    /// Whether it is turning by itself now (not just allowed to).
+    pub fn turning_by_itself(&self) -> bool {
+        self.auto_rotate && self.idle > AUTO_DELAY
     }
 
     /// Ease back to the starting view.
     pub fn go_home(&mut self) {
-        self.going_home = true;
-        self.velocity = Vec2::ZERO;
+        self.turn_home();
         self.target_zoom = HOME.zoom;
+    }
+
+    /// Ease back to the starting view's angle, keeping the zoom (another item on the stage), and
+    /// wait again before turning by itself.
+    pub fn turn_home(&mut self) {
+        self.homing = Some((self.pose, 0.0));
+        self.velocity = Vec2::ZERO;
         self.touched();
     }
 
-    /// Advance `dt` seconds. Returns whether the camera is still moving (draw again next frame).
+    /// Advance `dt` seconds (the time since the last frame, however long). Returns whether the
+    /// camera is still moving (draw again next frame).
     pub fn update(&mut self, dt: f32) -> bool {
-        let dt = dt.clamp(0.0, 0.25);
+        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
+        // All of a long gap counts as waiting; movement steps at most a tenth of a second.
         self.idle += dt;
+        let dt = dt.min(0.1);
+        if std::mem::take(&mut self.go_on) {
+            // Let go while it was turning by itself: on at once, at full speed.
+            self.idle = AUTO_DELAY + AUTO_RAMP;
+        }
         let ease = 1.0 - (-EASE * dt).exp();
         let mut moving = false;
-        if self.going_home {
-            let yaw = wrap_angle(HOME.yaw - self.pose.yaw);
-            let pitch = HOME.pitch - self.pose.pitch;
-            if yaw.abs() < 1e-3 && pitch.abs() < 1e-3 {
+        if let Some((from, done)) = self.homing {
+            // Smoothstep: no jump in speed at either end, the short way round.
+            let done = (done + dt / HOME_SECONDS).min(1.0);
+            let s = done * done * (3.0 - 2.0 * done);
+            self.pose.yaw = wrap_angle(from.yaw + wrap_angle(HOME.yaw - from.yaw) * s);
+            self.pose.pitch = from.pitch + (HOME.pitch - from.pitch) * s;
+            if done >= 1.0 {
                 self.pose.yaw = HOME.yaw;
                 self.pose.pitch = HOME.pitch;
-                self.going_home = false;
+                self.homing = None;
             } else {
-                self.pose.yaw += yaw * ease;
-                self.pose.pitch += pitch * ease;
+                self.homing = Some((from, done));
                 moving = true;
             }
         } else if self.velocity.length() > STOP_SPEED {
@@ -205,6 +305,9 @@ impl OrbitCamera {
         } else {
             self.velocity = Vec2::ZERO;
         }
+        // Turning by itself waits only for the way home: a flick dies down over it, and the zoom
+        // settles while it turns.
+        let turning = self.homing.is_some();
         let zoom = self.target_zoom - self.pose.zoom;
         if zoom.abs() > 1e-4 {
             self.pose.zoom += zoom * ease;
@@ -212,8 +315,10 @@ impl OrbitCamera {
         } else {
             self.pose.zoom = self.target_zoom;
         }
-        if self.auto_rotate && self.idle > AUTO_DELAY && !moving {
-            self.turn_by(Vec2::new(AUTO_SPEED * dt, 0.0));
+        if self.auto_rotate && self.idle > AUTO_DELAY && !turning {
+            let ramp = ((self.idle - AUTO_DELAY) / AUTO_RAMP).min(1.0);
+            let speed = AUTO_SPEED * ramp * ramp * (3.0 - 2.0 * ramp);
+            self.turn_by(Vec2::new(self.auto_direction * speed * dt, 0.0));
             moving = true;
         }
         moving
@@ -260,7 +365,7 @@ impl OrbitCamera {
     }
 
     fn turn(&mut self, by: Vec2) {
-        self.going_home = false;
+        self.homing = None;
         self.touched();
         self.turn_by(by);
     }
@@ -279,7 +384,7 @@ impl OrbitCamera {
 
     /// How far the camera must stand for the model's sphere to fit both ways, times the zoom.
     /// How far the camera stands, times the zoom: the nearest distance from which the model fits
-    /// the picture (its `FILL_SHARE`) seen from any side at the home pitch, so the model is as
+    /// the picture (its fill share) seen from any side at the home pitch, so the model is as
     /// large as it can be and keeps its size while it turns.
     fn distance(&self, aspect: f32) -> f32 {
         let fit = match self.fit.get() {
@@ -294,7 +399,7 @@ impl OrbitCamera {
     }
 
     fn fit_distance(&self, aspect: f32) -> f32 {
-        let tan_y = (FOV_Y / 2.0).tan() * FILL_SHARE;
+        let tan_y = (FOV_Y / 2.0).tan() * self.fill;
         let tan_x = tan_y * aspect;
         let (sin_pitch, cos_pitch) = HOME.pitch.sin_cos();
         let mut fit: f32 = 0.0;

@@ -681,6 +681,8 @@ impl Studio {
         let preview_3d = store.preview_3d()?;
         let stage_quality =
             tanki_viewer::QualityPreference::from_pref(store.stage_quality()?.as_deref());
+        let whole_tank = store.whole_tank()?;
+        let tank = crate::preview3d::Tank::restored(|part| store.tank_part(part).ok().flatten());
         tanki_ui::fonts::install(&cc.egui_ctx);
         tanki_ui::theme::apply(&cc.egui_ctx, theme);
         // A size given for screenshots and tests (`TANKI_SIZE`, `TANKI_SHOT`) is kept as it is.
@@ -782,8 +784,13 @@ impl Studio {
                 preview_3d,
                 stage_quality,
                 tanki_viewer::Stage::new(cc.wgpu_render_state.as_ref()),
+                whole_tank,
+                tank,
             ),
         };
+        if let Some(view) = app.session.stage.clone() {
+            app.preview.restore_view(&view);
+        }
         app.reload_roots();
         app.packs = app.store.list_packs().unwrap_or_default();
         app.active_pack = app.store.active_pack().ok().flatten();
@@ -897,9 +904,15 @@ impl Studio {
             .filter(|key| self.rows.iter().any(|r| &r.key == key));
     }
 
-    /// The first recognised item, at its highest modification present.
+    /// The tank's hull (the starter one until the user chooses), else the first recognised item,
+    /// at its highest modification present.
     pub fn default_selection(&self) -> Option<Selection> {
-        let item = self.items.first()?;
+        let hull = &self.preview.tank.hull.0;
+        let item = self
+            .items
+            .iter()
+            .find(|item| item.kind == "hull" && &item.id == hull)
+            .or_else(|| self.items.first())?;
         let grade = (0..4).rev().find(|g| item.present[*g]).unwrap_or(3);
         Some(Selection {
             kind: item.kind.clone(),
@@ -1165,6 +1178,9 @@ impl Studio {
         self.session.garage_tab = self.garage_tab.clone();
         self.session.resource_filter = self.filter.code().to_owned();
         self.session.window = self.window;
+        if let Some(view) = self.preview.kept_view(self.session.stage.as_ref()) {
+            self.session.stage = Some(view);
+        }
         let Some(root) = self
             .scan
             .as_ref()

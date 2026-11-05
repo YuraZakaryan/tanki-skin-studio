@@ -172,12 +172,19 @@ fn the_3d_preview_is_on_by_default_and_settings_turn_it_off_for_good() {
         h.state().preview.quality,
         tanki_viewer::QualityPreference::Economy
     );
+    // The whole tank is on by default, and the switch beside it turns it off.
+    assert!(h.state().preview.whole_tank);
+    h.get_by_label("Show the whole tank").click();
+    h.run_steps(3);
+    assert!(!h.state().preview.whole_tank);
     h.get_by_label("Show the tank in 3D").click();
     h.run_steps(3);
     assert!(!h.state().preview.enabled);
-    // Off, the quality cannot be changed.
+    // Off, the other rows cannot be changed.
     h.get_by_label("High").click();
+    h.get_by_label("Show the whole tank").click();
     h.run_steps(3);
+    assert!(!h.state().preview.whole_tank);
     assert_eq!(
         h.state().preview.quality,
         tanki_viewer::QualityPreference::Economy
@@ -193,4 +200,5 @@ fn the_3d_preview_is_on_by_default_and_settings_turn_it_off_for_good() {
         again.state().preview.quality,
         tanki_viewer::QualityPreference::Economy
     );
+    assert!(!again.state().preview.whole_tank);
 }

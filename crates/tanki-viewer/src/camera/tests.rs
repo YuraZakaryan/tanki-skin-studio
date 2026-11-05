@@ -178,8 +178,167 @@ fn a_model_framed_on_its_points_comes_closer_than_its_box_and_still_fits() {
 }
 
 #[test]
+fn a_larger_fill_comes_closer_and_stays_within_its_limits() {
+    let distance = |fill: f32| {
+        let mut c = camera();
+        c.set_fill(fill);
+        c.eye().distance(c.centre)
+    };
+    let usual = distance(FILL_SHARE);
+    assert!(distance(0.78) < usual, "a whole tank comes closer");
+    assert!(distance(0.4) > usual);
+    assert_eq!(distance(5.0), distance(0.9), "kept below 0.9");
+    assert_eq!(distance(f32::NAN), usual, "nonsense keeps the usual share");
+}
+
+#[test]
+fn turning_home_starts_and_ends_at_rest_and_keeps_the_zoom() {
+    let mut camera = camera();
+    camera.set_pose(Pose { yaw: -1.0, ..HOME });
+    camera.zoom_by(1.5);
+    settle(&mut camera, 1.0);
+    let zoom = camera.pose().zoom;
+    camera.turn_home();
+    let mut steps = Vec::new();
+    let mut last = camera.pose().yaw;
+    for _ in 0..80 {
+        camera.update(FRAME);
+        steps.push(wrap_angle(camera.pose().yaw - last).abs());
+        last = camera.pose().yaw;
+    }
+    assert_eq!(camera.pose().yaw, HOME.yaw);
+    assert_eq!(camera.pose().zoom, zoom, "the zoom is kept");
+    let fastest = steps.iter().copied().fold(0.0, f32::max);
+    assert!(steps[0] < fastest / 4.0, "starts slowly: {steps:?}");
+    assert!(camera.resting_pose().is_some());
+}
+
+#[test]
+fn turning_by_itself_waits_five_seconds_then_gathers_speed_very_slowly() {
+    let mut camera = camera();
+    assert!(camera.auto_rotate, "on unless turned off");
+    let mut time = 0.0;
+    while time < 4.9 {
+        assert!(!camera.update(FRAME), "still at {time}");
+        time += FRAME;
+    }
+    assert!(!camera.turning_by_itself());
+    let mut yaws = Vec::new();
+    for _ in 0..(6.0 / FRAME) as usize {
+        camera.update(FRAME);
+        yaws.push(camera.pose().yaw);
+    }
+    assert!(camera.turning_by_itself());
+    let step = |i: usize| wrap_angle(yaws[i + 1] - yaws[i]);
+    assert!(step(10) < step(yaws.len() - 2), "gathers speed");
+    let speed = step(yaws.len() - 2) / FRAME;
+    assert!(speed > 0.0 && speed < 0.2, "very slowly: {speed} rad/s");
+}
+
+#[test]
 fn angles_wrap_into_one_turn() {
     assert!((wrap_angle(3.0 * PI) - PI).abs() < 1e-5);
     assert!((wrap_angle(-PI / 2.0) + PI / 2.0).abs() < 1e-6);
     assert!((wrap_angle(TAU + 0.5) - 0.5).abs() < 1e-5);
+}
+
+#[test]
+fn a_still_stage_is_woken_to_turn_by_itself_after_one_long_gap() {
+    // Nothing moves, so no frames come between: one update five seconds later must count.
+    let mut camera = camera();
+    camera.update(FRAME);
+    let wait = camera.turns_by_itself_in().expect("waiting to turn");
+    assert!(wait > 4.9 && wait <= AUTO_DELAY, "{wait}");
+    camera.update(wait + 0.02);
+    assert!(camera.turns_by_itself_in().is_none());
+    assert!(camera.turning_by_itself());
+    let yaw = camera.pose().yaw;
+    for _ in 0..30 {
+        camera.update(FRAME);
+    }
+    assert_ne!(camera.pose().yaw, yaw, "it turns");
+    camera.auto_rotate = false;
+    assert!(camera.turns_by_itself_in().is_none(), "off: never woken");
+}
+
+#[test]
+fn turning_it_by_hand_pauses_turning_by_itself_which_then_goes_on_from_there() {
+    let mut camera = camera();
+    camera.update(AUTO_DELAY + AUTO_RAMP);
+    camera.update(FRAME);
+    assert!(camera.turning_by_itself());
+    // Grabbed and turned by hand: it does not fight the hand.
+    camera.hold();
+    camera.drag(Vec2::new(-60.0, 0.0), FRAME);
+    assert!(!camera.turning_by_itself());
+    let mut time = 0.0;
+    while time < 1.0 {
+        camera.update(FRAME);
+        time += FRAME;
+    }
+    let settled = camera.pose().yaw;
+    assert!(camera.turns_by_itself_in().is_some(), "waits again");
+    // Five seconds later it goes on from where the hand (and its flick) left it, not from home.
+    camera.update(AUTO_DELAY);
+    for _ in 0..120 {
+        camera.update(FRAME);
+    }
+    assert!(camera.turning_by_itself());
+    let now = camera.pose().yaw;
+    assert_ne!(now, settled, "turning again");
+    assert!(
+        wrap_angle(now - settled).abs() < 0.5,
+        "from there: {settled} → {now}"
+    );
+}
+
+#[test]
+fn let_go_while_it_turned_by_itself_it_goes_on_at_once_and_zooming_does_not_stop_it() {
+    let mut camera = camera();
+    camera.update(AUTO_DELAY + AUTO_RAMP);
+    camera.update(FRAME);
+    assert!(camera.turning_by_itself());
+    // Zooming does not stop it.
+    camera.zoom_by(1.2);
+    let yaw = camera.pose().yaw;
+    camera.update(FRAME);
+    assert!(camera.turning_by_itself());
+    assert_ne!(camera.pose().yaw, yaw, "still turning while zooming");
+    // Grabbed: it stops while held, however long.
+    camera.hold();
+    for _ in 0..(8.0 / FRAME) as usize {
+        camera.drag(Vec2::ZERO, FRAME);
+        camera.update(FRAME);
+    }
+    assert!(!camera.turning_by_itself(), "held still");
+    // Let go: it goes on the very next frame, at its usual speed, no stop and no new ramp.
+    camera.release();
+    let yaw = camera.pose().yaw;
+    camera.update(FRAME);
+    assert!(camera.turning_by_itself(), "goes on at once");
+    let step = wrap_angle(camera.pose().yaw - yaw) / FRAME;
+    assert!(
+        (step - AUTO_SPEED).abs() < 1e-3,
+        "at full speed: {step} rad/s"
+    );
+    // Let go with a flick the other way: it slows down into turning that way, never stopping or
+    // turning back in between.
+    camera.hold();
+    camera.drag(Vec2::new(40.0, 0.0), FRAME);
+    camera.release();
+    let mut last = camera.pose().yaw;
+    for _ in 0..120 {
+        camera.update(FRAME);
+        let yaw = camera.pose().yaw;
+        assert!(wrap_angle(yaw - last) < -1e-4, "never stops or turns back");
+        last = yaw;
+    }
+    assert!(camera.turning_by_itself());
+    // Grabbed while it only waited: let go, it waits the usual time.
+    let mut waiting = OrbitCamera::default();
+    waiting.update(FRAME);
+    waiting.hold();
+    waiting.release();
+    waiting.update(1.0);
+    assert!(!waiting.turning_by_itself());
 }

@@ -75,6 +75,16 @@ impl Studio {
         }
     }
 
+    pub fn set_whole_tank(&mut self, on: bool) {
+        if self.preview.whole_tank == on {
+            return;
+        }
+        self.preview.whole_tank = on;
+        if let Err(error) = self.store.set_whole_tank(on) {
+            log::warn!("could not save the whole tank setting: {error}");
+        }
+    }
+
     pub fn set_stage_quality(&mut self, quality: tanki_viewer::QualityPreference) {
         if self.preview.quality == quality {
             return;

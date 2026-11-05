@@ -14,7 +14,7 @@ use tanki_ui::{
     widgets::{self, Button, ButtonKind, ChipKind, Cover, Width},
 };
 
-use super::{preview3d::Looks, scroll_page, shell};
+use super::{scroll_page, shell};
 use crate::{
     app::{Page, Selection, StateFilter, Studio, TABS},
     model::{grade_code, item_name, target_title},
@@ -319,47 +319,11 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         Pos2::new(stage.min.x + 18.0, stage.min.y + 54.0),
         Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector_room),
     );
-    let ctx = ui.ctx().clone();
-    let variant_texture = app.chosen_variant(&selection).and_then(|(i, v)| {
-        let pack = app.active_pack.clone()?;
-        let variant = pack.manifest.items.get(i)?.variants.get(v)?.clone();
-        app.variant_preview(&ctx, &pack, &variant)
-    });
-    // The picked skin's own picture when the pack has one, else the item as the game shows it.
-    // The caption says whether that skin is in the game: a pick is only a pick until applied.
-    let chosen = app.chosen_variant(&selection);
-    let has_variant = chosen.is_some();
-    let in_game = chosen.is_some() && chosen == app.applied_variant(&selection);
-    let worn = app.in_game_name(&selection);
-    // A paint's own picture stands for it when the game has no garage picture of it.
-    let picture = row.as_ref().and_then(|r| {
-        r.picture_group
-            .clone()
-            .or_else(|| paint.then(|| r.preview_group.clone()).flatten())
-    });
-    // In 3D when it is on and the look can be built; else the flat picture below. A paint is
-    // seen on the hull last shown.
-    if selection.kind == "hull" {
-        app.preview.hull = Some((selection.id.clone(), selection.grade));
-    }
+    // In 3D when it is on and the look can be built; else the flat picture. A hull, turret or
+    // paint chosen becomes the tank's, shown with the tank's other parts.
+    app.remember_tank_part(&selection);
     let drawn_3d = app.preview.active() && {
-        let (main, compared) = app.stage_looks(&selection, chosen, in_game);
-        let caption = if in_game {
-            tl!("In the game now").to_owned()
-        } else if has_variant {
-            tl!("Skin preview · not applied").to_owned()
-        } else {
-            worn.clone().map_or_else(
-                || tl!("Current look in the game").to_owned(),
-                |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
-            )
-        };
-        let looks = Looks {
-            main,
-            compared,
-            item: format!("{}:{}", selection.kind, selection.id),
-            caption,
-        };
+        let looks = super::preview3d::looks(app, &selection);
         // Between the chips' row and the selector (a paint has none), 16 clear of each.
         let selector = if paint { 0.0 } else { 30.0 + 16.0 };
         let scene = Rect::from_min_max(
@@ -376,89 +340,7 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         )
     };
     if !drawn_3d {
-        let (texture, caption) = match (variant_texture, has_variant, picture) {
-            (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
-            (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
-            // A skin of the pack that came without a picture: say so instead of showing another picture.
-            (None, true, _) => (None, tl!("This skin has no preview in the pack").to_owned()),
-            (None, false, Some(group)) => (
-                app.cache_preview(&ctx, &group),
-                worn.map_or_else(
-                    || tl!("Current look in the game").to_owned(),
-                    |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
-                ),
-            ),
-            (None, false, None) => (None, tl!("No preview available").to_owned()),
-        };
-        // The game downloads a modification's garage picture only when its own garage shows it: say
-        // so, and how to get it, when the cache has none.
-        let no_picture = row.is_some()
-            && !has_variant
-            && row.as_ref().is_some_and(|r| r.picture_group.is_none());
-        match texture {
-            Some(texture) => {
-                let area =
-                    Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
-                let size = texture.size_vec2();
-                let scale = (area.width() / size.x).min(area.height() / size.y).min(2.0);
-                let image = Rect::from_center_size(area.center(), size * scale);
-                ui.painter().image(
-                    texture.id(),
-                    image,
-                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                    egui::Color32::WHITE,
-                );
-                fonts::draw_centered(
-                    ui.painter(),
-                    Rect::from_center_size(
-                        Pos2::new(center.center().x, center.max.y - 8.0),
-                        Vec2::new(center.width(), 16.0),
-                    ),
-                    &caption,
-                    Text::mono(12.0, 400, tokens.text_3),
-                );
-            }
-            None => {
-                let c = center.center();
-                fonts::icon(
-                    ui.painter(),
-                    Pos2::new(c.x, c.y - 14.0),
-                    icons::IMAGE,
-                    72.0,
-                    tokens.text_3,
-                );
-                fonts::draw_centered(
-                    ui.painter(),
-                    Rect::from_center_size(
-                        Pos2::new(c.x, c.y + 44.0),
-                        Vec2::new(center.width(), 16.0),
-                    ),
-                    &caption,
-                    Text::mono(12.0, 400, tokens.text_3),
-                );
-                if no_picture {
-                    let note = fmt(
-                        tl!(
-                            "The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache."
-                        ),
-                        &[(
-                            "name",
-                            &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
-                        )],
-                    );
-                    let width = (center.width() - 48.0).clamp(120.0, 420.0);
-                    let galley = fonts::paragraph_centered(
-                        ui.painter(),
-                        &note,
-                        Text::body(12.0, 400, tokens.text_3),
-                        width,
-                        Some(17.0),
-                    );
-                    ui.painter()
-                        .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
-                }
-            }
-        }
+        flat_picture(app, ui, center, &selection, row.as_ref());
     }
     if paint {
         return;
@@ -499,6 +381,115 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
                 grade,
                 ..selection.clone()
             });
+        }
+    }
+}
+
+/// The item's flat picture in `center` (3D off, or a look that cannot be built): the picked skin's
+/// own picture, else the item as the game shows it, with a caption saying which.
+pub(super) fn flat_picture(
+    app: &mut Studio,
+    ui: &mut Ui,
+    center: Rect,
+    selection: &Selection,
+    row: Option<&crate::model::ResourceRow>,
+) {
+    let tokens = Tokens::get(ui.ctx());
+    let paint = selection.kind == "paint";
+    let ctx = ui.ctx().clone();
+    let variant_texture = app.chosen_variant(selection).and_then(|(i, v)| {
+        let pack = app.active_pack.clone()?;
+        let variant = pack.manifest.items.get(i)?.variants.get(v)?.clone();
+        app.variant_preview(&ctx, &pack, &variant)
+    });
+    // The picked skin's own picture when the pack has one, else the item as the game shows it.
+    // The caption says whether that skin is in the game: a pick is only a pick until applied.
+    let chosen = app.chosen_variant(selection);
+    let has_variant = chosen.is_some();
+    let in_game = chosen.is_some() && chosen == app.applied_variant(selection);
+    let worn = app.in_game_name(selection);
+    // A paint's own picture stands for it when the game has no garage picture of it.
+    let picture = row.and_then(|r| {
+        r.picture_group
+            .clone()
+            .or_else(|| paint.then(|| r.preview_group.clone()).flatten())
+    });
+    let (texture, caption) = match (variant_texture, has_variant, picture) {
+        (Some(texture), _, _) if in_game => (Some(texture), tl!("In the game now").to_owned()),
+        (Some(texture), _, _) => (Some(texture), tl!("Skin preview · not applied").to_owned()),
+        // A skin of the pack that came without a picture: say so instead of showing another picture.
+        (None, true, _) => (None, tl!("This skin has no preview in the pack").to_owned()),
+        (None, false, Some(group)) => (
+            app.cache_preview(&ctx, &group),
+            worn.map_or_else(
+                || tl!("Current look in the game").to_owned(),
+                |name| fmt(tl!("In the game: {name}"), &[("name", &name)]),
+            ),
+        ),
+        (None, false, None) => (None, tl!("No preview available").to_owned()),
+    };
+    // The game downloads a modification's garage picture only when its own garage shows it: say
+    // so, and how to get it, when the cache has none.
+    let no_picture =
+        row.is_some() && !has_variant && row.is_some_and(|r| r.picture_group.is_none());
+    match texture {
+        Some(texture) => {
+            let area = Rect::from_min_max(center.min, Pos2::new(center.max.x, center.max.y - 24.0));
+            let size = texture.size_vec2();
+            let scale = (area.width() / size.x).min(area.height() / size.y).min(2.0);
+            let image = Rect::from_center_size(area.center(), size * scale);
+            ui.painter().image(
+                texture.id(),
+                image,
+                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                egui::Color32::WHITE,
+            );
+            fonts::draw_centered(
+                ui.painter(),
+                Rect::from_center_size(
+                    Pos2::new(center.center().x, center.max.y - 8.0),
+                    Vec2::new(center.width(), 16.0),
+                ),
+                &caption,
+                Text::mono(12.0, 400, tokens.text_3),
+            );
+        }
+        None => {
+            let c = center.center();
+            fonts::icon(
+                ui.painter(),
+                Pos2::new(c.x, c.y - 14.0),
+                icons::IMAGE,
+                72.0,
+                tokens.text_3,
+            );
+            fonts::draw_centered(
+                ui.painter(),
+                Rect::from_center_size(Pos2::new(c.x, c.y + 44.0), Vec2::new(center.width(), 16.0)),
+                &caption,
+                Text::mono(12.0, 400, tokens.text_3),
+            );
+            if no_picture {
+                let note = fmt(
+                    tl!(
+                        "The game has not cached a picture of {name} yet. Open it in the game's garage, then rescan the cache."
+                    ),
+                    &[(
+                        "name",
+                        &item_name(&selection.kind, &selection.id, grade_code(selection.grade)),
+                    )],
+                );
+                let width = (center.width() - 48.0).clamp(120.0, 420.0);
+                let galley = fonts::paragraph_centered(
+                    ui.painter(),
+                    &note,
+                    Text::body(12.0, 400, tokens.text_3),
+                    width,
+                    Some(17.0),
+                );
+                ui.painter()
+                    .galley(Pos2::new(c.x, c.y + 62.0), galley, tokens.text_3);
+            }
         }
     }
 }

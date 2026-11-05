@@ -64,6 +64,11 @@ pub struct Stage {
     quality: Quality,
     camera: OrbitCamera,
     slots: [Slot; 2],
+    /// The input time of the last frame drawn: the wait before turning by itself counts the time
+    /// between frames, which is long while nothing moves.
+    last_time: Option<f64>,
+    /// How opaque the pictures are drawn (1 unless set: a picture waiting for the next one fades).
+    opacity: f32,
 }
 
 impl Stage {
@@ -80,6 +85,8 @@ impl Stage {
             msaa: render_state.is_some_and(|state| Gpu::supports_samples(&state.adapter, 4)),
             quality: detected,
             camera: OrbitCamera::default(),
+            last_time: None,
+            opacity: 1.0,
             slots: Default::default(),
         }
     }
@@ -136,6 +143,15 @@ impl Stage {
         }
     }
 
+    /// Draw the pictures this opaque (0 to 1), as while the next model loads.
+    pub fn set_opacity(&mut self, opacity: f32) {
+        self.opacity = if opacity.is_finite() {
+            opacity.clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+    }
+
     /// Forget a slot's scene; its picture is cleared.
     pub fn unload(&mut self, slot: usize) {
         if let Some(entry) = self.slots.get_mut(slot) {
@@ -171,7 +187,11 @@ impl Stage {
         response
             .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), label));
         let mut moving = self.handle_input(ui, &response);
-        let dt = ui.input(|i| i.stable_dt).min(0.1);
+        let (time, stable) = ui.input(|i| (i.time, i.stable_dt));
+        let dt = self
+            .last_time
+            .map_or(stable, |last| (time - last).max(0.0) as f32);
+        self.last_time = Some(time);
         moving |= self.camera.update(dt);
         let slots: &[usize] = match view {
             StageView::Single => &[MAIN],
@@ -203,6 +223,10 @@ impl Stage {
         }
         if moving {
             ui.ctx().request_repaint();
+        } else if let Some(wait) = self.camera.turns_by_itself_in() {
+            // Nothing moves, so no frame would come: ask for one when it starts turning.
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_secs_f32(wait + 0.02));
         }
         response
     }
@@ -233,6 +257,9 @@ impl Stage {
         }
         if response.double_clicked() {
             self.camera.go_home();
+        }
+        if response.drag_stopped() {
+            self.camera.release();
         }
         let dragging = response.dragged();
         if dragging {
@@ -346,7 +373,8 @@ impl Stage {
             Pos2::new(rect.min.x + rect.width() * to, rect.max.y),
         );
         let uv = Rect::from_min_max(Pos2::new(from, 0.0), Pos2::new(to, 1.0));
-        Some(egui::Shape::image(texture, part, uv, Color32::WHITE))
+        let tint = Color32::WHITE.gamma_multiply(self.opacity);
+        Some(egui::Shape::image(texture, part, uv, tint))
     }
 }
 

@@ -123,6 +123,33 @@ pub struct SessionState {
     pub last_cache: Option<String>,
     /// Per-cache selections, most recently used first.
     pub caches: Vec<CacheSession>,
+    /// The Garage's 3D view as it was left.
+    pub stage: Option<StageSession>,
+}
+
+/// Where the 3D camera stood, and for which item, so the next start shows the same view.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct StageSession {
+    /// The item the view was framed for (`tank` for the whole tank).
+    pub item: String,
+    /// Radians around the model, above the ground, and the zoom (1 frames the model).
+    pub yaw: f32,
+    pub pitch: f32,
+    pub zoom: f32,
+    pub auto_rotate: bool,
+}
+
+impl Default for StageSession {
+    fn default() -> Self {
+        Self {
+            item: String::new(),
+            yaw: 0.0,
+            pitch: 0.0,
+            zoom: 1.0,
+            auto_rotate: false,
+        }
+    }
 }
 
 impl Default for SessionState {
@@ -134,6 +161,7 @@ impl Default for SessionState {
             resource_filter: "all".into(),
             last_cache: None,
             caches: Vec::new(),
+            stage: None,
         }
     }
 }
@@ -156,6 +184,12 @@ impl SessionState {
         let mut seen = std::collections::BTreeSet::new();
         self.caches.retain(|c| seen.insert(c.root.clone()));
         self.caches.truncate(MAX_CACHES);
+        // The camera keeps the angles and zoom within its limits; a view without numbers is not kept.
+        if self.stage.as_ref().is_some_and(|s| {
+            s.item.is_empty() || ![s.yaw, s.pitch, s.zoom].iter().all(|v| v.is_finite())
+        }) {
+            self.stage = None;
+        }
     }
 
     /// The selection state of `root`, if any was saved.
@@ -240,7 +274,42 @@ mod tests {
         });
         cache.grade = Some("m3".into());
         cache.variants.insert("hull:wasp:m3".into(), "red".into());
+        session.stage = Some(StageSession {
+            item: "tank:hunter:smoky".into(),
+            yaw: 1.5,
+            pitch: 0.4,
+            zoom: 0.8,
+            auto_rotate: false,
+        });
         assert_eq!(SessionState::from_json(&session.to_json()), session);
+    }
+
+    #[test]
+    fn a_3d_view_without_an_item_or_with_a_number_that_is_none_is_not_kept() {
+        for view in [
+            StageSession::default(),
+            StageSession {
+                item: "tank".into(),
+                zoom: f32::NAN,
+                ..StageSession::default()
+            },
+        ] {
+            let mut session = SessionState {
+                stage: Some(view),
+                ..SessionState::default()
+            };
+            session.sanitize(PAGES, TABS, FILTERS);
+            assert_eq!(session.stage, None);
+        }
+        let mut session = SessionState {
+            stage: Some(StageSession {
+                item: "tank".into(),
+                ..StageSession::default()
+            }),
+            ..SessionState::default()
+        };
+        session.sanitize(PAGES, TABS, FILTERS);
+        assert!(session.stage.is_some(), "a sound view is kept");
     }
 
     #[test]

@@ -82,7 +82,7 @@ fn faces_in_different_groups_or_none_split_their_vertices() {
 #[test]
 fn several_meshes_become_one_piece_with_offset_indices() {
     let model = read(&hull_3ds()).unwrap();
-    let geometry = Geometry::from_meshes(&model.meshes);
+    let geometry = Geometry::from_meshes(model.shown());
     assert_eq!(geometry.vertices.len(), 48);
     assert_eq!(geometry.triangle_count(), 24);
     assert!(geometry.indices.iter().any(|i| *i >= 24));

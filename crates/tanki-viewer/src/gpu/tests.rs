@@ -23,7 +23,7 @@ fn device() -> Option<(wgpu::Adapter, wgpu::Device, wgpu::Queue)> {
 
 fn tank(paint: [u8; 3]) -> Scene {
     let part = |bytes: &[u8], offset| Part {
-        geometry: Arc::new(Geometry::from_meshes(&read(bytes).unwrap().meshes)),
+        geometry: Arc::new(Geometry::from_meshes(read(bytes).unwrap().shown())),
         material: Material {
             paint,
             ..Material::default()
@@ -177,14 +177,14 @@ const SIZE: [u32; 2] = [320, 200];
 fn boxed(paint: [u8; 3]) -> (Scene, OrbitCamera) {
     use tanki_testkit::three_ds::{Mesh3ds, model_3ds};
     let model = read(&model_3ds(&[Mesh3ds::cuboid(
-        "box",
+        "block",
         [-100.0, -150.0, 0.0],
         [100.0, 150.0, 120.0],
     )]))
     .unwrap();
     let scene = Scene {
         parts: vec![Part {
-            geometry: Arc::new(Geometry::from_meshes(&model.meshes)),
+            geometry: Arc::new(Geometry::from_meshes(model.shown())),
             material: Material {
                 paint,
                 ..Material::default()

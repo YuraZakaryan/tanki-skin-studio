@@ -10,6 +10,7 @@ const VERTICES: u16 = 0x4110;
 const FACES: u16 = 0x4120;
 const SMOOTHING: u16 = 0x4150;
 const UVS: u16 = 0x4140;
+const LOCAL_AXES: u16 = 0x4160;
 
 /// One object of a synthetic 3DS model.
 #[derive(Debug, Clone, Default)]
@@ -21,6 +22,8 @@ pub struct Mesh3ds {
     pub faces: Vec<[u16; 3]>,
     /// Empty, or one smoothing-group mask per face.
     pub smoothing: Vec<u32>,
+    /// The object's origin (its pivot), written with identity axes; none when `None`.
+    pub origin: Option<[f32; 3]>,
 }
 
 impl Mesh3ds {
@@ -96,6 +99,15 @@ pub fn model_3ds(meshes: &[Mesh3ds]) -> Vec<u8> {
             trimesh.extend(chunk(UVS, &uvs));
         }
         trimesh.extend(chunk(FACES, &faces));
+        if let Some(origin) = mesh.origin {
+            let axes = [1.0f32, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+            let local: Vec<u8> = axes
+                .iter()
+                .chain(&origin)
+                .flat_map(|v| v.to_le_bytes())
+                .collect();
+            trimesh.extend(chunk(LOCAL_AXES, &local));
+        }
         let mut object = format!("{}\0", mesh.name).into_bytes();
         object.extend(chunk(TRIMESH, &trimesh));
         editor.extend(chunk(OBJECT, &object));
@@ -118,17 +130,28 @@ pub fn model_counts(meshes: &[(u16, u16)]) -> Vec<u8> {
 }
 
 /// A small synthetic hull: a body with a deck on top. Flat boxes only, no game shapes.
+/// Its turret mounts on the deck, at the origin of its `mount01` helper.
 pub fn hull_3ds() -> Vec<u8> {
+    let mut mount = Mesh3ds::cuboid("mount01", [-10.0, -30.0, 110.0], [10.0, -10.0, 120.0]);
+    mount.origin = Some(HULL_MOUNT);
     model_3ds(&[
         Mesh3ds::cuboid("hull", [-150.0, -250.0, 0.0], [150.0, 250.0, 80.0]),
         Mesh3ds::cuboid("deck", [-110.0, -180.0, 80.0], [110.0, 160.0, 110.0]),
+        mount,
     ])
 }
 
+/// Where [`hull_3ds`] carries its turret.
+pub const HULL_MOUNT: [f32; 3] = [0.0, -20.0, 110.0];
+
 /// A small synthetic turret: a block with a barrel along +Y, its pivot at the origin.
+/// It carries a collision box (a helper, not drawn).
 pub fn turret_3ds() -> Vec<u8> {
+    let mut turret = Mesh3ds::cuboid("turret", [-80.0, -90.0, 0.0], [80.0, 90.0, 60.0]);
+    turret.origin = Some([0.0; 3]);
     model_3ds(&[
-        Mesh3ds::cuboid("turret", [-80.0, -90.0, 0.0], [80.0, 90.0, 60.0]),
+        turret,
         Mesh3ds::cuboid("barrel", [-12.0, 90.0, 18.0], [12.0, 330.0, 42.0]),
+        Mesh3ds::cuboid("Box01", [-90.0, -100.0, 0.0], [90.0, 100.0, 70.0]),
     ])
 }
