@@ -6,6 +6,30 @@ All notable changes are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **The Garage shows your item in 3D.** "My tank" draws the selected hull, turret or paint as a 3D
+  model lit like the game's own garage pictures, in the cache's plain green until a paint or skin
+  says otherwise. Drag to turn it, scroll to zoom, double-click or **Home** to bring the first view
+  back. The toolbar compares a picked skin with the game side by side, turns the model by itself,
+  resets the view and saves the picture as a PNG. While the next model loads, the one before stays,
+  faded, under a loading note.
+- **The whole tank.** The hull, turret and paint you chose last are shown together, the turret on
+  the hull's mount; they are remembered across restarts, starting from the starter tank at M3 in
+  green. Turn it off in Settings or in the 3D quick settings to see the selected item alone.
+- **It turns by itself.** After five seconds still, the model turns very slowly. Switching the
+  hull, turret or paint keeps it turning from where it was; let go of it, and it goes on at once
+  the way you turned it. Zoom, angle and turning come back after a restart.
+- **3D on the item's Details page.** The same model and view, and with the whole tank on, its hull,
+  turret and paint as cards: pick one to see its modifications and skins below.
+- **3D settings.** **Settings → Garage** (and the gear on the stage) turn 3D off for the flat
+  picture, turn the whole tank on or off, and choose the quality (Auto picks it from your
+  graphics: Economy for basic or older graphics).
+
+### Fixed
+
+- **Item cards are centred on the item,** not on its shadow, with as much room above as below.
+
 ## [0.7.0] - 2026-11-03
 
 ### Added
