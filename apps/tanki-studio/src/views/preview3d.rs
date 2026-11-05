@@ -315,14 +315,15 @@ fn tool(ui: &mut Ui, rect: Rect, glyph: char, label: &str, active: bool, enabled
 
 /// Draw the stage: turned from `scene`, the room between the chips and the modification selector,
 /// and drawn over the whole height of `picture` (the chips, the toolbar and the selector lie over
-/// the model, as in a garage), in the shape slot `under` reserved below them.
+/// the model, as in a garage), in the shape slot `under` reserved below them, with a soft light
+/// behind it in the slot `backdrop` below that.
 /// Returns false when there is no 3D picture to show (the caller draws the flat one).
 pub fn stage(
     app: &mut Studio,
     ui: &mut Ui,
     scene: Rect,
     picture: Rect,
-    under: egui::layers::ShapeIdx,
+    [backdrop, under]: [egui::layers::ShapeIdx; 2],
     looks: Looks,
 ) -> bool {
     let tokens = Tokens::get(ui.ctx());
@@ -386,6 +387,15 @@ pub fn stage(
             .max(0.0)
     };
     let drawn = room.expand2(Vec2::new(0.0, grow));
+    // A soft green light behind the model, fading to the stage's dark edges: the model stands out
+    // of its background and belongs to it.
+    ui.painter().set(
+        backdrop,
+        draw::glow(
+            Rect::from_center_size(drawn.center(), drawn.size() * Vec2::new(0.7, 0.95)),
+            tokens.primary.gamma_multiply(0.09),
+        ),
+    );
     let response = app.preview.stage.show_in(
         ui,
         drawn,

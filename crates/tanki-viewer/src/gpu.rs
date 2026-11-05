@@ -21,9 +21,9 @@ pub const COLOUR: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 const TEXTURE: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 const DEPTH: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 /// How dark the ground shadow is at its centre.
-const SHADOW_OPACITY: f32 = 0.5;
+const SHADOW_OPACITY: f32 = 0.68;
 /// The shadow reaches this far past the model's footprint, as a share of the footprint.
-const SHADOW_REACH: f32 = 1.3;
+const SHADOW_REACH: f32 = 1.18;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

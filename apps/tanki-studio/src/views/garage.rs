@@ -222,7 +222,9 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
         egui::Stroke::new(1.0, tokens.border),
         egui::StrokeKind::Inside,
     );
-    // The 3D model goes here, under the chips, the toolbar and the selector drawn next.
+    // The 3D model and the light behind it go here, under the chips, the toolbar and the selector
+    // drawn next.
+    let backdrop = ui.painter().add(egui::Shape::Noop);
     let under_widgets = ui.painter().add(egui::Shape::Noop);
     let marker = app
         .items
@@ -364,7 +366,14 @@ fn my_tank(app: &mut Studio, ui: &mut Ui, rect: Rect) {
             Pos2::new(stage.min.x + 18.0, stage.min.y + 18.0 + 32.0 + 8.0),
             Pos2::new(stage.max.x - 18.0, stage.max.y - 18.0 - selector),
         );
-        super::preview3d::stage(app, ui, scene, stage.shrink(2.0), under_widgets, looks)
+        super::preview3d::stage(
+            app,
+            ui,
+            scene,
+            stage.shrink(2.0),
+            [backdrop, under_widgets],
+            looks,
+        )
     };
     if !drawn_3d {
         let (texture, caption) = match (variant_texture, has_variant, picture) {

@@ -103,8 +103,8 @@ const LIGHTMAP_EXPOSURE: f32 = 2.1;
 // their detail (the lightmap keeps the deep shadows of the recesses).
 const SKY: vec3<f32> = vec3<f32>(0.86, 0.88, 0.92);
 const GROUND: vec3<f32> = vec3<f32>(0.76, 0.75, 0.73);
-const KEY: f32 = 0.40;
-const FILL: f32 = 0.18;
+const KEY: f32 = 0.48;
+const FILL: f32 = 0.22;
 // About a tenth of the key light: enough to lift the front, not to flatten the shape.
 const FRONT: f32 = 0.065;
 const RIM: vec3<f32> = vec3<f32>(0.08, 0.15, 0.07);
