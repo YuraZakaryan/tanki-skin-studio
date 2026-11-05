@@ -39,7 +39,8 @@ pub struct Pose {
 /// A three-quarter view from the front left and a little above, the way a garage shows a tank.
 pub const HOME: Pose = Pose {
     yaw: 2.36,
-    pitch: 0.36,
+    // 30 degrees, as the game's own garage pictures look down on an item.
+    pitch: 0.52,
     zoom: 1.0,
 };
 

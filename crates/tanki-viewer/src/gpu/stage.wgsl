@@ -98,11 +98,11 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const LIGHTMAP_EXPOSURE: f32 = 1.6;
+const LIGHTMAP_EXPOSURE: f32 = 1.5;
 // The ambient: a sky above, and a floor bright enough that the lower hull and the tracks keep
 // their detail (the lightmap keeps the deep shadows of the recesses).
 const SKY: vec3<f32> = vec3<f32>(0.94, 0.95, 0.97);
-const GROUND: vec3<f32> = vec3<f32>(0.82, 0.82, 0.81);
+const GROUND: vec3<f32> = vec3<f32>(0.90, 0.90, 0.89);
 const KEY: f32 = 0.24;
 const FILL: f32 = 0.07;
 // About a tenth of the key light: enough to lift the front, not to flatten the shape.
