@@ -139,8 +139,8 @@ fn details_cover_the_paint_where_they_are_opaque() {
 }
 
 /// The lightmap value that leaves a colour as it is: half brightness, lit up by the garage's exposure
-/// (2.1, see the shader).
-const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 2.1) as u8;
+/// (1.6, see the shader).
+const NEUTRAL_LIGHTMAP: u8 = (255.0 * 0.5 / 1.6) as u8;
 
 #[test]
 fn a_neutral_lightmap_leaves_the_colour_as_it_is() {
@@ -270,7 +270,7 @@ fn the_top_catches_the_light_and_the_sides_are_told_apart() {
         "the top catches the light: {top} {left} {front}"
     );
     assert!(
-        left.abs_diff(front) >= 8,
+        left.abs_diff(front) >= 6,
         "two sides are told apart by the light: {left} {front}"
     );
 }

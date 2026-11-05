@@ -69,8 +69,9 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
 
     // The client blends its textures as stored, gamma-encoded: paint, the details over it where
     // their alpha says, then the lightmap, baked at half brightness. The game's garage lights that
-    // up again: measured against the garage pictures the game itself saved in the cache, a model
-    // comes out LIGHTMAP_EXPOSURE times brighter than texture × lightmap × 2.
+    // up again: LIGHTMAP_EXPOSURE is measured so the model has the mean colour of the garage
+    // pictures the game itself saved in the cache, as the item cards show them (within a few
+    // percent on several hulls).
     let under = mix(part.paint.rgb, pattern, part.flags.z);
     var base = mix(under, detail.rgb, detail.a * part.flags.x);
     base = base * mix(vec3<f32>(1.0), baked * (2.0 * LIGHTMAP_EXPOSURE), part.flags.y);
@@ -83,31 +84,30 @@ fn fs_model(input: ModelOut, @builtin(front_facing) front: bool) -> @location(0)
     }
     let to_eye = normalize(globals.eye.xyz - input.world);
     // The client's own light is baked into the lightmap, which already shades the model as the
-    // game does: the studio only models the shape over it, a little brighter where the key light
-    // falls and a little darker away from it, about 1 on average so the colours stay the game's.
+    // game does: the studio only hints at the shape over it as the model turns, a little brighter
+    // where the key light falls, about 1 on average so the model looks as the game shows it.
     // A soft sky above a darker floor, a key light, a fill, and a rim on the silhouette.
     let hemisphere = mix(GROUND, SKY, 0.5 + 0.5 * normal.z);
     let key = max(dot(normal, globals.key.xyz), 0.0) * KEY;
     let fill = max(dot(normal, globals.fill.xyz), 0.0) * FILL
         + max(dot(normal, globals.front.xyz), 0.0) * FRONT;
     let edge = pow(1.0 - max(dot(normal, to_eye), 0.0), 3.0);
-    // The rim takes the stage's green, so the model belongs to its background and its silhouette
-    // stands out of it.
+    // A faint neutral rim lifts the silhouette off the dark stage without changing the colours.
     let rim = edge * (0.5 + 0.5 * dot(normal, globals.rim.xyz)) * RIM;
     let lit = base * (hemisphere + vec3<f32>(key + fill)) + rim;
     return vec4<f32>(neutral(lit), 1.0);
 }
 
-const LIGHTMAP_EXPOSURE: f32 = 2.1;
+const LIGHTMAP_EXPOSURE: f32 = 1.6;
 // The ambient: a sky above, and a floor bright enough that the lower hull and the tracks keep
 // their detail (the lightmap keeps the deep shadows of the recesses).
-const SKY: vec3<f32> = vec3<f32>(0.86, 0.88, 0.92);
-const GROUND: vec3<f32> = vec3<f32>(0.76, 0.75, 0.73);
-const KEY: f32 = 0.48;
-const FILL: f32 = 0.22;
+const SKY: vec3<f32> = vec3<f32>(0.94, 0.95, 0.97);
+const GROUND: vec3<f32> = vec3<f32>(0.82, 0.82, 0.81);
+const KEY: f32 = 0.24;
+const FILL: f32 = 0.07;
 // About a tenth of the key light: enough to lift the front, not to flatten the shape.
-const FRONT: f32 = 0.065;
-const RIM: vec3<f32> = vec3<f32>(0.08, 0.15, 0.07);
+const FRONT: f32 = 0.03;
+const RIM: vec3<f32> = vec3<f32>(0.03, 0.03, 0.03);
 
 // The highlight roll-off of Khronos PBR Neutral tone mapping: colours up to 0.8 pass as they are,
 // brighter ones roll off toward white instead of clipping, so a lit skin keeps its hue. Its toe,
